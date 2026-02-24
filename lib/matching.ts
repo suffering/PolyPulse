@@ -1,16 +1,10 @@
-/**
- * Event matching between Polymarket and The Odds API
- * Handles team name variations for robust matching
- */
-
 import type { OddsApiEvent, OddsApiBookmaker } from "./odds-api";
 import type { PolymarketEvent, PolymarketMarket } from "./polymarket";
+import { parseMarketOutcomes } from "./polymarket";
 import { calculateEV } from "./calculator";
 import { getMarketType, getTimeframe, getMarketCategory } from "./types";
 import type { MarketCategory } from "./types";
 
-// Team name aliases for matching (Polymarket vs Odds API)
-// Canonical name -> aliases (Odds API uses full names, Polymarket may use short)
 const TEAM_ALIASES: Record<string, string[]> = {
   "oklahoma city thunder": ["oklahoma city", "thunder", "okc"],
   "cleveland cavaliers": ["cleveland", "cavaliers", "cavs"],
@@ -42,9 +36,40 @@ const TEAM_ALIASES: Record<string, string[]> = {
   "chicago bulls": ["chicago", "bulls"],
   "detroit pistons": ["detroit", "pistons"],
   "toronto raptors": ["toronto", "raptors"],
+  "new jersey devils": ["new jersey", "devils", "nj devils"],
+  "buffalo sabres": ["buffalo", "sabres"],
+  "washington capitals": ["washington", "capitals", "caps"],
+  "philadelphia flyers": ["philadelphia", "flyers"],
+  "los angeles kings": ["la kings", "kings"],
+  "columbus blue jackets": ["columbus", "blue jackets", "jackets"],
+  "toronto maple leafs": ["toronto", "maple leafs", "leafs"],
+  "montreal canadiens": ["montreal", "canadiens", "habs"],
+  "ottawa senators": ["ottawa", "senators", "sens"],
+  "boston bruins": ["boston", "bruins"],
+  "detroit red wings": ["detroit", "red wings", "wings"],
+  "florida panthers": ["florida", "panthers"],
+  "tampa bay lightning": ["tampa bay", "lightning", "bolts"],
+  "carolina hurricanes": ["carolina", "hurricanes", "canes"],
+  "new york rangers": ["ny rangers", "rangers"],
+  "new york islanders": ["ny islanders", "islanders", "isles"],
+  "pittsburgh penguins": ["pittsburgh", "penguins", "pens"],
+  "nashville predators": ["nashville", "predators", "preds"],
+  "st louis blues": ["st louis", "st. louis", "blues"],
+  "chicago blackhawks": ["chicago", "blackhawks", "hawks"],
+  "minnesota wild": ["minnesota", "wild"],
+  "dallas stars": ["dallas", "stars"],
+  "colorado avalanche": ["colorado", "avalanche", "avs"],
+  "winnipeg jets": ["winnipeg", "jets"],
+  "arizona coyotes": ["arizona", "coyotes", "yotes"],
+  "vegas golden knights": ["vegas", "golden knights", "vgk"],
+  "seattle kraken": ["seattle", "kraken"],
+  "calgary flames": ["calgary", "flames"],
+  "edmonton oilers": ["edmonton", "oilers"],
+  "vancouver canucks": ["vancouver", "canucks", "nucks"],
+  "anaheim ducks": ["anaheim", "ducks"],
+  "san jose sharks": ["san jose", "sharks"],
 };
 
-// Soccer team aliases (EPL, La Liga, etc.) - Polymarket uses "X FC", Odds API may use short names
 const SOCCER_TEAM_ALIASES: Record<string, string[]> = {
   "manchester united": ["man united", "man utd", "manchester utd", "man u", "united"],
   "manchester city": ["man city", "manchester city fc", "city"],
@@ -77,6 +102,36 @@ const SOCCER_TEAM_ALIASES: Record<string, string[]> = {
   "ac milan": ["milan", "ac milan", "acm"],
   "juventus": ["juventus fc", "juve"],
   "paris saint germain": ["psg", "paris sg", "paris saint-germain"],
+  "lille": ["lille osc", "losc lille"],
+  "monaco": ["as monaco", "monaco fc"],
+  "marseille": ["olympique marseille", "om", "olympique de marseille"],
+  "lyon": ["olympique lyon", "olympique lyonnais", "ol"],
+  "lens": ["rc lens", "lens"],
+  "rennes": ["stade rennais", "stade rennais fc"],
+  "napoli": ["ssc napoli", "napoli fc"],
+  "roma": ["as roma", "roma fc"],
+  "lazio": ["ss lazio", "lazio roma"],
+  "inter": ["inter milan", "fc internazionale", "inter milano"],
+  "fiorentina": ["acf fiorentina", "fiorentina"],
+  "atalanta": ["atalanta bc", "atalanta bergamasca"],
+  "bologna": ["bologna fc", "bologna"],
+  "torino": ["torino fc", "torino"],
+  "leverkusen": ["bayer leverkusen", "bayer 04 leverkusen"],
+  "rb leipzig": ["rasenballsport leipzig", "leipzig", "rbl"],
+  "eintracht frankfurt": ["eintracht", "frankfurt", "sg eintracht"],
+  "borussia monchengladbach": ["monchengladbach", "gladbach", "borussia mg"],
+  "freiburg": ["sc freiburg", "sport-club freiburg"],
+  "hoffenheim": ["tsg hoffenheim", "1899 hoffenheim", "tsg"],
+  "wolfsburg": ["vfl wolfsburg", "vfl wolfsburg"],
+  "union berlin": ["1. fc union berlin", "union berlin", "fc union berlin"],
+  "sevilla": ["sevilla fc", "sevilla"],
+  "real sociedad": ["real sociedad de futbol", "real sociedad", "la real"],
+  "real betis": ["real betis balompie", "betis", "real betis"],
+  "villarreal": ["villarreal cf", "villarreal", "yellow submarine"],
+  "athletic bilbao": ["athletic club", "athletic bilbao", "bilbao", "atletic club bilbao"],
+  "valencia": ["valencia cf", "valencia"],
+  "getafe": ["getafe cf", "getafe"],
+  "girona": ["girona fc", "girona"],
 };
 
 export function normalizeTeamName(name: string): string {
@@ -87,7 +142,6 @@ export function normalizeTeamName(name: string): string {
     .trim();
 }
 
-/** Normalize soccer team names: strip FC, CF, handle "&" vs "and" */
 function normalizeSoccerTeamName(name: string): string {
   return normalizeTeamName(name)
     .replace(/\bfc\b/g, "")
@@ -138,7 +192,6 @@ function soccerTeamNamesMatch(a: string, b: string): boolean {
       if (na.includes(normAlias) || normAlias.includes(na)) return true;
     }
   }
-  // Check reverse: na might be an alias of canonical nb
   for (const [canonical, aliases] of Object.entries(SOCCER_TEAM_ALIASES)) {
     const normCanonical = normalizeSoccerTeamName(canonical);
     const allNames = [normCanonical, ...aliases.map(normalizeSoccerTeamName)];
@@ -152,7 +205,7 @@ function soccerTeamNamesMatch(a: string, b: string): boolean {
 export interface MatchedOpportunity {
   id: string;
   sport: string;
-  league?: string; // e.g. "EPL", "Champions League"
+  league?: string;
   matchup: string;
   outcome: string;
   eventTime: string;
@@ -162,7 +215,6 @@ export interface MatchedOpportunity {
   polymarketEventId: string;
   polymarketMarketId: string;
   polymarketQuestion: string;
-  /** Optional for Polymarket-only markets (no sportsbook odds) */
   sportsbookName?: string;
   sportsbookOdds?: number;
   sportsbookImpliedProb?: number;
@@ -177,21 +229,18 @@ export interface MatchedOpportunity {
   category: MarketCategory;
 }
 
-/** Outright-style events that have Odds API match (NBA Champion only) */
 function hasOddsApiMatch(title: string): boolean {
   const t = title.toLowerCase();
   return (
     (t.includes("champion") && !t.includes("conference")) ||
     t.includes("finals") ||
     t.includes("world series") ||
-    t.includes("stanley cup")
+    t.includes("stanley cup") ||
+    t.includes("mls cup") ||
+    (t.includes("cup") && t.includes("winner"))
   );
 }
 
-/**
- * Match Polymarket outright markets with Odds API where available.
- * Championship: matched to Odds API for EV.
- */
 export function matchOutrights(
   polymarketEvents: PolymarketEvent[],
   oddsEvents: OddsApiEvent[],
@@ -203,7 +252,6 @@ export function matchOutrights(
     const title = pmEvent.title || "";
     const category = getMarketCategory(title);
 
-    // Skip non-outright event types (games, win totals handled elsewhere)
     if (category === "games" || category === "win_totals") continue;
 
     for (const market of pmEvent.markets || []) {
@@ -221,9 +269,6 @@ export function matchOutrights(
 
       if (polymarketPriceCents < 1) continue;
 
-      let matched = false;
-
-      // Championship: try to match with Odds API (team-based outrights)
       if (hasOddsApiMatch(title) && category === "championship") {
         for (const oddsEvent of oddsEvents) {
           const bestBook =
@@ -231,7 +276,6 @@ export function matchOutrights(
             getBestBookmakerForTeam(oddsEvent, outcomeName, "h2h");
           if (!bestBook) continue;
 
-          matched = true;
           const stake = 100;
           const { ev, evPercentage, potentialProfit, expectedProfit } = calculateEV(
             stake,
@@ -276,38 +320,64 @@ export function matchOutrights(
   return opportunities.sort((a, b) => (b.evPercent ?? -999) - (a.evPercent ?? -999));
 }
 
-function parseMarketOutcomes(market: PolymarketMarket): { name: string; price: number }[] {
-  const outcomesStr = market.outcomes || "[]";
-  const pricesStr = market.outcomePrices || "[]";
-  let outcomes: string[] = [];
-  let prices: number[] = [];
+export function matchPolymarketOnlyOutrights(
+  polymarketEvents: PolymarketEvent[],
+  sport: string,
+  league?: string
+): MatchedOpportunity[] {
+  const opportunities: MatchedOpportunity[] = [];
 
-  try {
-    outcomes = JSON.parse(outcomesStr.replace(/'/g, '"'));
-  } catch {
-    outcomes = outcomesStr.split(",").map((s) => s.trim().replace(/^["']|["']$/g, ""));
-  }
-  try {
-    prices = JSON.parse(pricesStr.replace(/'/g, '"')).map((p: string) => parseFloat(p));
-  } catch {
-    prices = pricesStr.split(",").map((s) => parseFloat(s.trim()) || 0);
+  for (const pmEvent of polymarketEvents) {
+    const title = pmEvent.title || "";
+    const category = getMarketCategory(title);
+    const timeframe = getTimeframe(pmEvent.endDate || pmEvent.startDate);
+
+    if (category === "games" || category === "win_totals") continue;
+    if (timeframe !== "futures") continue;
+    if (!hasOddsApiMatch(title)) continue;
+
+    for (const market of pmEvent.markets || []) {
+      const outcomeName =
+        market.groupItemTitle || extractTeamOrPlayerFromQuestion(market.question);
+      if (!outcomeName) continue;
+
+      const outcomes = parseMarketOutcomes(market);
+      const yesOutcome = outcomes.find((o) => o.name.toLowerCase() === "yes");
+      if (!yesOutcome || yesOutcome.price <= 0) continue;
+
+      const polymarketPrice = yesOutcome.price;
+      const polymarketPriceCents = polymarketPrice * 100;
+      if (polymarketPriceCents < 1) continue;
+
+      opportunities.push({
+        id: `pm-only-${pmEvent.id}-${market.id}-${outcomeName}`,
+        sport,
+        league,
+        matchup: title || "Outright",
+        outcome: outcomeName,
+        eventTime: pmEvent.endDate || pmEvent.startDate || "",
+        polymarketPrice,
+        polymarketImpliedProb: polymarketPriceCents,
+        polymarketUrl: getPolymarketUrl(pmEvent),
+        polymarketEventId: pmEvent.id,
+        polymarketMarketId: market.id,
+        polymarketQuestion: market.question || "",
+        marketType: getMarketType(market.question || title),
+        timeframe: "futures",
+        category,
+      });
+    }
   }
 
-  return outcomes.map((name, i) => ({ name, price: prices[i] ?? 0 }));
+  return opportunities;
 }
 
 function extractTeamFromQuestion(question: string): string | null {
-  // "Will the Oklahoma City Thunder win the 2026 NBA Finals?"
   const match = question.match(/Will (?:the )?([^?]+) win/);
   return match ? match[1].trim() : null;
 }
 
-/** Extract team or player from "Will X win/lead/record..." questions */
 function extractTeamOrPlayerFromQuestion(question: string): string | null {
-  // "Will the Oklahoma City Thunder win the 2026 NBA Finals?"
-  // "Will Trae Young win the 2025–2026 NBA MVP?"
-  // "Will Victor Wembanyama win the 2025–2026 NBA Defensive Player of the Year?"
-  // "Will the Atlanta Hawks make the NBA Playoffs?"
   const winMatch = question.match(/Will (?:the )?([^?]+?) (?:win|make|lead|record|finish|have)/);
   return winMatch ? winMatch[1].trim() : extractTeamFromQuestion(question);
 }
@@ -340,10 +410,13 @@ function getPolymarketUrl(event: PolymarketEvent): string {
   return `https://polymarket.com/event/${slug}`;
 }
 
-/**
- * Extract team names from game-level question text.
- * Handles: "Will the Lakers beat the Celtics?", "Will Lakers defeat Celtics?"
- */
+function extractTeamsFromTitle(title: string): { team1: string; team2: string } | null {
+  const clean = title.trim();
+  const vsMatch = clean.match(/^(.+?)\s+(?:vs\.?|v\.?|-)\s+(.+)$/i);
+  if (vsMatch) return { team1: vsMatch[1].trim(), team2: vsMatch[2].trim() };
+  return null;
+}
+
 function extractTeamsFromGameQuestion(question: string): { team1: string; team2: string } | null {
   const q = question.toLowerCase();
   const beatMatch = q.match(/will\s+(?:the\s+)?([^?]+?)\s+(?:beat|defeat)\s+(?:the\s+)?([^?]+?)\s*\??/);
@@ -353,56 +426,184 @@ function extractTeamsFromGameQuestion(question: string): { team1: string; team2:
   return null;
 }
 
-/**
- * Match Polymarket game-level markets with Odds API h2h markets
- * For daily NBA games like "Will Lakers beat Celtics?"
- */
+function extractTeamFromWinQuestion(question: string): string | null {
+  const match = question.match(/will\s+(?:the\s+)?([^?]+?)\s+win\s*\??/i);
+  return match ? match[1].trim() : null;
+}
+
 export function matchH2HGames(
   polymarketEvents: PolymarketEvent[],
   oddsEvents: OddsApiEvent[],
-  sport: string
+  sport: string,
+  options?: { includeWithoutSportsbook?: boolean }
 ): MatchedOpportunity[] {
   const opportunities: MatchedOpportunity[] = [];
+  const includeWithoutSportsbook = options?.includeWithoutSportsbook ?? false;
 
   for (const pmEvent of polymarketEvents) {
     const title = (pmEvent.title || "").toLowerCase();
     const isGameLevel =
-      title.includes("beat") || title.includes("defeat") || title.includes("win against");
+      title.includes("beat") ||
+      title.includes("defeat") ||
+      title.includes("win against") ||
+      title.includes(" vs") ||
+      title.includes(" v ");
 
     for (const market of pmEvent.markets || []) {
       const question = market.question || "";
+      const qLower = question.toLowerCase();
+      
+      const isPlayerProp =
+        qLower.includes("points") ||
+        qLower.includes("assists") ||
+        qLower.includes("rebounds") ||
+        qLower.includes("steals") ||
+        qLower.includes("blocks") ||
+        qLower.includes("threes") ||
+        qLower.includes("3-pointers") ||
+        qLower.includes("turnovers") ||
+        qLower.includes("minutes") ||
+        qLower.includes("goals") ||
+        qLower.includes("saves") ||
+        qLower.includes("shots") ||
+        qLower.includes("hits") ||
+        qLower.includes("strikeouts") ||
+        qLower.includes("home runs") ||
+        qLower.includes("rbi") ||
+        qLower.includes("aces") ||
+        qLower.includes("double faults") ||
+        qLower.includes("o/u") ||
+        qLower.includes("over/under") ||
+        qLower.includes("spread:") ||
+        qLower.includes("total:") ||
+        qLower.match(/\d+\.\d+/);
+      
+      if (isPlayerProp) continue;
+      
+      const isPartialGame =
+        qLower.includes("1h ") ||
+        qLower.includes("2h ") ||
+        qLower.includes("1st half") ||
+        qLower.includes("2nd half") ||
+        qLower.includes("first half") ||
+        qLower.includes("second half") ||
+        qLower.includes("1st quarter") ||
+        qLower.includes("2nd quarter") ||
+        qLower.includes("3rd quarter") ||
+        qLower.includes("4th quarter") ||
+        qLower.includes("1st period") ||
+        qLower.includes("2nd period") ||
+        qLower.includes("3rd period");
+      
+      if (isPartialGame) continue;
+      
       const isGameQuestion =
-        question.toLowerCase().includes("beat") ||
-        question.toLowerCase().includes("defeat") ||
-        question.toLowerCase().includes("win against");
+        qLower.includes("beat") ||
+        qLower.includes("defeat") ||
+        qLower.includes("win against") ||
+        (qLower.includes("will") && qLower.includes("win")) ||
+        qLower.includes(" vs") ||
+        qLower.includes(" v ") ||
+        qLower.includes("moneyline");
       if (!isGameLevel && !isGameQuestion) continue;
 
-      const teams = extractTeamsFromGameQuestion(question);
+      let teams = extractTeamsFromGameQuestion(question);
+      let yesMeansTeam1 = !!teams;
+      if (!teams) {
+        teams = extractTeamsFromTitle(question);
+      }
+      if (!teams) {
+        const teamsFromTitle = extractTeamsFromTitle(pmEvent.title || "");
+        if (teamsFromTitle) {
+          if (qLower.includes("will") && qLower.includes("win")) {
+            const teamFromQ = extractTeamFromWinQuestion(question);
+            if (teamFromQ) {
+              if (teamNamesMatch(teamFromQ, teamsFromTitle.team1)) {
+                teams = teamsFromTitle;
+                yesMeansTeam1 = true;
+              } else if (teamNamesMatch(teamFromQ, teamsFromTitle.team2)) {
+                teams = { team1: teamsFromTitle.team2, team2: teamsFromTitle.team1 };
+                yesMeansTeam1 = true;
+              }
+            }
+          }
+          if (!teams) {
+            teams = teamsFromTitle;
+          }
+        }
+      }
       if (!teams) continue;
 
       const { team1, team2 } = teams;
 
       const outcomes = parseMarketOutcomes(market);
+      let polymarketPrice: number | null = null;
+      const team1Outcome = outcomes.find((o) => teamNamesMatch(o.name, team1));
       const yesOutcome = outcomes.find((o) => o.name.toLowerCase() === "yes");
-      if (!yesOutcome || yesOutcome.price <= 0) continue;
 
-      const polymarketPrice = yesOutcome.price;
+      if (team1Outcome && team1Outcome.price > 0) {
+        polymarketPrice = team1Outcome.price;
+      } else if (yesOutcome && yesOutcome.price > 0 && yesMeansTeam1) {
+        polymarketPrice = yesOutcome.price;
+      }
+      
+      if (!polymarketPrice || polymarketPrice <= 0) continue;
+
       const polymarketPriceCents = polymarketPrice * 100;
       const polymarketImpliedProb = polymarketPriceCents;
 
       if (polymarketPriceCents < 1) continue;
 
-      // Find matching h2h event in Odds API
+      const gameStartTime = market.gameStartTime || null;
+
+      let matched = false;
       for (const oddsEvent of oddsEvents) {
-        // Match by team names
+        const eventTime = gameStartTime || oddsEvent.commence_time || pmEvent.startDate || pmEvent.endDate || "";
+        const timeframeDate = gameStartTime || oddsEvent.commence_time || pmEvent.startDate || pmEvent.endDate;
         const matchesTeams =
           (teamNamesMatch(oddsEvent.home_team, team1) && teamNamesMatch(oddsEvent.away_team, team2)) ||
           (teamNamesMatch(oddsEvent.home_team, team2) && teamNamesMatch(oddsEvent.away_team, team1));
 
         if (!matchesTeams) continue;
 
+        matched = true;
         const bestBook = getBestBookmakerForTeam(oddsEvent, team1, "h2h");
-        if (!bestBook) continue;
+        if (!bestBook) {
+          if (includeWithoutSportsbook) {
+            opportunities.push({
+              id: `${pmEvent.id}-${market.id}-h2h-nobook`,
+              sport,
+              matchup: `${oddsEvent.home_team} vs ${oddsEvent.away_team}`,
+              outcome: team1,
+              eventTime,
+              polymarketPrice,
+              polymarketImpliedProb,
+              polymarketUrl: getPolymarketUrl(pmEvent),
+              polymarketEventId: pmEvent.id,
+              polymarketMarketId: market.id,
+              polymarketQuestion: market.question || "",
+              marketType: "game",
+              timeframe: getTimeframe(timeframeDate),
+              category: "games",
+            });
+          }
+          continue;
+        }
+
+        const decimalOdds = bestBook.decimalOdds;
+        const sportsbookImpliedPct = (1 / decimalOdds) * 100;
+        if (
+          polymarketImpliedProb < 45 &&
+          sportsbookImpliedPct > 55
+        ) {
+          continue;
+        }
+        if (
+          polymarketImpliedProb > 55 &&
+          sportsbookImpliedPct < 45
+        ) {
+          continue;
+        }
 
         const stake = 100;
         const { ev, evPercentage, potentialProfit, expectedProfit } = calculateEV(
@@ -411,18 +612,15 @@ export function matchH2HGames(
           bestBook.outcome.price
         );
 
-        // Show all opportunities for debugging (including negative/breakeven EV)
         const quality: MatchedOpportunity["quality"] =
           evPercentage >= 5 ? "excellent" : evPercentage >= 2 ? "good" : "marginal";
-
-        const decimalOdds = bestBook.decimalOdds;
 
         opportunities.push({
           id: `${pmEvent.id}-${market.id}-h2h`,
           sport,
           matchup: `${team1} vs ${team2}`,
           outcome: team1,
-          eventTime: pmEvent.startDate || pmEvent.endDate || "",
+          eventTime,
           polymarketPrice,
           polymarketImpliedProb,
           polymarketUrl: getPolymarketUrl(pmEvent),
@@ -431,7 +629,7 @@ export function matchH2HGames(
           polymarketQuestion: market.question || "",
           sportsbookName: bestBook.bookmaker.title,
           sportsbookOdds: bestBook.outcome.price,
-          sportsbookImpliedProb: (1 / decimalOdds) * 100,
+          sportsbookImpliedProb: sportsbookImpliedPct,
           trueProbability: 1 / decimalOdds,
           ev,
           evPercent: evPercentage,
@@ -439,20 +637,57 @@ export function matchH2HGames(
           expectedProfit100: expectedProfit,
           quality,
           marketType: "game",
-          timeframe: getTimeframe(pmEvent.endDate || pmEvent.startDate),
+          timeframe: getTimeframe(timeframeDate),
+          category: "games",
+        });
+      }
+
+      if (includeWithoutSportsbook && !matched) {
+        const pmOnlyEventTime = gameStartTime || pmEvent.startDate || pmEvent.endDate || "";
+        const pmOnlyTimeframeDate = gameStartTime || pmEvent.startDate || pmEvent.endDate;
+        
+        opportunities.push({
+          id: `${pmEvent.id}-${market.id}-h2h-pmonly`,
+          sport,
+          matchup: `${team1} vs ${team2}`,
+          outcome: team1,
+          eventTime: pmOnlyEventTime,
+          polymarketPrice,
+          polymarketImpliedProb,
+          polymarketUrl: getPolymarketUrl(pmEvent),
+          polymarketEventId: pmEvent.id,
+          polymarketMarketId: market.id,
+          polymarketQuestion: market.question || "",
+          marketType: "game",
+          timeframe: getTimeframe(pmOnlyTimeframeDate),
           category: "games",
         });
       }
     }
   }
 
-  return opportunities;
+  const deduplicated = new Map<string, MatchedOpportunity>();
+  for (const opp of opportunities) {
+    const key = `${opp.matchup}|${opp.outcome}`;
+    const existing = deduplicated.get(key);
+    if (!existing) {
+      deduplicated.set(key, opp);
+    } else {
+      const existingTime = new Date(existing.eventTime || 0).getTime();
+      const oppTime = new Date(opp.eventTime || 0).getTime();
+      if (oppTime < existingTime || (oppTime === existingTime && (opp.evPercent ?? -999) > (existing.evPercent ?? -999))) {
+        deduplicated.set(key, opp);
+      }
+    }
+  }
+
+  return Array.from(deduplicated.values()).sort((a, b) => {
+    const timeA = new Date(a.eventTime || 0).getTime();
+    const timeB = new Date(b.eventTime || 0).getTime();
+    return timeA - timeB;
+  });
 }
 
-/**
- * Match Polymarket totals markets with Odds API totals markets
- * For markets like "Will Lakers score over 110 points?"
- */
 export function matchTotals(
   polymarketEvents: PolymarketEvent[],
   oddsEvents: OddsApiEvent[],
@@ -467,7 +702,6 @@ export function matchTotals(
         question.includes("total") || question.includes("over") || question.includes("under");
       if (!isTotals) continue;
 
-      // Extract team and total line
       const teamMatch = question.match(/(?:the\s+)?([^?]+?)\s+(?:score|total)/);
       if (!teamMatch) continue;
 
@@ -483,7 +717,6 @@ export function matchTotals(
 
       if (polymarketPriceCents < 1) continue;
 
-      // Find matching totals event in Odds API
       for (const oddsEvent of oddsEvents) {
         const matchesTeam =
           teamNamesMatch(oddsEvent.home_team, teamName) ||
@@ -491,14 +724,12 @@ export function matchTotals(
 
         if (!matchesTeam) continue;
 
-        // Find best totals market from bookmakers
         let bestBook: { bookmaker: OddsApiBookmaker; outcome: { price: number }; decimalOdds: number } | null = null;
 
         for (const bookmaker of oddsEvent.bookmakers) {
           const totalsMarket = bookmaker.markets.find((m) => m.key === "totals");
           if (!totalsMarket) continue;
 
-          // Get over/under outcomes (The Odds API has "Over" and "Under" outcomes)
           const overOutcome = totalsMarket.outcomes.find((o) => o.name === "Over");
           if (!overOutcome) continue;
 
@@ -517,7 +748,6 @@ export function matchTotals(
           bestBook.outcome.price
         );
 
-        // Show all opportunities for debugging (including negative/breakeven EV)
         const quality: MatchedOpportunity["quality"] =
           evPercentage >= 5 ? "excellent" : evPercentage >= 2 ? "good" : "marginal";
 
@@ -555,60 +785,90 @@ export function matchTotals(
   return opportunities;
 }
 
-/**
- * Get best bookmaker for a soccer outcome (team win or Draw)
- * Soccer h2h has 3 outcomes: Home, Away, Draw
- */
+function americanToDecimalFromPrice(american: number): number {
+  return american > 0 ? 1 + american / 100 : 1 + 100 / Math.abs(american);
+}
+
 function getBestBookmakerForSoccerOutcome(
   event: OddsApiEvent,
-  outcomeName: string, // Team name or "Draw"
-  marketKey: "h2h" = "h2h"
+  outcomeName: string
 ): { bookmaker: OddsApiBookmaker; outcome: { price: number }; decimalOdds: number } | null {
+  const marketKeys: ("h2h_3_way" | "h2h")[] = ["h2h_3_way", "h2h"];
   let best: { bookmaker: OddsApiBookmaker; outcome: { price: number }; decimalOdds: number } | null =
     null;
 
   for (const bookmaker of event.bookmakers) {
-    const market = bookmaker.markets.find((m) => m.key === marketKey);
-    if (!market) continue;
+    for (const marketKey of marketKeys) {
+      const market = bookmaker.markets.find((m) => m.key === marketKey);
+      if (!market) continue;
 
-    const isDraw = outcomeName.toLowerCase() === "draw";
-    const outcome = isDraw
-      ? market.outcomes.find((o) => o.name === "Draw")
-      : market.outcomes.find((o) => o.name !== "Draw" && soccerTeamNamesMatch(o.name, outcomeName));
+      const isDraw = outcomeName.toLowerCase() === "draw";
+      let outcome: { name: string; price: number } | undefined;
+      if (isDraw) {
+        outcome = market.outcomes.find((o) => o.name === "Draw");
+      } else {
+        outcome = market.outcomes.find((o) => {
+          if (o.name === "Draw") return false;
+          if (o.name === "Home") return soccerTeamNamesMatch(event.home_team, outcomeName);
+          if (o.name === "Away") return soccerTeamNamesMatch(event.away_team, outcomeName);
+          return soccerTeamNamesMatch(o.name, outcomeName);
+        });
+      }
 
-    if (!outcome) continue;
+      if (!outcome) continue;
 
-    const decimalOdds =
-      outcome.price > 0 ? 1 + outcome.price / 100 : 1 + 100 / Math.abs(outcome.price);
-    if (!best || decimalOdds > best.decimalOdds) {
-      best = { bookmaker, outcome, decimalOdds };
+      const decimalOdds = americanToDecimalFromPrice(outcome.price);
+      if (!best || decimalOdds > best.decimalOdds) {
+        best = { bookmaker, outcome, decimalOdds };
+      }
+      break;
     }
   }
   return best;
 }
 
-/**
- * Extract teams from Polymarket soccer event title: "Chelsea FC vs. Burnley FC"
- * Handles "Team A vs. Team B - More Markets" by stripping suffix
- */
 function extractTeamsFromSoccerTitle(title: string): { team1: string; team2: string } | null {
   const clean = title.replace(/\s*-\s*More Markets\s*$/i, "").trim();
   const match = clean.match(/^(.+?)\s+vs\.?\s+(.+)$/i);
   return match ? { team1: match[1].trim(), team2: match[2].trim() } : null;
 }
 
-/**
- * Extract team from Polymarket soccer question: "Will Chelsea FC win on 2026-02-21?"
- */
 function extractTeamFromSoccerWinQuestion(question: string): string | null {
   const match = question.match(/Will\s+(.+?)\s+win\s+on/i);
   return match ? match[1].trim() : null;
 }
 
-/**
- * Match Polymarket soccer game markets with Odds API h2h
- * Handles: "Will X win on date?" and "Will X vs Y end in a draw?"
- */
+function getSoccerOutcomePrice(
+  market: PolymarketMarket,
+  outcomeName: string,
+  team1: string,
+  team2: string
+): number | null {
+  const outcomes = parseMarketOutcomes(market);
+  if (outcomes.length === 0) return null;
+
+  const yesOutcome = outcomes.find((o) => o.name.toLowerCase() === "yes");
+  if (yesOutcome != null && yesOutcome.price > 0) {
+    const matchesThisMarket =
+      outcomeName === "Draw" ||
+      soccerTeamNamesMatch(outcomeName, team1) ||
+      soccerTeamNamesMatch(outcomeName, team2);
+    if (matchesThisMarket) return yesOutcome.price;
+  }
+
+  const drawOutcome = outcomes.find(
+    (o) => o.name.toLowerCase() === "draw" || o.name.toLowerCase().includes("draw")
+  );
+  if (outcomeName === "Draw" && drawOutcome != null && drawOutcome.price > 0)
+    return drawOutcome.price;
+
+  for (const o of outcomes) {
+    if (o.name.toLowerCase() === "yes" || o.name.toLowerCase() === "no") continue;
+    if (soccerTeamNamesMatch(o.name, outcomeName) && o.price > 0) return o.price;
+  }
+  return null;
+}
+
 export function matchSoccerH2H(
   polymarketEvents: PolymarketEvent[],
   oddsEvents: OddsApiEvent[],
@@ -627,34 +887,63 @@ export function matchSoccerH2H(
     for (const market of pmEvent.markets || []) {
       const question = market.question || "";
       const qLower = question.toLowerCase();
+      
+      const isPartialGame =
+        qLower.includes("1h ") ||
+        qLower.includes("2h ") ||
+        qLower.includes("1st half") ||
+        qLower.includes("2nd half") ||
+        qLower.includes("first half") ||
+        qLower.includes("second half");
+      
+      if (isPartialGame) continue;
+      
+      const outcomes = parseMarketOutcomes(market);
 
-      // Team win: "Will Chelsea FC win on 2026-02-21?"
       const teamWinMatch = qLower.match(/will\s+.+?\s+win\s+on/);
-      // Draw: "Will Chelsea FC vs. Burnley FC end in a draw?"
       const drawMatch = qLower.includes("end in a draw") || qLower.includes("end in draw");
 
-      let outcomeName: string;
-      if (teamWinMatch) {
-        const team = extractTeamFromSoccerWinQuestion(question);
-        if (!team) continue;
-        outcomeName = team;
-      } else if (drawMatch) {
-        outcomeName = "Draw";
+      const outcomeCandidates: { outcomeName: string; price: number }[] = [];
+
+      if (teamWinMatch || drawMatch) {
+        let outcomeName: string;
+        if (teamWinMatch) {
+          const team = extractTeamFromSoccerWinQuestion(question);
+          if (!team) continue;
+          outcomeName = team;
+        } else {
+          outcomeName = "Draw";
+        }
+        const outcomeMatchesEvent =
+          outcomeName === "Draw" ||
+          soccerTeamNamesMatch(outcomeName, team1) ||
+          soccerTeamNamesMatch(outcomeName, team2);
+        if (!outcomeMatchesEvent) continue;
+        const price = getSoccerOutcomePrice(market, outcomeName, team1, team2);
+        if (price != null && price > 0 && price * 100 >= 1)
+          outcomeCandidates.push({ outcomeName, price });
       } else {
-        continue;
+        for (const o of outcomes) {
+          if (o.name.toLowerCase() === "yes" || o.name.toLowerCase() === "no") continue;
+          if (o.price <= 0 || o.price * 100 < 1) continue;
+          const isDraw =
+            o.name.toLowerCase() === "draw" || o.name.toLowerCase().includes("draw");
+          const isTeam1 = !isDraw && soccerTeamNamesMatch(o.name, team1);
+          const isTeam2 = !isDraw && soccerTeamNamesMatch(o.name, team2);
+          if (isDraw) outcomeCandidates.push({ outcomeName: "Draw", price: o.price });
+          else if (isTeam1) outcomeCandidates.push({ outcomeName: team1, price: o.price });
+          else if (isTeam2) outcomeCandidates.push({ outcomeName: team2, price: o.price });
+        }
       }
 
-      const outcomes = parseMarketOutcomes(market);
-      const yesOutcome = outcomes.find((o) => o.name.toLowerCase() === "yes");
-      if (!yesOutcome || yesOutcome.price <= 0) continue;
+      for (const { outcomeName, price: polymarketPrice } of outcomeCandidates) {
+        const polymarketPriceCents = polymarketPrice * 100;
+        const polymarketImpliedProb = polymarketPriceCents;
+        const gameStartTime = market.gameStartTime || null;
 
-      const polymarketPrice = yesOutcome.price;
-      const polymarketPriceCents = polymarketPrice * 100;
-      const polymarketImpliedProb = polymarketPriceCents;
-
-      if (polymarketPriceCents < 1) continue;
-
-      for (const oddsEvent of oddsEvents) {
+        for (const oddsEvent of oddsEvents) {
+        const eventTime = gameStartTime || oddsEvent.commence_time || pmEvent.startDate || pmEvent.endDate || "";
+        const timeframeDate = gameStartTime || oddsEvent.commence_time || pmEvent.startDate || pmEvent.endDate;
         const matchesTeams =
           (soccerTeamNamesMatch(oddsEvent.home_team, team1) &&
             soccerTeamNamesMatch(oddsEvent.away_team, team2)) ||
@@ -663,8 +952,15 @@ export function matchSoccerH2H(
 
         if (!matchesTeams) continue;
 
-        const bestBook = getBestBookmakerForSoccerOutcome(oddsEvent, outcomeName, "h2h");
+        const bestBook = getBestBookmakerForSoccerOutcome(oddsEvent, outcomeName);
         if (!bestBook) continue;
+
+        const displayOutcome =
+          outcomeName === "Draw"
+            ? "Draw"
+            : soccerTeamNamesMatch(outcomeName, oddsEvent.home_team)
+              ? oddsEvent.home_team
+              : oddsEvent.away_team;
 
         const stake = 100;
         const { ev, evPercentage, potentialProfit, expectedProfit } = calculateEV(
@@ -683,8 +979,8 @@ export function matchSoccerH2H(
           sport,
           league,
           matchup: `${oddsEvent.home_team} vs ${oddsEvent.away_team}`,
-          outcome: outcomeName === "Draw" ? "Draw" : outcomeName,
-          eventTime: pmEvent.startDate || pmEvent.endDate || oddsEvent.commence_time || "",
+          outcome: displayOutcome,
+          eventTime,
           polymarketPrice,
           polymarketImpliedProb,
           polymarketUrl: getPolymarketUrl(pmEvent),
@@ -701,12 +997,31 @@ export function matchSoccerH2H(
           expectedProfit100: expectedProfit,
           quality,
           marketType: "game",
-          timeframe: getTimeframe(pmEvent.endDate || pmEvent.startDate),
+          timeframe: getTimeframe(timeframeDate),
           category: "games",
         });
+        }
       }
     }
   }
 
-  return opportunities.sort((a, b) => (b.evPercent ?? -999) - (a.evPercent ?? -999));
+  const byKey = new Map<string, MatchedOpportunity>();
+  for (const opp of opportunities) {
+    const key = `${opp.matchup}|${opp.outcome}`;
+    const existing = byKey.get(key);
+    if (!existing) {
+      byKey.set(key, opp);
+    } else {
+      const existingTime = new Date(existing.eventTime || 0).getTime();
+      const oppTime = new Date(opp.eventTime || 0).getTime();
+      if (oppTime < existingTime || (oppTime === existingTime && (opp.polymarketPrice ?? 0) > (existing.polymarketPrice ?? 0))) {
+        byKey.set(key, opp);
+      }
+    }
+  }
+  return Array.from(byKey.values()).sort((a, b) => {
+    const timeA = new Date(a.eventTime || 0).getTime();
+    const timeB = new Date(b.eventTime || 0).getTime();
+    return timeA - timeB;
+  });
 }

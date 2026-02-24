@@ -2,6 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
+import { PageAiProvider } from "@/components/ai/PageAiContext";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -9,14 +10,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60 * 1000, // 1 min
-            refetchInterval: 60 * 1000, // Auto-refresh every 60s
+            staleTime: 10 * 60 * 1000,
+            refetchInterval: 10 * 60 * 1000,
           },
         },
       })
   );
 
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <PageAiProvider>{children}</PageAiProvider>
+    </QueryClientProvider>
   );
 }

@@ -1,21 +1,65 @@
 import { NextResponse } from "next/server";
-import { fetchOdds } from "@/lib/odds-api";
+import { fetchOdds, getLastKnownQuotaRemaining } from "@/lib/odds-api";
 import { fetchPolymarketBySport } from "@/lib/polymarket";
-import { matchOutrights, matchH2HGames, matchSoccerH2H } from "@/lib/matching";
+import { matchOutrights, matchH2HGames, matchSoccerH2H, matchPolymarketOnlyOutrights } from "@/lib/matching";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-type ApiSport = "nba" | "mls";
+type ApiSport = "nba" | "mls" | "mlb" | "nhl" | "tennis";
+
+type SoccerLeagueKey =
+  | "mls"
+  | "epl"
+  | "laliga"
+  | "ligue1"
+  | "seriea"
+  | "bundesliga";
+
+const SOCCER_LEAGUES: Record<
+  SoccerLeagueKey,
+  { oddsGameSport: string; polymarketSport: string; label: string }
+> = {
+  mls: {
+    oddsGameSport: "soccer_usa_mls",
+    polymarketSport: "soccer_usa_mls",
+    label: "MLS",
+  },
+  epl: {
+    oddsGameSport: "soccer_epl",
+    polymarketSport: "soccer_epl",
+    label: "Premier League",
+  },
+  laliga: {
+    oddsGameSport: "soccer_spain_la_liga",
+    polymarketSport: "soccer_spain_la_liga",
+    label: "La Liga",
+  },
+  ligue1: {
+    oddsGameSport: "soccer_france_ligue_one",
+    polymarketSport: "soccer_france_ligue_one",
+    label: "Ligue 1",
+  },
+  seriea: {
+    oddsGameSport: "soccer_italy_serie_a",
+    polymarketSport: "soccer_italy_serie_a",
+    label: "Serie A",
+  },
+  bundesliga: {
+    oddsGameSport: "soccer_germany_bundesliga",
+    polymarketSport: "soccer_germany_bundesliga",
+    label: "Bundesliga",
+  },
+};
 
 const SPORT_CONFIG: Record<
   ApiSport,
   {
     oddsGameSport: string;
-    oddsFuturesSport?: string; // optional (many leagues have no outrights)
+    oddsFuturesSport?: string;
     polymarketSport: string;
     label: string;
-    league?: string; // soccer league label
+    league?: string;
   }
 > = {
   nba: {
@@ -30,30 +74,59 @@ const SPORT_CONFIG: Record<
     label: "Soccer",
     league: "MLS",
   },
+  mlb: {
+    oddsGameSport: "baseball_mlb",
+    oddsFuturesSport: "baseball_mlb_world_series_winner",
+    polymarketSport: "baseball_mlb",
+    label: "MLB",
+  },
+  nhl: {
+    oddsGameSport: "icehockey_nhl",
+    oddsFuturesSport: "icehockey_nhl_championship_winner",
+    polymarketSport: "icehockey_nhl",
+    label: "NHL",
+  },
+  tennis: {
+    oddsGameSport: "tennis_atp_indian_wells",
+    polymarketSport: "tennis",
+    label: "Tennis",
+  },
 };
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const sport = (searchParams.get("sport") || "nba") as ApiSport;
+  const leagueParam = (searchParams.get("league") || "mls") as SoccerLeagueKey;
+  const refreshOdds = searchParams.get("refresh_odds") === "1" || searchParams.get("refresh_odds") === "true";
 
   const config = SPORT_CONFIG[sport];
   if (!config) {
     return NextResponse.json({ error: "Invalid sport" }, { status: 400 });
   }
 
+  const soccerLeague =
+    sport === "mls" && SOCCER_LEAGUES[leagueParam]
+      ? SOCCER_LEAGUES[leagueParam]
+      : null;
+  const oddsGameSport = soccerLeague ? soccerLeague.oddsGameSport : config.oddsGameSport;
+  const polymarketSport = soccerLeague ? soccerLeague.polymarketSport : config.polymarketSport;
+  const leagueLabel = soccerLeague ? soccerLeague.label : config.league;
+
   const apiKey = process.env.ODDS_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: "ODDS_API_KEY not configured" }, { status: 500 });
   }
 
+  const oddsOptions = refreshOdds ? { skipCache: true } : undefined;
+
   try {
     const [gameOddsResult, futuresOddsResult, polymarketEvents] = await Promise.all([
-      fetchOdds(config.oddsGameSport, apiKey, "h2h").catch((e) => {
+      fetchOdds(oddsGameSport, apiKey, "h2h", oddsOptions).catch((e) => {
         console.warn("[EV API] Game odds fetch failed:", e instanceof Error ? e.message : e);
         return { events: [], quotaRemaining: undefined };
       }),
       config.oddsFuturesSport
-        ? fetchOdds(config.oddsFuturesSport, apiKey, "outrights").catch((e) => {
+        ? fetchOdds(config.oddsFuturesSport, apiKey, "outrights", oddsOptions).catch((e) => {
             console.warn(
               "[EV API] Futures odds fetch failed:",
               e instanceof Error ? e.message : e
@@ -61,50 +134,66 @@ export async function GET(req: Request) {
             return { events: [], quotaRemaining: undefined };
           })
         : Promise.resolve({ events: [], quotaRemaining: undefined }),
-      fetchPolymarketBySport(config.polymarketSport),
+      fetchPolymarketBySport(polymarketSport),
     ]);
 
     const h2hOpportunities =
-      sport === "nba"
-        ? matchH2HGames(polymarketEvents, gameOddsResult.events, config.label)
+      sport === "nba" || sport === "mlb" || sport === "nhl" || sport === "tennis"
+        ? matchH2HGames(polymarketEvents, gameOddsResult.events, config.label, {
+            includeWithoutSportsbook: true,
+          })
         : matchSoccerH2H(
             polymarketEvents,
             gameOddsResult.events,
             config.label,
-            config.league || "MLS"
+            leagueLabel || "MLS"
           );
 
     const futuresOpportunities =
-      sport === "nba" && config.oddsFuturesSport
+      config.oddsFuturesSport
         ? matchOutrights(polymarketEvents, futuresOddsResult.events, config.label)
+        : [];
+
+    const polymarketOnlyFutures =
+      sport === "mls"
+        ? matchPolymarketOnlyOutrights(polymarketEvents, config.label, leagueLabel)
         : [];
 
     const allOpportunitiesRaw = [
       ...h2hOpportunities,
       ...futuresOpportunities,
+      ...polymarketOnlyFutures,
     ];
 
-    // EV-only: only show opportunities where we have sportsbook odds + computed EV
     const evOnly = allOpportunitiesRaw.filter(
-      (o) => o.evPercent != null && o.sportsbookOdds != null && o.sportsbookName != null
+      (o) =>
+        (o.evPercent != null && o.sportsbookOdds != null && o.sportsbookName != null) ||
+        (o.timeframe === "futures" && o.sportsbookName == null) ||
+        ((o.sport === "NBA" || o.sport === "MLB" || o.sport === "NHL" || o.sport === "Tennis") && o.polymarketPrice != null)
     );
 
-    // For now: only futures + the most recent moneyline games
     const filtered = evOnly.filter((o) => {
       if (o.timeframe === "futures") return true;
-      if (o.marketType === "game" && (o.timeframe === "today" || o.timeframe === "week")) {
-        return true;
-      }
+      if (o.marketType === "game" && o.timeframe !== "all") return true;
       return false;
     });
 
-    const allOpportunities = filtered.sort(
-      (a, b) => (b.evPercent ?? -999) - (a.evPercent ?? -999)
-    );
+    const allOpportunities = filtered.sort((a, b) => {
+      const timeA = new Date(a.eventTime || 0).getTime();
+      const timeB = new Date(b.eventTime || 0).getTime();
+      if (timeA !== timeB) return timeA - timeB;
+      return (b.evPercent ?? -999) - (a.evPercent ?? -999);
+    });
+
+    const quotaRemaining =
+      getLastKnownQuotaRemaining() ??
+      futuresOddsResult.quotaRemaining ??
+      gameOddsResult.quotaRemaining ??
+      null;
 
     return NextResponse.json({
       opportunities: allOpportunities,
-      quotaRemaining: futuresOddsResult.quotaRemaining ?? gameOddsResult.quotaRemaining ?? null,
+      quotaRemaining,
       oddsLastUpdated: new Date().toISOString(),
       polymarketLastUpdated: new Date().toISOString(),
     });

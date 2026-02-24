@@ -1,17 +1,45 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { EVCard } from "@/components/EVCard";
 import { QuotaTracker } from "@/components/QuotaTracker";
 import type { MatchedOpportunity } from "@/lib/matching";
 import type { Timeframe, MarketCategory } from "@/lib/types";
 import { getTimeframeLabel, getMarketCategoryLabel } from "@/lib/types";
+import { useSetPageAiState } from "@/components/ai/PageAiContext";
 
-type UiSport = "nba" | "mls";
+type UiSport = "nba" | "mls" | "mlb" | "nhl" | "tennis";
 
-async function fetchEV(sport: UiSport) {
-  const res = await fetch(`/api/ev?sport=${sport}`);
+type SoccerLeagueKey =
+  | "mls"
+  | "epl"
+  | "laliga"
+  | "ligue1"
+  | "seriea"
+  | "bundesliga";
+
+const SOCCER_LEAGUES_UI: { key: SoccerLeagueKey; label: string }[] = [
+  { key: "mls", label: "MLS" },
+  { key: "epl", label: "Premier League" },
+  { key: "laliga", label: "La Liga" },
+  { key: "ligue1", label: "Ligue 1" },
+  { key: "seriea", label: "Serie A" },
+  { key: "bundesliga", label: "Bundesliga" },
+];
+
+async function fetchEV(
+  sport: UiSport,
+  league?: SoccerLeagueKey,
+  refreshOdds?: boolean
+) {
+  const base =
+    sport === "mls"
+      ? `/api/ev?sport=${sport}&league=${league ?? "mls"}`
+      : `/api/ev?sport=${sport}`;
+  const url = refreshOdds ? `${base}&refresh_odds=1` : base;
+  const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch");
   return res.json();
 }
@@ -38,18 +66,22 @@ export default function Home() {
   const [timeframe, setTimeframe] = useState<Timeframe>("all");
   const [category, setCategory] = useState<MarketCategory | "all">("all");
   const [league, setLeague] = useState<string | "all">("all");
+  const [soccerLeague, setSoccerLeague] = useState<SoccerLeagueKey>("mls");
   const [sort, setSort] = useState<SortOption>("highest_ev");
+  const [refreshingOdds, setRefreshingOdds] = useState(false);
+  const queryClient = useQueryClient();
+  const setPageAiState = useSetPageAiState();
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["ev", sport],
-    queryFn: () => fetchEV(sport),
-    refetchInterval: 60 * 1000,
+    queryKey: ["ev", sport, sport === "mls" ? soccerLeague : undefined],
+    queryFn: () => fetchEV(sport, sport === "mls" ? soccerLeague : undefined),
+    refetchInterval: 10 * 60 * 1000,
   });
 
   const opportunities: MatchedOpportunity[] = data?.opportunities ?? [];
   const quotaRemaining = data?.quotaRemaining ?? null;
 
-  const { filtered, timeframeCounts, categoryCounts, leagueCounts } = useMemo(() => {
+  const { filtered, timeframeCounts, categoryCounts } = useMemo(() => {
     const opps: MatchedOpportunity[] = data?.opportunities ?? [];
     const tfCounts: Record<Timeframe, number> = {
       today: 0,
@@ -84,13 +116,16 @@ export default function Home() {
     let filtered = opps.filter((opp) => {
       const tfMatch = timeframe === "all" || opp.timeframe === timeframe;
       const catMatch = category === "all" || opp.category === category;
-      const leagueMatch = sport === "nba" || league === "all" || opp.league === league;
+      const leagueMatch =
+        sport === "nba" || sport === "mlb" || sport === "nhl" || sport === "tennis"
+          ? league === "all" || opp.league === league
+          : true;
       return tfMatch && catMatch && leagueMatch;
     });
 
     filtered = sortOpportunities(filtered, sort);
 
-    return { filtered, timeframeCounts: tfCounts, categoryCounts: catCounts, leagueCounts: lgCounts };
+    return { filtered, timeframeCounts: tfCounts, categoryCounts: catCounts };
   }, [data?.opportunities, timeframe, category, league, sort, sport]);
 
   const categoriesWithCounts = useMemo(() => {
@@ -110,28 +145,79 @@ export default function Home() {
     return cats.filter((c) => c === "all" || categoryCounts[c] > 0);
   }, [categoryCounts]);
 
+  useEffect(() => {
+    setPageAiState({
+      kind: "ev",
+      state: {
+        sport,
+        timeframe,
+        category,
+        sort,
+        displayed: filtered,
+        quotaRemaining,
+        oddsLastUpdated: data?.oddsLastUpdated ?? null,
+      },
+    });
+  }, [
+    setPageAiState,
+    sport,
+    timeframe,
+    category,
+    sort,
+    filtered,
+    quotaRemaining,
+    data?.oddsLastUpdated,
+  ]);
+
   return (
     <div className="min-h-screen bg-[#0d1117] text-slate-200 font-mono">
       <div className="max-w-4xl mx-auto px-4 py-8">
         <header className="mb-8">
-          <h1 className="text-2xl font-bold text-white tracking-tight">
-            PolyPulse +EV Engine
-          </h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Positive expected value bets on Polymarket vs sportsbooks
-          </p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-2xl font-bold text-white tracking-tight">
+                PolyPulse +EV Engine
+              </h1>
+              <p className="text-slate-500 text-sm mt-1">
+                Positive expected value bets on Polymarket vs sportsbooks
+              </p>
+            </div>
+          </div>
         </header>
 
-        <div className="mb-6">
+        <div className="mb-6 flex flex-wrap items-center gap-3">
           <QuotaTracker
             quotaRemaining={quotaRemaining}
             lastUpdated={data?.oddsLastUpdated ?? ""}
             onRefresh={() => refetch()}
             isLoading={isLoading}
           />
+          <button
+            type="button"
+            onClick={async () => {
+              setRefreshingOdds(true);
+              try {
+                const result = await fetchEV(
+                  sport,
+                  sport === "mls" ? soccerLeague : undefined,
+                  true
+                );
+                queryClient.setQueryData(
+                  ["ev", sport, sport === "mls" ? soccerLeague : undefined],
+                  result
+                );
+              } finally {
+                setRefreshingOdds(false);
+              }
+            }}
+            disabled={refreshingOdds || isLoading}
+            className="rounded-md border border-amber-500/50 bg-amber-500/10 px-2 py-1 font-mono text-xs text-amber-400 hover:bg-amber-500/20 disabled:opacity-50"
+          >
+            {refreshingOdds ? "Refreshing…" : "Dev: Refresh Odds API"}
+          </button>
         </div>
 
-        {!isLoading && !isError && opportunities.length > 0 && (
+        {!isLoading && !isError && (
           <div className="mb-6 space-y-4">
             <div>
               <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Sport</p>
@@ -155,7 +241,6 @@ export default function Home() {
                 <button
                   onClick={() => {
                     setSport("mls");
-                    setLeague("MLS");
                     setCategory("all");
                     setTimeframe("all");
                   }}
@@ -167,6 +252,54 @@ export default function Home() {
                   aria-pressed={sport === "mls"}
                 >
                   Soccer
+                </button>
+                <button
+                  onClick={() => {
+                    setSport("mlb");
+                    setLeague("all");
+                    setCategory("all");
+                    setTimeframe("all");
+                  }}
+                  className={`px-3 py-1.5 rounded-md font-mono text-sm border transition-colors ${
+                    sport === "mlb"
+                      ? "bg-amber-500/20 text-amber-400 border-amber-500/50"
+                      : "bg-slate-800/50 text-slate-400 border-slate-600 hover:border-slate-500"
+                  }`}
+                  aria-pressed={sport === "mlb"}
+                >
+                  MLB
+                </button>
+                <button
+                  onClick={() => {
+                    setSport("nhl");
+                    setLeague("all");
+                    setCategory("all");
+                    setTimeframe("all");
+                  }}
+                  className={`px-3 py-1.5 rounded-md font-mono text-sm border transition-colors ${
+                    sport === "nhl"
+                      ? "bg-amber-500/20 text-amber-400 border-amber-500/50"
+                      : "bg-slate-800/50 text-slate-400 border-slate-600 hover:border-slate-500"
+                  }`}
+                  aria-pressed={sport === "nhl"}
+                >
+                  NHL
+                </button>
+                <button
+                  onClick={() => {
+                    setSport("tennis");
+                    setLeague("all");
+                    setCategory("all");
+                    setTimeframe("all");
+                  }}
+                  className={`px-3 py-1.5 rounded-md font-mono text-sm border transition-colors ${
+                    sport === "tennis"
+                      ? "bg-amber-500/20 text-amber-400 border-amber-500/50"
+                      : "bg-slate-800/50 text-slate-400 border-slate-600 hover:border-slate-500"
+                  }`}
+                  aria-pressed={sport === "tennis"}
+                >
+                  Tennis
                 </button>
               </div>
             </div>
@@ -190,7 +323,7 @@ export default function Home() {
               </div>
             </div>
 
-            {sport === "nba" ? (
+            {sport === "nba" || sport === "mlb" || sport === "nhl" || sport === "tennis" ? (
               <div>
                 <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Category</p>
                 <div className="flex flex-wrap gap-2">
@@ -214,17 +347,17 @@ export default function Home() {
               <div>
                 <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">League</p>
                 <div className="flex flex-wrap gap-2">
-                  {["MLS"].map((lg) => (
+                  {SOCCER_LEAGUES_UI.map(({ key, label }) => (
                     <button
-                      key={lg}
-                      onClick={() => setLeague(lg)}
+                      key={key}
+                      onClick={() => setSoccerLeague(key)}
                       className={`px-3 py-1.5 rounded-md font-mono text-sm border transition-colors ${
-                        league === lg
+                        soccerLeague === key
                           ? "bg-amber-500/20 text-amber-400 border-amber-500/50"
                           : "bg-slate-800/50 text-slate-400 border-slate-600 hover:border-slate-500"
                       }`}
                     >
-                      {lg} ({leagueCounts[lg] ?? 0})
+                      {label}
                     </button>
                   ))}
                 </div>

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { fetchOdds } from "@/lib/odds-api";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 300; // 5 min
+export const revalidate = 300;
 
 export async function GET(
   _req: Request,

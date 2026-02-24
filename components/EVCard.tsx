@@ -15,11 +15,11 @@ function formatOdds(american: number): string {
 }
 
 function getEVColor(ev: number): string {
-  if (ev >= 5) return "bg-emerald-500/20 text-emerald-400 border-emerald-500/50"; // Excellent +EV
-  if (ev > 0) return "bg-blue-500/20 text-blue-400 border-blue-500/50"; // Positive +EV
-  if (Math.abs(ev) < 0.05) return "bg-slate-500/20 text-slate-400 border-slate-500/50"; // Breakeven
-  if (ev > -5) return "bg-amber-500/20 text-amber-400 border-amber-500/50"; // Slight -EV
-  return "bg-red-500/20 text-red-400 border-red-500/50"; // Bad -EV
+  if (ev >= 5) return "bg-emerald-500/20 text-emerald-400 border-emerald-500/50";
+  if (ev > 0) return "bg-blue-500/20 text-blue-400 border-blue-500/50";
+  if (Math.abs(ev) < 0.05) return "bg-slate-500/20 text-slate-400 border-slate-500/50";
+  if (ev > -5) return "bg-amber-500/20 text-amber-400 border-amber-500/50";
+  return "bg-red-500/20 text-red-400 border-red-500/50";
 }
 
 export function EVCard({ opportunity }: EVCardProps) {

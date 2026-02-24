@@ -1,11 +1,6 @@
-/**
- * Shared types for NBA market filtering and categorization
- */
-
 export type MarketType = "game" | "player_prop" | "futures" | "total" | "other";
 export type Timeframe = "today" | "week" | "month" | "futures" | "all";
 
-/** NBA market category for filtering - derived from Polymarket event title */
 export type MarketCategory =
   | "championship"
   | "conference"
@@ -22,6 +17,7 @@ export function getMarketCategory(eventTitle: string): MarketCategory {
   const t = (eventTitle || "").toLowerCase();
 
   if (t.includes("champion") && !t.includes("conference")) return "championship";
+  if ((t.includes("cup") && t.includes("winner")) || t.includes("mls cup")) return "championship";
   if (t.includes("conference") && (t.includes("champion") || t.includes("finals")))
     return "conference";
   if (t.includes("#1 seed") || t.includes("1 seed")) return "conference";
@@ -99,13 +95,30 @@ export function getTimeframe(endDate: string | null): Timeframe {
   if (!endDate) return "all";
   try {
     const now = new Date();
-    const end = new Date(endDate);
-    const hoursUntil = (end.getTime() - now.getTime()) / (1000 * 60 * 60);
-
-    if (hoursUntil < 0) return "all"; // Past
-    if (hoursUntil < 24) return "today";
-    if (hoursUntil < 24 * 7) return "week";
-    if (hoursUntil < 24 * 30) return "month";
+    const eventDate = new Date(endDate);
+    
+    if (eventDate < now) return "all";
+    
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(todayStart);
+    todayEnd.setDate(todayEnd.getDate() + 1);
+    
+    if (eventDate >= todayStart && eventDate < todayEnd) return "today";
+    
+    const currentDay = now.getDay();
+    const daysUntilSunday = currentDay === 0 ? 6 : (7 - currentDay);
+    const thisWeekEnd = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() + daysUntilSunday + 1
+    ));
+    
+    if (eventDate < thisWeekEnd) return "week";
+    
+    const thisMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    
+    if (eventDate < thisMonthEnd) return "month";
+    
     return "futures";
   } catch {
     return "all";

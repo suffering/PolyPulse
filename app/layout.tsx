@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
+import { Header } from "@/components/Header";
+import { UniversalAiAssistant } from "@/components/ai/UniversalAiAssistant";
 
 export const metadata: Metadata = {
   title: "PolyPulse +EV Engine",
@@ -15,7 +17,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="antialiased bg-[#0d1117]">
-        <Providers>{children}</Providers>
+        <Providers>
+          <Header />
+          {children}
+          <UniversalAiAssistant />
+        </Providers>
       </body>
     </html>
   );

@@ -1,14 +1,11 @@
-/**
- * The Odds API client - fetches sportsbook odds
- * CRITICAL: 500 requests/month = ~16/day - aggressive caching required
- */
-
 const ODDS_API_BASE = "https://api.the-odds-api.com/v4";
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL_MS = 5 * 60 * 1000;
+const RATE_LIMIT_RETRY_DELAYS_MS = [1000, 2000];
 
+/** Outcome from /odds; price is American odds when request uses oddsFormat=american */
 export interface OddsApiOutcome {
   name: string;
-  price: number; // American odds
+  price: number;
   point?: number;
 }
 
@@ -39,11 +36,16 @@ export interface OddsApiResponse {
   quotaRemaining?: number;
 }
 
-// In-memory cache for server-side
 const cache = new Map<
   string,
   { data: OddsApiEvent[]; timestamp: number; quotaRemaining?: number }
 >();
+
+let lastKnownQuotaRemaining: number | null = null;
+
+export function getLastKnownQuotaRemaining(): number | null {
+  return lastKnownQuotaRemaining;
+}
 
 function americanToDecimal(american: number): number {
   if (american > 0) {
@@ -66,44 +68,70 @@ const OUTRIGHTS_SPORTS = [
 export async function fetchOdds(
   sport: string,
   apiKey: string,
-  markets?: string // Optional: comma-separated markets like "h2h,spreads,totals"
+  markets?: string,
+  options?: { skipCache?: boolean }
 ): Promise<{ events: OddsApiEvent[]; quotaRemaining?: number }> {
-  // Determine default markets based on sport type
   const defaultMarkets = OUTRIGHTS_SPORTS.includes(sport) ? "outrights" : "h2h,totals";
   const marketsParam = markets || defaultMarkets;
-  
+
   const cacheKey = `odds:${sport}:${marketsParam}`;
-  const cached = cache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-    return {
-      events: cached.data,
-      quotaRemaining: cached.quotaRemaining,
-    };
+  if (!options?.skipCache) {
+    const cached = cache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+      const quota =
+        lastKnownQuotaRemaining !== null ? lastKnownQuotaRemaining : cached.quotaRemaining;
+      return { events: cached.data, quotaRemaining: quota };
+    }
   }
 
   const url = `${ODDS_API_BASE}/sports/${sport}/odds?regions=us&markets=${marketsParam}&oddsFormat=american&apiKey=${apiKey}`;
-  const res = await fetch(url);
+  let res: Response | null = null;
+  for (let attempt = 0; attempt <= RATE_LIMIT_RETRY_DELAYS_MS.length; attempt++) {
+    res = await fetch(url);
+    if (res.status !== 429) break;
+    if (attempt === RATE_LIMIT_RETRY_DELAYS_MS.length) break;
+    await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_RETRY_DELAYS_MS[attempt]));
+  }
 
-  const quotaRemaining = res.headers.get("x-requests-remaining")
-    ? parseInt(res.headers.get("x-requests-remaining")!, 10)
-    : undefined;
+  if (!res) {
+    throw new Error("Odds API error: request did not return a response");
+  }
+
+  if (res.status === 429) {
+    const body = await res.text();
+    throw new Error(`Odds API rate limit exceeded (429). ${body}`);
+  }
 
   if (!res.ok) {
     throw new Error(`Odds API error: ${res.status} ${await res.text()}`);
   }
 
-  const events: OddsApiEvent[] = await res.json();
+  const quotaRemaining = res.headers.get("x-requests-remaining")
+    ? parseInt(res.headers.get("x-requests-remaining")!, 10)
+    : undefined;
 
-  // Empty response doesn't count against quota per docs
+  if (quotaRemaining != null) {
+    lastKnownQuotaRemaining = quotaRemaining;
+  }
+
+  const raw = await res.json();
+  if (!Array.isArray(raw)) {
+    throw new Error(`Odds API error: expected array of events, got ${typeof raw}`);
+  }
+  const events: OddsApiEvent[] = raw;
+
   if (events.length > 0) {
     cache.set(cacheKey, {
       data: events,
       timestamp: Date.now(),
-      quotaRemaining,
+      quotaRemaining:
+        lastKnownQuotaRemaining !== null ? lastKnownQuotaRemaining : undefined,
     });
   }
 
-  return { events, quotaRemaining };
+  const quota =
+    lastKnownQuotaRemaining !== null ? lastKnownQuotaRemaining : quotaRemaining;
+  return { events, quotaRemaining: quota };
 }
 
 export function getBestSportsbookOdds(
