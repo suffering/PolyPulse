@@ -5,13 +5,38 @@ import type {
   LeaderboardOrderBy,
   LeaderboardTimePeriod,
 } from "@/lib/leaderboard";
+import {
+  detectSportsFromMessage,
+  opportunitySportToKey,
+  type EvSportKey,
+} from "@/lib/ai/evSportDetection";
+
+function toAIBetSummary(opp: MatchedOpportunity) {
+  return {
+    market: opp.polymarketQuestion || opp.matchup,
+    polymarket: {
+      probability: opp.polymarketImpliedProb,
+      price: opp.polymarketPrice,
+      url: opp.polymarketUrl,
+    },
+    sportsbook: { name: opp.sportsbookName ?? null, odds: opp.sportsbookOdds ?? null },
+    evPercent: opp.evPercent ?? null,
+    expectedProfitOn100: opp.expectedProfit100 ?? null,
+    profitIfWinOn100: opp.profitIfWin100 ?? null,
+    timeframe: opp.timeframe,
+    category: opp.category,
+  };
+}
 
 export type EvPageState = {
   sport: string;
   timeframe: string;
   category: string;
   sort: string;
+  /** Opportunities currently shown (after filters) */
   displayed: MatchedOpportunity[];
+  /** Full list for the current sport before filters */
+  allForCurrentSport: MatchedOpportunity[];
   quotaRemaining: number | null;
   oddsLastUpdated: string | null;
 };
@@ -29,11 +54,11 @@ export type LeaderboardPageState = {
 
 export type VolumePageState = {
   polymarket: {
-    day: number;
+    volume24h?: number;
+    week?: number;
     month: number;
     allTime: number;
     lastUpdated: string;
-    volume24h?: number;
   };
 };
 
@@ -65,7 +90,17 @@ export type ExtraDataPageState = {
 };
 
 export function collectEVPageContext(state: EvPageState) {
-  const bets = state.displayed.map((opp) => ({
+  const allOpps = state.allForCurrentSport ?? state.displayed;
+  const countsByTimeframe: Record<string, number> = {};
+  const countsByCategory: Record<string, number> = {};
+  for (const opp of allOpps) {
+    const tf = opp.timeframe ?? "all";
+    countsByTimeframe[tf] = (countsByTimeframe[tf] ?? 0) + 1;
+    const cat = opp.category ?? "other";
+    countsByCategory[cat] = (countsByCategory[cat] ?? 0) + 1;
+  }
+
+  const betsDisplayed = state.displayed.map((opp) => ({
     market: opp.polymarketQuestion || opp.matchup,
     polymarket: {
       probability: opp.polymarketImpliedProb,
@@ -79,14 +114,21 @@ export function collectEVPageContext(state: EvPageState) {
     evPercent: opp.evPercent ?? null,
     expectedProfitOn100: opp.expectedProfit100 ?? null,
     profitIfWinOn100: opp.profitIfWin100 ?? null,
+    timeframe: opp.timeframe,
+    category: opp.category,
   }));
 
-  const evs = state.displayed.map((o) => o.evPercent ?? null).filter((v): v is number => typeof v === "number");
-  const avgEv = evs.length ? evs.reduce((a, b) => a + b, 0) / evs.length : null;
+  const betsAllForSport = allOpps.map((opp) => ({
+    market: opp.polymarketQuestion || opp.matchup,
+    timeframe: opp.timeframe,
+    category: opp.category,
+    evPercent: opp.evPercent ?? null,
+  }));
 
-  const highest = [...state.displayed].sort((a, b) => (b.evPercent ?? -999) - (a.evPercent ?? -999))[0];
-  const lowest = [...state.displayed].sort((a, b) => (a.evPercent ?? -999) - (b.evPercent ?? -999))[0];
-
+  const evsAll = allOpps.map((o) => o.evPercent ?? null).filter((v): v is number => typeof v === "number");
+  const avgEvAll = evsAll.length ? evsAll.reduce((a, b) => a + b, 0) / evsAll.length : null;
+  const highestAll = [...allOpps].sort((a, b) => (b.evPercent ?? -999) - (a.evPercent ?? -999))[0];
+  const lowestAll = [...allOpps].sort((a, b) => (a.evPercent ?? -999) - (b.evPercent ?? -999))[0];
   return {
     dataCollectedAt: new Date().toISOString(),
     page: "ev",
@@ -97,16 +139,109 @@ export function collectEVPageContext(state: EvPageState) {
       sort: state.sort,
     },
     totalDisplayed: state.displayed.length,
-    bets,
-    highestEV: highest
-      ? { market: highest.polymarketQuestion || highest.matchup, evPercent: highest.evPercent ?? null }
+    bets: betsDisplayed,
+    allForCurrentSport: betsAllForSport,
+    highestEV: highestAll
+      ? { market: highestAll.polymarketQuestion || highestAll.matchup, evPercent: highestAll.evPercent ?? null }
       : null,
-    lowestEV: lowest
-      ? { market: lowest.polymarketQuestion || lowest.matchup, evPercent: lowest.evPercent ?? null }
+    lowestEV: lowestAll
+      ? { market: lowestAll.polymarketQuestion || lowestAll.matchup, evPercent: lowestAll.evPercent ?? null }
       : null,
+    averageEVPercent: avgEvAll,
+    lastUpdated: state.oddsLastUpdated,
+    apiRequestsRemaining: state.quotaRemaining,
+  };
+}
+
+/**
+ * Build EV context for the AI using sport detection on the user's message.
+ * Injects only relevant sport(s) data to stay within context limits; if no sport detected, injects summary only.
+ */
+export function buildEVContextForMessage(state: EvPageState, userMessage: string): ReturnType<typeof collectEVPageContext> {
+  const fullDataset = state.allEVDataForAI && state.allEVDataForAI.length > 0
+    ? state.allEVDataForAI
+    : (state.allForCurrentSport ?? state.displayed);
+
+  const detected = detectSportsFromMessage(userMessage, fullDataset);
+
+  if (detected.length === 0) {
+    const summaryPerSport: { sport: string; count: number; topEVPercent: number | null; sampleMarket: string | null }[] = [];
+    const seenKeys = new Set<EvSportKey>();
+    for (const opp of fullDataset) {
+      const key = opportunitySportToKey(opp.sport);
+      if (!key || seenKeys.has(key)) continue;
+      seenKeys.add(key);
+      const sportOpps = fullDataset.filter((o) => opportunitySportToKey(o.sport) === key);
+      const withEv = sportOpps.filter((o) => o.evPercent != null);
+      const top = withEv.length ? Math.max(...withEv.map((o) => o.evPercent ?? 0)) : null;
+      const sample = sportOpps[0] ? (sportOpps[0].polymarketQuestion || sportOpps[0].matchup) : null;
+      summaryPerSport.push({
+        sport: SPORT_LABELS[key],
+        count: sportOpps.length,
+        topEVPercent: top,
+        sampleMarket: sample,
+      });
+    }
+    for (const k of SPORT_KEYS) {
+      if (seenKeys.has(k)) continue;
+      summaryPerSport.push({ sport: SPORT_LABELS[k], count: 0, topEVPercent: null, sampleMarket: null });
+    }
+
+    return {
+      dataCollectedAt: new Date().toISOString(),
+      page: "ev",
+      summaryOnly: true,
+      note: "No specific sport was detected in the user's question. You have only a per-sport summary below. Respond with this summary and ask the user which sport they want details for (e.g. NBA, Soccer, MLB, NHL, Tennis).",
+      currentFilters: { sport: state.sport, timeframe: state.timeframe, category: state.category, sort: state.sort },
+      totalDisplayed: state.displayed.length,
+      summaryPerSport,
+      lastUpdated: state.oddsLastUpdated,
+      apiRequestsRemaining: state.quotaRemaining,
+    };
+  }
+
+  const filtered = fullDataset.filter((opp) => {
+    const key = opportunitySportToKey(opp.sport);
+    return key != null && detected.includes(key);
+  });
+
+  const countsBySport: Record<string, number> = {};
+  const countsByTimeframe: Record<string, number> = {};
+  const countsByCategory: Record<string, number> = {};
+  for (const opp of filtered) {
+    const s = opp.sport ?? "unknown";
+    countsBySport[s] = (countsBySport[s] ?? 0) + 1;
+    const tf = opp.timeframe ?? "all";
+    countsByTimeframe[tf] = (countsByTimeframe[tf] ?? 0) + 1;
+    const cat = opp.category ?? "other";
+    countsByCategory[cat] = (countsByCategory[cat] ?? 0) + 1;
+  }
+
+  const bets = filtered.map(toAIBetSummary);
+  const evs = filtered.map((o) => o.evPercent ?? null).filter((v): v is number => typeof v === "number");
+  const avgEv = evs.length ? evs.reduce((a, b) => a + b, 0) / evs.length : null;
+  const highest = [...filtered].sort((a, b) => (b.evPercent ?? -999) - (a.evPercent ?? -999))[0];
+  const lowest = [...filtered].sort((a, b) => (a.evPercent ?? -999) - (b.evPercent ?? -999))[0];
+
+  const detectedLabels = detected.map((k) => SPORT_LABELS[k]).join(", ");
+
+  return {
+    dataCollectedAt: new Date().toISOString(),
+    page: "ev",
+    note: `User question matched sport(s): ${detectedLabels}. Data below is limited to these sports only. Answer using this dataset.`,
+    currentFilters: { sport: state.sport, timeframe: state.timeframe, category: state.category, sort: state.sort },
+    totalDisplayed: state.displayed.length,
+    totalInFullDataset: filtered.length,
+    countsBySport,
+    countsByTimeframe,
+    countsByCategory,
+    fullDataset: bets,
+    highestEV: highest ? toAIBetSummary(highest) : null,
+    lowestEV: lowest ? toAIBetSummary(lowest) : null,
     averageEVPercent: avgEv,
     lastUpdated: state.oddsLastUpdated,
     apiRequestsRemaining: state.quotaRemaining,
+
   };
 }
 
@@ -167,10 +302,10 @@ export function collectVolumePageContext(state: VolumePageState) {
     page: "volume",
     exchange: "Polymarket",
     volume: {
-      week: state.polymarket.day,
+      volume24h: state.polymarket.volume24h ?? null,
+      week: state.polymarket.week ?? null,
       month: state.polymarket.month,
       allTime: state.polymarket.allTime,
-      volume24h: state.polymarket.volume24h ?? null,
     },
     lastUpdated: state.polymarket.lastUpdated,
   };
@@ -256,7 +391,10 @@ export function collectExtraDataContext(state: ExtraDataPageState) {
   };
 }
 
-export function getCurrentPageContext(pathname: string, pageState: any) {
+export function getCurrentPageContext(
+  pathname: string,
+  pageState: EvPageState | LeaderboardPageState | VolumePageState | LiveFeedPageState | ExtraDataPageState
+) {
   if (pathname === "/" || pathname.includes("ev")) {
     return collectEVPageContext(pageState as EvPageState);
   }

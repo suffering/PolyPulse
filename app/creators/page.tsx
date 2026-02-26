@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import type { CreatorStats } from "@/lib/polymarket";
 import { TableSkeleton } from "@/components/ui/Skeleton";
@@ -27,14 +26,6 @@ async function fetchCreators(): Promise<CreatorsResponse> {
     throw new Error("Failed to fetch creators");
   }
   return res.json();
-}
-
-/** URL slug for creator profile: wallet if present, else URL-encoded creator id. */
-function getCreatorSlug(creator: CreatorStats): string {
-  if (creator.walletAddress && /^0x[a-fA-F0-9]{40}$/.test(creator.walletAddress)) {
-    return creator.walletAddress;
-  }
-  return encodeURIComponent(creator.id);
 }
 
 function formatCurrency(value: number): string {
@@ -74,7 +65,6 @@ function SortHeader({
 }
 
 export default function CreatorsPage() {
-  const router = useRouter();
   const { data, isLoading, isError, error } = useQuery<CreatorsResponse>({
     queryKey: ["creators"],
     queryFn: fetchCreators,
@@ -115,8 +105,8 @@ export default function CreatorsPage() {
         aVal = a.name.toLowerCase();
         bVal = b.name.toLowerCase();
       } else {
-        aVal = (a as any)[sortKey] ?? 0;
-        bVal = (b as any)[sortKey] ?? 0;
+        aVal = (a as Record<string, unknown>)[sortKey] ?? 0;
+        bVal = (b as Record<string, unknown>)[sortKey] ?? 0;
       }
 
       if (typeof aVal === "string" && typeof bVal === "string") {
@@ -264,16 +254,7 @@ export default function CreatorsPage() {
                   {filteredAndSorted.map((creator) => (
                     <tr
                       key={creator.id}
-                      className="border-b border-slate-800/70 hover:bg-slate-800/40 transition-colors cursor-pointer"
-                      onClick={() => router.push(`/creators/${getCreatorSlug(creator)}`)}
-                      role="link"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          router.push(`/creators/${getCreatorSlug(creator)}`);
-                        }
-                      }}
+                      className="border-b border-slate-800/70 transition-colors"
                     >
                       <td className="px-3 py-2 text-xs">
                         <div className="flex items-center gap-2">
@@ -304,7 +285,6 @@ export default function CreatorsPage() {
                                   href={creator.url}
                                   target="_blank"
                                   rel="noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
                                   className="text-[11px] font-semibold text-slate-100 hover:text-amber-400 truncate"
                                 >
                                   {creator.name}
@@ -327,8 +307,7 @@ export default function CreatorsPage() {
                         {creator.walletAddress ? (
                           <button
                             type="button"
-                            onClick={async (e) => {
-                              e.stopPropagation();
+                            onClick={async () => {
                               try {
                                 await navigator.clipboard.writeText(creator.walletAddress!);
                               } catch {

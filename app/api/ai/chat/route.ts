@@ -88,14 +88,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const json = (await res.json()) as any;
+    type OpenAIMessageContent = string | { type: string; text?: string }[];
+    const json = (await res.json()) as {
+      choices?: Array<{ message?: { content?: OpenAIMessageContent } }>;
+    };
+    const rawContent = json?.choices?.[0]?.message?.content;
     const text: string | undefined =
-      json?.choices?.[0]?.message?.content ??
-      (Array.isArray(json?.choices?.[0]?.message?.content)
-        ? json.choices[0].message.content
-            .map((c: any) => c?.text ?? "")
-            .join("")
-        : undefined);
+      typeof rawContent === "string"
+        ? rawContent
+        : Array.isArray(rawContent)
+          ? rawContent.map((c) => (typeof c === "object" && c?.text != null ? c.text : "")).join("")
+          : undefined;
 
     if (!text) {
       return NextResponse.json(

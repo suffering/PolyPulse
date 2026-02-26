@@ -118,10 +118,12 @@ export async function GET(req: Request) {
   }
 
   const oddsOptions = refreshOdds ? { skipCache: true } : undefined;
+  const isSoccer = oddsGameSport.startsWith("soccer_");
+  const gameMarkets = isSoccer ? "h2h,h2h_3_way" : "h2h";
 
   try {
     const [gameOddsResult, futuresOddsResult, polymarketEvents] = await Promise.all([
-      fetchOdds(oddsGameSport, apiKey, "h2h", oddsOptions).catch((e) => {
+      fetchOdds(oddsGameSport, apiKey, gameMarkets, oddsOptions).catch((e) => {
         console.warn("[EV API] Game odds fetch failed:", e instanceof Error ? e.message : e);
         return { events: [], quotaRemaining: undefined };
       }),
@@ -146,7 +148,8 @@ export async function GET(req: Request) {
             polymarketEvents,
             gameOddsResult.events,
             config.label,
-            leagueLabel || "MLS"
+            leagueLabel || "MLS",
+            { includeWithoutSportsbook: true }
           );
 
     const futuresOpportunities =
@@ -169,7 +172,7 @@ export async function GET(req: Request) {
       (o) =>
         (o.evPercent != null && o.sportsbookOdds != null && o.sportsbookName != null) ||
         (o.timeframe === "futures" && o.sportsbookName == null) ||
-        ((o.sport === "NBA" || o.sport === "MLB" || o.sport === "NHL" || o.sport === "Tennis") && o.polymarketPrice != null)
+        ((o.sport === "NBA" || o.sport === "MLB" || o.sport === "NHL" || o.sport === "Tennis" || o.sport === "Soccer") && o.polymarketPrice != null)
     );
 
     const filtered = evOnly.filter((o) => {
@@ -178,7 +181,16 @@ export async function GET(req: Request) {
       return false;
     });
 
-    const allOpportunities = filtered.sort((a, b) => {
+    // Only show +EV when Polymarket odds are better than the sportsbook (same bet).
+    // Include Polymarket-only (no sportsbook) so user can still see those markets.
+    const positiveEVOnly = filtered.filter(
+      (o) =>
+        o.sportsbookName == null ||
+        o.evPercent == null ||
+        (o.evPercent != null && o.evPercent > 0)
+    );
+
+    const allOpportunities = positiveEVOnly.sort((a, b) => {
       const timeA = new Date(a.eventTime || 0).getTime();
       const timeB = new Date(b.eventTime || 0).getTime();
       if (timeA !== timeB) return timeA - timeB;

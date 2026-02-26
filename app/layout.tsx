@@ -18,6 +18,7 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className="antialiased bg-[#0d1117]">
         <Providers>
+          <div id="header-portal" />
           <Header />
           {children}
           <UniversalAiAssistant />

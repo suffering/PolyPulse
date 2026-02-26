@@ -7,7 +7,7 @@ import { usePageAiState } from "@/components/ai/PageAiContext";
 import { getCurrentPageContext } from "@/lib/ai/pageContextCollectors";
 import { collectTraderContext } from "@/lib/ai/trader-context";
 
-function isTraderState(value: any): boolean {
+function isTraderState(value: unknown): value is { walletAddress: string; openPositions: unknown; trades: unknown } {
   return (
     value &&
     typeof value === "object" &&
@@ -153,7 +153,7 @@ export function UniversalAiAssistant() {
 
       const context = trader
         ? collectTraderContext({
-            ...(trader as any),
+            ...(trader as { walletAddress: string; openPositions: unknown; trades: unknown }),
             mode,
             dataCollectedAt: new Date().toISOString(),
           })
@@ -164,7 +164,7 @@ export function UniversalAiAssistant() {
 
     // Leaderboard: cache for 60s unless filters changed
     if (pathname.includes("leaderboard") && pageAiState.kind === "leaderboard") {
-      const filterSig = JSON.stringify((pageAiState.state as any)?.filters ?? pageAiState.state ?? {});
+      const filterSig = JSON.stringify((pageAiState.state as { filters?: unknown })?.filters ?? pageAiState.state ?? {});
       const now = Date.now();
       const cached = leaderboardCacheRef.current;
       if (cached && cached.filterSig === filterSig && now - cached.collectedAt < 60_000) {
@@ -172,6 +172,12 @@ export function UniversalAiAssistant() {
       }
       const ctx = getCurrentPageContext(pathname, pageAiState.state);
       leaderboardCacheRef.current = { filterSig, collectedAt: now, context: ctx };
+    // EV page: sport detection — inject only relevant sport(s) or summary to stay within context limits
+    if ((pathname === "/" || pathname.includes("ev")) && pageAiState.kind === "ev") {
+      const ctx = buildEVContextForMessage(pageAiState.state as EvPageState, userMessage);
+      return { context: ctx, pathname };
+    }
+
       return { context: ctx, pathname };
     }
 

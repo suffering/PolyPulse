@@ -8,7 +8,7 @@ import { TraderProfileHeader } from "@/components/TraderProfileHeader";
 import { PnLChart } from "@/components/PnLChart";
 import { PerformanceCard } from "@/components/PerformanceCard";
 import { MonthlyPnLGrid } from "@/components/MonthlyPnLGrid";
-import { ProfileHeaderSkeleton, Skeleton } from "@/components/ui/Skeleton";
+import { ProfileHeaderSkeleton } from "@/components/ui/Skeleton";
 import type { TraderStats, PnLDataPoint } from "@/lib/leaderboard";
 import type { PerformanceMetrics, TimeRange } from "@/lib/trader-stats";
 import { aggregateMonthlyPnL, getMinYear, getMaxYear } from "@/lib/trader-stats";

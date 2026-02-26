@@ -39,8 +39,9 @@ export function EVCard({ opportunity }: EVCardProps) {
             <Badge
               className={`font-mono ${getEVColor(evPercent)} border`}
               variant="outline"
+              title="+EV only when Polymarket odds are better than the sportsbook (lower price, same bet)"
             >
-              {evPercent > 0 ? "+" : ""}{evPercent.toFixed(1)}% EV
+              {evPercent > 0 ? "+" : ""}{Math.min(50, Math.max(-100, evPercent)).toFixed(1)}% EV
             </Badge>
           ) : (
             <Badge
@@ -78,8 +79,8 @@ export function EVCard({ opportunity }: EVCardProps) {
               $100 stake → ${Math.round(opportunity.profitIfWin100 ?? 0).toLocaleString()} profit if win
             </p>
             <p className="text-xs text-slate-500">
-              {(opportunity.expectedProfit100 ?? 0) >= 0 ? "$" : "-$"}
-              {Math.abs(opportunity.expectedProfit100 ?? 0).toFixed(0)} expected profit
+              Expected profit (on Polymarket bet): {(opportunity.expectedProfit100 ?? 0) >= 0 ? "$" : "-$"}
+              {Math.abs(opportunity.expectedProfit100 ?? 0).toFixed(2)}
             </p>
           </div>
         )}

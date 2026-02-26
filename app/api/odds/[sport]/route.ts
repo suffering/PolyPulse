@@ -19,9 +19,16 @@ export async function GET(
     "basketball_nba_championship_winner",
     "americanfootball_nfl",
     "icehockey_nhl",
+    "icehockey_nhl_championship_winner",
     "baseball_mlb",
     "baseball_mlb_world_series_winner",
-    "icehockey_nhl_championship_winner",
+    "soccer_usa_mls",
+    "soccer_epl",
+    "soccer_spain_la_liga",
+    "soccer_france_ligue_one",
+    "soccer_italy_serie_a",
+    "soccer_germany_bundesliga",
+    "tennis_atp_indian_wells",
   ];
   if (!validSports.includes(sport)) {
     return NextResponse.json({ error: "Invalid sport" }, { status: 400 });

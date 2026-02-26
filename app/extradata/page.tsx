@@ -62,15 +62,6 @@ function getMarketUrl(market: PolymarketMarket): string {
   return `https://polymarket.com/event/${slug}?market=${market.id}`;
 }
 
-/** Volume for market: prefer 24h then 1wk so it can differ from Notional Volume */
-function marketVolume(market: PolymarketMarket): number {
-  const v24 = toNumber(market.volume24hr ?? market.volume24h);
-  if (v24 > 0) return v24;
-  const v1wk = toNumber(market.volume1wk);
-  if (v1wk > 0) return v1wk;
-  return toNumber(market.volume);
-}
-
 const tableScrollClass = "overflow-y-auto overflow-x-auto min-h-0";
 const tableContainerHeight = "max-h-[45vh]";
 const denseCell = "px-2 py-1 text-xs whitespace-nowrap";

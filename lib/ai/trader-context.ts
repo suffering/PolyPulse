@@ -128,6 +128,7 @@ export function collectTraderContext(input: CollectTraderContextInput): TraderCo
     mode = "active",
     dataCollectedAt,
   } = input;
+  void closedPositions; // reserved for future closed-position-specific context
 
   const contextMode: "active" | "closed" =
     mode === "closed" ? "closed" : "active";
@@ -155,26 +156,27 @@ export function collectTraderContext(input: CollectTraderContextInput): TraderCo
 
   // Filter to truly active open positions (exclude resolved / expired / $0 or $1 markets)
   const nowMs = Date.now();
+  type PositionLike = Record<string, unknown>;
   const trueOpenPositions = openPositions.filter((p) => {
     const curPrice = Number(p.curPrice ?? 0);
     const currentValue = Number(p.currentValue ?? p.size * p.curPrice ?? 0);
 
-    const anyP = p as any;
+    const pos = p as PositionLike;
     const endDateRaw =
-      anyP?.endDate ||
-      anyP?.closeTime ||
-      anyP?.expiryDate ||
-      anyP?.resolutionDate ||
-      anyP?.end_date ||
-      anyP?.close_date;
+      pos?.endDate ||
+      pos?.closeTime ||
+      pos?.expiryDate ||
+      pos?.resolutionDate ||
+      pos?.end_date ||
+      pos?.close_date;
     const isNotExpired =
-      !endDateRaw || Number.isNaN(Date.parse(endDateRaw))
+      !endDateRaw || Number.isNaN(Date.parse(String(endDateRaw)))
         ? true
-        : new Date(endDateRaw).getTime() > nowMs;
+        : new Date(String(endDateRaw)).getTime() > nowMs;
 
-    const resolvedFlag = Boolean(anyP?.resolved) || Boolean(anyP?.closed);
+    const resolvedFlag = Boolean(pos?.resolved) || Boolean(pos?.closed);
     const hasWinner =
-      anyP?.winner !== undefined && anyP?.winner !== null ? true : false;
+      pos?.winner !== undefined && pos?.winner !== null ? true : false;
     const isNotResolved = !resolvedFlag && !hasWinner;
 
     const isActivePrice = curPrice > 0.01 && curPrice < 0.99;
@@ -231,15 +233,17 @@ export function collectTraderContext(input: CollectTraderContextInput): TraderCo
   const lastClosedTrades: TraderContext["tradeHistorySummary"]["lastClosedTrades"] =
     [];
 
+  type TradeLike = Record<string, unknown>;
   for (const t of trades.slice(0, 50)) {
+    const tr = t as TradeLike;
     const pnlUsd =
       safeNumber(
-        (t as any).realizedPnlUsd ??
-          (t as any).realizedPnlUSD ??
-          (t as any).realizedPnl ??
-          (t as any).pnlUsd ??
-          (t as any).pnlUSD ??
-          (t as any).pnl,
+        tr.realizedPnlUsd ??
+          tr.realizedPnlUSD ??
+          tr.realizedPnl ??
+          tr.pnlUsd ??
+          tr.pnlUSD ??
+          tr.pnl,
       ) ?? 0;
 
     if (pnlUsd > 0) {
@@ -264,8 +268,8 @@ export function collectTraderContext(input: CollectTraderContextInput): TraderCo
       market: String(t.title ?? ""),
       side: sideStr === "SELL" ? "SELL" : "BUY",
       outcome: typeof t.outcome === "string" ? t.outcome : null,
-      entryPriceCents: safeNumber((t as any).entryPrice)?.valueOf() ?? null,
-      exitPriceCents: safeNumber((t as any).exitPrice)?.valueOf() ?? null,
+      entryPriceCents: safeNumber(tr.entryPrice)?.valueOf() ?? null,
+      exitPriceCents: safeNumber(tr.exitPrice)?.valueOf() ?? null,
       realizedPnlUsd: pnlUsd || null,
     });
   }
@@ -280,14 +284,15 @@ export function collectTraderContext(input: CollectTraderContextInput): TraderCo
     .slice(0, 200)
     .map((t) => {
       const sideStr = String(t.side ?? "").toUpperCase();
+      const tt = t as TradeLike;
       const pnlUsd =
         safeNumber(
-          (t as any).realizedPnlUsd ??
-            (t as any).realizedPnlUSD ??
-            (t as any).realizedPnl ??
-            (t as any).pnlUsd ??
-            (t as any).pnlUSD ??
-            (t as any).pnl,
+          tt.realizedPnlUsd ??
+            tt.realizedPnlUSD ??
+            tt.realizedPnl ??
+            tt.pnlUsd ??
+            tt.pnlUSD ??
+            tt.pnl,
         ) ?? null;
 
       return {

@@ -68,6 +68,37 @@ const TEAM_ALIASES: Record<string, string[]> = {
   "vancouver canucks": ["vancouver", "canucks", "nucks"],
   "anaheim ducks": ["anaheim", "ducks"],
   "san jose sharks": ["san jose", "sharks"],
+  // MLB
+  "new york yankees": ["ny yankees", "yankees", "nyy"],
+  "boston red sox": ["boston", "red sox", "sox"],
+  "tampa bay rays": ["tampa bay", "rays"],
+  "toronto blue jays": ["toronto", "blue jays", "jays"],
+  "baltimore orioles": ["baltimore", "orioles", "os"],
+  "cleveland guardians": ["cleveland", "guardians"],
+  "detroit tigers": ["detroit", "tigers"],
+  "chicago white sox": ["chicago", "white sox", "pale hose"],
+  "kansas city royals": ["kansas city", "royals", "kc"],
+  "minnesota twins": ["minnesota", "twins"],
+  "houston astros": ["houston", "astros", "stros"],
+  "seattle mariners": ["seattle", "mariners", "ms"],
+  "los angeles angels": ["la angels", "angels", "halos"],
+  "oakland athletics": ["oakland", "athletics", "as", "oakland a"],
+  "texas rangers": ["texas", "rangers"],
+  "atlanta braves": ["atlanta", "braves"],
+  "philadelphia phillies": ["philadelphia", "phillies", "phils"],
+  "new york mets": ["ny mets", "mets"],
+  "washington nationals": ["washington", "nationals", "nats"],
+  "miami marlins": ["miami", "marlins"],
+  "milwaukee brewers": ["milwaukee", "brewers", "brew crew"],
+  "chicago cubs": ["chicago", "cubs"],
+  "st louis cardinals": ["st louis", "st. louis", "cardinals", "cards"],
+  "pittsburgh pirates": ["pittsburgh", "pirates", "bucs"],
+  "cincinnati reds": ["cincinnati", "reds"],
+  "arizona diamondbacks": ["arizona", "diamondbacks", "dbacks"],
+  "los angeles dodgers": ["la dodgers", "dodgers"],
+  "san diego padres": ["san diego", "padres"],
+  "san francisco giants": ["san francisco", "giants", "sf giants"],
+  "colorado rockies": ["colorado", "rockies"],
 };
 
 const SOCCER_TEAM_ALIASES: Record<string, string[]> = {
@@ -132,6 +163,35 @@ const SOCCER_TEAM_ALIASES: Record<string, string[]> = {
   "valencia": ["valencia cf", "valencia"],
   "getafe": ["getafe cf", "getafe"],
   "girona": ["girona fc", "girona"],
+  // MLS
+  "inter miami cf": ["inter miami", "miami", "inter miami cf"],
+  "la galaxy": ["los angeles galaxy", "galaxy", "la galaxy"],
+  "seattle sounders fc": ["seattle sounders", "sounders", "seattle"],
+  "atlanta united fc": ["atlanta united", "atlanta", "atl utd"],
+  "new york city fc": ["nycfc", "new york city", "nyc"],
+  "new york red bulls": ["ny red bulls", "red bulls", "new york rb"],
+  "los angeles fc": ["lafc", "la fc", "los angeles fc"],
+  "portland timbers": ["portland", "timbers"],
+  "real salt lake": ["salt lake", "rsl"],
+  "fc dallas": ["dallas", "fcd"],
+  "houston dynamo fc": ["houston dynamo", "dynamo", "houston"],
+  "sporting kansas city": ["sporting kc", "kansas city", "skc", "sporting kansas city"],
+  "minnesota united fc": ["minnesota united", "minnesota", "min utd"],
+  "colorado rapids": ["rapids", "colorado"],
+  "austin fc": ["austin"],
+  "nashville sc": ["nashville", "nashville sc"],
+  "orlando city sc": ["orlando city", "orlando"],
+  "cf montreal": ["montreal", "cf montreal", "impact"],
+  "toronto fc": ["toronto", "tfc"],
+  "chicago fire fc": ["chicago fire", "chicago", "fire"],
+  "columbus crew": ["columbus crew sc", "columbus", "crew"],
+  "dc united": ["washington dc", "dc united", "dc"],
+  "philadelphia union": ["philadelphia", "union", "philly"],
+  "new england revolution": ["new england", "revolution", "revs"],
+  "charlotte fc": ["charlotte"],
+  "san jose earthquakes": ["san jose", "earthquakes", "quakes"],
+  "vancouver whitecaps fc": ["vancouver whitecaps", "vancouver", "whitecaps"],
+  "st louis city sc": ["st louis", "st. louis", "st louis city"],
 };
 
 export function normalizeTeamName(name: string): string {
@@ -279,7 +339,7 @@ export function matchOutrights(
           const stake = 100;
           const { ev, evPercentage, potentialProfit, expectedProfit } = calculateEV(
             stake,
-            polymarketPriceCents,
+            polymarketPrice,
             bestBook.outcome.price
           );
 
@@ -608,7 +668,7 @@ export function matchH2HGames(
         const stake = 100;
         const { ev, evPercentage, potentialProfit, expectedProfit } = calculateEV(
           stake,
-          polymarketPriceCents,
+          polymarketPrice,
           bestBook.outcome.price
         );
 
@@ -744,7 +804,7 @@ export function matchTotals(
         const stake = 100;
         const { ev, evPercentage, potentialProfit, expectedProfit } = calculateEV(
           stake,
-          polymarketPriceCents,
+          polymarketPrice,
           bestBook.outcome.price
         );
 
@@ -873,9 +933,11 @@ export function matchSoccerH2H(
   polymarketEvents: PolymarketEvent[],
   oddsEvents: OddsApiEvent[],
   sport: string,
-  league: string
+  league: string,
+  options?: { includeWithoutSportsbook?: boolean }
 ): MatchedOpportunity[] {
   const opportunities: MatchedOpportunity[] = [];
+  const includeWithoutSportsbook = options?.includeWithoutSportsbook ?? false;
 
   for (const pmEvent of polymarketEvents) {
     const title = pmEvent.title || "";
@@ -940,6 +1002,7 @@ export function matchSoccerH2H(
         const polymarketPriceCents = polymarketPrice * 100;
         const polymarketImpliedProb = polymarketPriceCents;
         const gameStartTime = market.gameStartTime || null;
+        let matched = false;
 
         for (const oddsEvent of oddsEvents) {
         const eventTime = gameStartTime || oddsEvent.commence_time || pmEvent.startDate || pmEvent.endDate || "";
@@ -953,7 +1016,33 @@ export function matchSoccerH2H(
         if (!matchesTeams) continue;
 
         const bestBook = getBestBookmakerForSoccerOutcome(oddsEvent, outcomeName);
-        if (!bestBook) continue;
+        if (!bestBook) {
+          if (includeWithoutSportsbook) {
+            const eventTime = gameStartTime || oddsEvent.commence_time || pmEvent.startDate || pmEvent.endDate || "";
+            const timeframeDate = gameStartTime || oddsEvent.commence_time || pmEvent.startDate || pmEvent.endDate;
+            const displayOutcome =
+              outcomeName === "Draw" ? "Draw" : outcomeName;
+            opportunities.push({
+              id: `${pmEvent.id}-${market.id}-soccer-nobook-${outcomeName}`,
+              sport,
+              league,
+              matchup: `${oddsEvent.home_team} vs ${oddsEvent.away_team}`,
+              outcome: displayOutcome,
+              eventTime,
+              polymarketPrice,
+              polymarketImpliedProb,
+              polymarketUrl: getPolymarketUrl(pmEvent),
+              polymarketEventId: pmEvent.id,
+              polymarketMarketId: market.id,
+              polymarketQuestion: market.question || "",
+              marketType: "game",
+              timeframe: getTimeframe(timeframeDate),
+              category: "games",
+            });
+            matched = true;
+          }
+          continue;
+        }
 
         const displayOutcome =
           outcomeName === "Draw"
@@ -965,7 +1054,7 @@ export function matchSoccerH2H(
         const stake = 100;
         const { ev, evPercentage, potentialProfit, expectedProfit } = calculateEV(
           stake,
-          polymarketPriceCents,
+          polymarketPrice,
           bestBook.outcome.price
         );
 
@@ -1000,6 +1089,30 @@ export function matchSoccerH2H(
           timeframe: getTimeframe(timeframeDate),
           category: "games",
         });
+        matched = true;
+        }
+
+        if (includeWithoutSportsbook && !matched) {
+          const eventTime = gameStartTime || pmEvent.startDate || pmEvent.endDate || "";
+          const timeframeDate = gameStartTime || pmEvent.startDate || pmEvent.endDate;
+          const displayOutcome = outcomeName === "Draw" ? "Draw" : outcomeName;
+          opportunities.push({
+            id: `${pmEvent.id}-${market.id}-soccer-pmonly-${outcomeName}`,
+            sport,
+            league,
+            matchup: `${team1} vs ${team2}`,
+            outcome: displayOutcome,
+            eventTime,
+            polymarketPrice,
+            polymarketImpliedProb,
+            polymarketUrl: getPolymarketUrl(pmEvent),
+            polymarketEventId: pmEvent.id,
+            polymarketMarketId: market.id,
+            polymarketQuestion: market.question || "",
+            marketType: "game",
+            timeframe: getTimeframe(timeframeDate),
+            category: "games",
+          });
         }
       }
     }
@@ -1019,9 +1132,7 @@ export function matchSoccerH2H(
       }
     }
   }
-  return Array.from(byKey.values()).sort((a, b) => {
-    const timeA = new Date(a.eventTime || 0).getTime();
-    const timeB = new Date(b.eventTime || 0).getTime();
-    return timeA - timeB;
-  });
+  return Array.from(byKey.values()).sort(
+    (a, b) => new Date(a.eventTime || 0).getTime() - new Date(b.eventTime || 0).getTime()
+  );
 }

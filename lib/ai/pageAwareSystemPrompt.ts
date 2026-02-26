@@ -1,6 +1,6 @@
 import { buildSystemPrompt, type TraderContext } from "@/lib/ai/trader-context";
 
-function isTraderContext(value: any): value is TraderContext {
+function isTraderContext(value: unknown): value is TraderContext {
   return (
     value &&
     typeof value === "object" &&
@@ -16,9 +16,10 @@ export function buildPageAwareSystemPrompt(context: unknown, pathname: string): 
     return buildSystemPrompt(context);
   }
 
+  const ctx = context as { dataCollectedAt?: string } | null;
   const collectedAt =
-    (context as any)?.dataCollectedAt && typeof (context as any).dataCollectedAt === "string"
-      ? (context as any).dataCollectedAt
+    ctx?.dataCollectedAt && typeof ctx.dataCollectedAt === "string"
+      ? ctx.dataCollectedAt
       : new Date().toISOString();
 
   const shared = [

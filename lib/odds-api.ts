@@ -145,9 +145,11 @@ export function getBestSportsbookOdds(
     const h2h = bookmaker.markets.find((m) => m.key === "h2h");
     if (!h2h) continue;
 
-    const outcome = h2h.outcomes.find((o) =>
-      normalizeTeamName(o.name).includes(normalizeTeamName(teamName))
-    );
+    const outcome = h2h.outcomes.find((o) => {
+      const oNorm = normalizeTeamName(o.name);
+      const tNorm = normalizeTeamName(teamName);
+      return oNorm === tNorm || oNorm.includes(tNorm) || tNorm.includes(oNorm);
+    });
     if (!outcome) continue;
 
     const decimalOdds = americanToDecimal(outcome.price);

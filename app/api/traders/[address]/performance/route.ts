@@ -5,7 +5,8 @@ import { calculatePerformance } from "@/lib/trader-stats";
 export const dynamic = "force-dynamic";
 export const revalidate = 120;
 
-const cache = new Map<string, { data: any; timestamp: number }>();
+type PerformanceResponse = { address: string; performance: ReturnType<typeof calculatePerformance>; lastUpdated: string };
+const cache = new Map<string, { data: PerformanceResponse; timestamp: number }>();
 const CACHE_TTL_MS = 2 * 60 * 1000;
 
 export async function GET(

@@ -58,7 +58,10 @@ export interface PolymarketEvent {
   title: string | null;
   startDate: string | null;
   endDate: string | null;
+  /** Gamma API: when false or missing, event may still be open; when true, event is closed. */
   closed: boolean;
+  /** Gamma API: when false, event is not active for trading; when true or missing, treat as active. */
+  active?: boolean;
   markets: PolymarketMarket[];
   tags?: { id: string; label: string; slug: string }[];
   /** Event-level liquidity (open interest) from Gamma API */
@@ -109,10 +112,6 @@ interface Position {
   initialValue: number;
 }
 
-interface ClosedPosition {
-  realizedPnl: number;
-}
-
 const SPORT_TAG_MAP: Record<string, string> = {
   basketball_nba: "745",
   basketball_nba_championship_winner: "745",
@@ -134,6 +133,12 @@ const SPORT_SERIES_MAP: Record<string, string> = {
   basketball_nba: "10345",
   icehockey_nhl: "10346",
   baseball_mlb: "10347",
+  soccer_usa_mls: "10189",
+  soccer_epl: "10188",
+  soccer_spain_la_liga: "10193",
+  soccer_france_ligue_one: "10195",
+  soccer_italy_serie_a: "10203",
+  soccer_germany_bundesliga: "10194",
 };
 
 export function isSupportedPolymarketSport(sport: string): boolean {
@@ -203,6 +208,7 @@ export async function fetchSportsEvents(
 ): Promise<PolymarketEvent[]> {
   const params = new URLSearchParams({
     tag_id: tagId,
+    active: "true",
     closed: "false",
     limit: String(limit),
     order: "startDate",
@@ -222,6 +228,7 @@ export async function fetchSeriesEvents(
 ): Promise<PolymarketEvent[]> {
   const params = new URLSearchParams({
     series_id: seriesId,
+    active: "true",
     closed: "false",
     limit: String(limit),
     order: "startDate",
@@ -504,6 +511,8 @@ export async function aggregateCreatorStats(): Promise<CreatorStats[]> {
       const eventCreators = event.eventCreators;
       if (!eventCreators || eventCreators.length === 0) continue;
 
+      // Gamma API: Event has markets[] and eventCreators[]. Total Markets = count of markets in each event the creator is attributed to.
+      const markets = event.markets ?? [];
       const isEventClosed = Boolean(event.closed);
       const eventVolume = toNumber(event.volume);
 
@@ -513,19 +522,23 @@ export async function aggregateCreatorStats(): Promise<CreatorStats[]> {
       if (eventVolume > 0) {
         eventVolumeToUse = eventVolume;
       } else {
-        const totalMarketVolume = (event.markets || []).reduce(
+        const totalMarketVolume = markets.reduce(
           (sum, m) => sum + toNumber(m.volumeNum ?? m.volume24hr ?? m.volume24h ?? m.volume),
           0
         );
         eventVolumeToUse = totalMarketVolume;
       }
 
-      for (const market of event.markets || []) {
+      for (const market of markets) {
         const marketOpenInterest =
           toNumber(market.liquidityNum ?? market.liquidity) ||
           toNumber(event.liquidity ?? event.openInterest);
 
-        const isMarketActive = !isEventClosed && (market.closed === undefined || market.closed === false);
+        // Gamma API: Event and Market have active (boolean) and closed (boolean). Active Markets = markets that are not closed and (when present) active.
+        const isEventActive = event.active !== false;
+        const isMarketClosed = market.closed === true;
+        const isMarketActiveFlag = market.active !== false;
+        const isMarketActive = !isEventClosed && isEventActive && !isMarketClosed && isMarketActiveFlag;
 
         for (const creator of eventCreators) {
           const creatorId = creator.id || creator.creatorHandle || creator.creatorUrl;
@@ -1064,7 +1077,7 @@ export async function fetchUserClosedPositions(
   const user = normalizeWalletForDataApi(walletAddress);
   if (!/^0x[a-fA-F0-9]{40}$/.test(user)) return [];
   const pageSize = Math.min(options?.limit ?? 50, 50);
-  let offset = options?.offset ?? 0;
+  const offset = options?.offset ?? 0;
   const params = new URLSearchParams({
     user,
     limit: String(pageSize),

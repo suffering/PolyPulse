@@ -43,7 +43,7 @@ export default function LivePage() {
           throw new Error(`HTTP ${res.status}`);
         }
 
-        const payload = (await res.json()) as { trades?: any[] };
+        const payload = (await res.json()) as { trades?: unknown[] };
         const data = Array.isArray(payload.trades) ? payload.trades : [];
 
         setStatus("LIVE");

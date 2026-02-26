@@ -58,7 +58,18 @@ export async function GET(request: NextRequest) {
     const raw = await res.json();
     const items = Array.isArray(raw) ? raw : [];
 
-    const closedPositions = items.map((p: any) => {
+    interface RawPosition {
+      title?: string;
+      outcome?: string;
+      realizedPnl?: number | string;
+      timestamp?: number;
+      avgPrice?: number | string;
+      curPrice?: number | string;
+      totalBought?: number | string;
+      conditionId?: string;
+      asset?: string;
+    }
+    const closedPositions = items.map((p: RawPosition) => {
       let ts = Number(p.timestamp) || 0;
       if (ts > 1e12) ts = Math.floor(ts / 1000);
       return {

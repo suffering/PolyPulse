@@ -2,12 +2,15 @@ import { fetchPolymarketMarkets } from "./polymarket";
 import { fetchKalshiTrades } from "./kalshi";
 
 export interface PeriodVolumeStats {
-  day: number;
+  /** Last 24h volume (Gamma: volume24hr) – Polymarket only */
+  volume24h?: number;
+  /** Last 7 days volume (Gamma: volume1wk) – Polymarket only */
+  week?: number;
+  /** Last 24h – Kalshi only; Polymarket uses volume24h + week instead */
+  day?: number;
   month: number;
   allTime: number;
   lastUpdated: string;
-  /** Optional: last 24h volume from Gamma API (Polymarket only) */
-  volume24h?: number;
 }
 
 export interface ExchangeVolumeData {
@@ -29,15 +32,15 @@ let cacheTimestamp = 0;
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 export async function getPolymarketPeriodVolumeStats(): Promise<PeriodVolumeStats> {
-  let day = 0;
+  let volume24h = 0;
+  let week = 0;
   let month = 0;
   let allTime = 0;
-  let volume24h = 0;
 
   try {
-    // Fetch ALL active markets: paginate until we have everything (Gamma API volume24hr, volume1wk, volume1mo, volumeNum)
+    // Fetch ALL active markets: paginate (Gamma API: volume24hr, volume1wk, volume1mo, volumeNum)
     const limit = 1000;
-    const maxPages = 500; // safety cap (~500k markets); we break when a page returns < limit
+    const maxPages = 500;
 
     let offset = 0;
     for (let page = 0; page < maxPages; page += 1) {
@@ -49,22 +52,17 @@ export async function getPolymarketPeriodVolumeStats(): Promise<PeriodVolumeStat
       if (!markets || markets.length === 0) break;
 
       for (const market of markets) {
-        const day24hr = toNumber(market.volume24hr ?? market.volume24h);
-        const weekVol = toNumber(market.volume1wk ?? market.volume24hr ?? market.volume24h);
-        const month1mo = toNumber(market.volume1mo);
-        const marketAllTime = toNumber(market.volumeNum ?? market.volume);
-
-        volume24h += day24hr;
-        day += weekVol;
-        month += month1mo;
-        allTime += marketAllTime;
+        volume24h += toNumber(market.volume24hr ?? market.volume24h);
+        week += toNumber(market.volume1wk);
+        month += toNumber(market.volume1mo);
+        allTime += toNumber(market.volumeNum ?? market.volume);
       }
 
       if (markets.length < limit) break;
       offset += limit;
     }
 
-    // Fetch ALL closed markets for all-time: paginate until we have everything
+    // Closed markets: only all-time is defined in Gamma; 24h/1wk/1mo are for active trading
     offset = 0;
     for (let page = 0; page < maxPages; page += 1) {
       const markets = await fetchPolymarketMarkets(limit, offset, {
@@ -75,8 +73,7 @@ export async function getPolymarketPeriodVolumeStats(): Promise<PeriodVolumeStat
       if (!markets || markets.length === 0) break;
 
       for (const market of markets) {
-        const marketAllTime = toNumber(market.volumeNum ?? market.volume);
-        allTime += marketAllTime;
+        allTime += toNumber(market.volumeNum ?? market.volume);
       }
 
       if (markets.length < limit) break;
@@ -87,10 +84,10 @@ export async function getPolymarketPeriodVolumeStats(): Promise<PeriodVolumeStat
   }
 
   return {
-    day,
+    volume24h,
+    week,
     month,
     allTime,
-    volume24h,
     lastUpdated: new Date().toISOString(),
   };
 }
@@ -187,10 +184,10 @@ export async function getExchangeVolumeData(): Promise<ExchangeVolumeData> {
 
   // Fetch fresh data (Polymarket only)
   const polymarket = await getPolymarketPeriodVolumeStats().catch(() => ({
-    day: 0,
+    volume24h: 0,
+    week: 0,
     month: 0,
     allTime: 0,
-    volume24h: 0,
     lastUpdated: new Date().toISOString(),
   }));
 

@@ -3,12 +3,19 @@ import { setStoredWallet, getStoredWalletByCreatorId, getStoredWalletByHandle } 
 
 const GAMMA_API_BASE = "https://gamma-api.polymarket.com";
 
+/** Per Polymarket API: profile wallet is returned as proxyWallet (proxy wallet on Polygon). */
 type SearchProfile = {
   id: string;
   name: string | null;
   pseudonym: string | null;
   proxyWallet: string | null;
 };
+
+/** Wallet from a search profile; API uses proxyWallet; fallback for alternate response keys. */
+function getProfileWallet(p: SearchProfile & { address?: string | null }): string | null {
+  const w = p.proxyWallet ?? (p as { address?: string | null }).address ?? null;
+  return w && /^0x[a-fA-F0-9]{40}$/.test(w) ? w : null;
+}
 
 type PublicSearchResponse = {
   profiles?: SearchProfile[] | null;
@@ -66,9 +73,11 @@ async function publicSearchProfiles(query: string, limit = 50): Promise<SearchPr
   const res = await fetchWithRetry(`${GAMMA_API_BASE}/public-search?${params}`, { cache: "no-store" });
   if (!res.ok) return [];
   const data = (await res.json()) as PublicSearchResponse;
-  return Array.isArray(data.profiles) ? data.profiles : [];
+  const list = Array.isArray(data.profiles) ? data.profiles : [];
+  return list as (SearchProfile & { address?: string | null })[];
 }
 
+/** GET public-profile?address= — returns canonical proxy wallet per Polymarket API. */
 async function fetchPublicProfileByWallet(wallet: string): Promise<PublicProfile | null> {
   if (!/^0x[a-fA-F0-9]{40}$/.test(wallet)) return null;
   const res = await fetchWithRetry(
@@ -76,41 +85,44 @@ async function fetchPublicProfileByWallet(wallet: string): Promise<PublicProfile
     { cache: "no-store" }
   );
   if (!res.ok) return null;
-  const data = (await res.json()) as any;
+  const data = (await res.json()) as Record<string, unknown>;
   return {
-    name: data.name ?? null,
-    pseudonym: data.pseudonym ?? null,
-    profileImage: data.profileImage ?? null,
-    xUsername: data.xUsername ?? null,
-    proxyWallet: data.proxyWallet ?? null,
+    name: (data.name as string) ?? null,
+    pseudonym: (data.pseudonym as string) ?? null,
+    profileImage: (data.profileImage as string) ?? null,
+    xUsername: (data.xUsername as string) ?? null,
+    proxyWallet: (data.proxyWallet as string) ?? null,
   };
 }
 
+/**
+ * Verifies that the given wallet belongs to the creator (name/handle match via public-profile).
+ * Returns the canonical proxy wallet from the API when verification succeeds, so the Creators
+ * page always displays the Polymarket proxy wallet address.
+ */
 async function verifyCandidateWallet(args: {
   wallet: string;
-  handle?: string | null; // X username (from Gamma xUsername)
+  handle?: string | null;
   name?: string | null;
-}): Promise<boolean> {
+}): Promise<string | null> {
   const profile = await fetchPublicProfileByWallet(args.wallet);
-  if (!profile) return false;
+  if (!profile) return null;
 
   const handle = args.handle ? normalizeHandle(args.handle) : "";
   if (handle) {
     const x = (profile.xUsername ?? "").toLowerCase().replace(/^@/, "");
-    // If xUsername is present, it must match the creator handle.
-    if (x && x !== handle) return false;
+    if (x && x !== handle) return null;
   }
 
   if (args.name) {
     const n = normalizeName(args.name);
     const profileName = profile.name ? normalizeName(profile.name) : "";
-    if (profileName && profileName !== n && args.handle == null) {
-      // Only enforce strict name match when we don't have a handle to anchor identity.
-      return false;
-    }
+    if (profileName && profileName !== n && args.handle == null) return null;
   }
 
-  return true;
+  return (profile.proxyWallet && /^0x[a-fA-F0-9]{40}$/.test(profile.proxyWallet))
+    ? profile.proxyWallet
+    : args.wallet;
 }
 
 export async function resolveCreatorWallet(creator: Pick<CreatorStats, "id" | "name" | "handle" | "url" | "walletAddress">): Promise<string | null> {
@@ -118,10 +130,10 @@ export async function resolveCreatorWallet(creator: Pick<CreatorStats, "id" | "n
 
   const urlWallet = extractWalletFromUrl(creator.url ?? null);
   if (urlWallet) {
-    const ok = await verifyCandidateWallet({ wallet: urlWallet, handle: creator.handle, name: creator.name });
-    if (ok) {
-      await setStoredWallet({ creatorId: creator.id, handle: creator.handle, wallet: urlWallet });
-      return urlWallet;
+    const canonical = await verifyCandidateWallet({ wallet: urlWallet, handle: creator.handle, name: creator.name });
+    if (canonical) {
+      await setStoredWallet({ creatorId: creator.id, handle: creator.handle, wallet: canonical });
+      return canonical;
     }
   }
 
@@ -139,7 +151,7 @@ export async function resolveCreatorWallet(creator: Pick<CreatorStats, "id" | "n
   if (xHandle) {
     const profiles = await publicSearchProfiles(`@${xHandle}`, 50);
     const candidates = profiles
-      .filter((p) => p.proxyWallet && /^0x[a-fA-F0-9]{40}$/.test(p.proxyWallet))
+      .filter((p) => getProfileWallet(p))
       .map((p) => {
         const scoreNameExact = p.name ? (normalizeName(p.name) === normalizeName(creator.name) ? 100 : 0) : 0;
         const scoreNamePartial =
@@ -156,29 +168,33 @@ export async function resolveCreatorWallet(creator: Pick<CreatorStats, "id" | "n
       .slice(0, 6);
 
     for (const candidate of candidates) {
-      if (!candidate.proxyWallet) continue;
-      const ok = await verifyCandidateWallet({
-        wallet: candidate.proxyWallet,
+      const wallet = getProfileWallet(candidate);
+      if (!wallet) continue;
+      const canonical = await verifyCandidateWallet({
+        wallet,
         handle: xHandle,
         name: creator.name,
       });
-      if (ok) {
-        await setStoredWallet({ creatorId: creator.id, handle: xHandle, wallet: candidate.proxyWallet });
-        return candidate.proxyWallet;
+      if (canonical) {
+        await setStoredWallet({ creatorId: creator.id, handle: xHandle, wallet: canonical });
+        return canonical;
       }
     }
   }
 
-  // Fallback: exact name match only when it's unambiguous.
   const profilesByName = await publicSearchProfiles(creator.name, 50);
   const nameNorm = normalizeName(creator.name);
-  const exactName = profilesByName.filter((p) => p.proxyWallet && p.name && normalizeName(p.name) === nameNorm);
-  if (exactName.length === 1 && exactName[0].proxyWallet) {
-    const wallet = exactName[0].proxyWallet;
-    const ok = await verifyCandidateWallet({ wallet, name: creator.name });
-    if (ok) {
-      await setStoredWallet({ creatorId: creator.id, handle: creator.handle, wallet });
-      return wallet;
+  const exactName = profilesByName.filter(
+    (p) => getProfileWallet(p) && p.name && normalizeName(p.name) === nameNorm
+  );
+  if (exactName.length === 1) {
+    const wallet = getProfileWallet(exactName[0]);
+    if (wallet) {
+      const canonical = await verifyCandidateWallet({ wallet, name: creator.name });
+      if (canonical) {
+        await setStoredWallet({ creatorId: creator.id, handle: creator.handle, wallet: canonical });
+        return canonical;
+      }
     }
   }
 

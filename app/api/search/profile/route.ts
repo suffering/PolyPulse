@@ -35,7 +35,8 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await res.json();
-    const profiles: any[] = Array.isArray(data?.profiles)
+    type ProfileRow = { proxyWallet?: string; name?: string; pseudonym?: string; profileImage?: string };
+    const profiles: ProfileRow[] = Array.isArray(data?.profiles)
       ? data.profiles
       : [];
 
@@ -69,9 +70,9 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      wallet: profile.proxyWallet as string,
-      name: (profile.name as string | undefined) ?? (profile.pseudonym as string | undefined) ?? null,
-      profileImage: (profile.profileImage as string | undefined) ?? null,
+      wallet: profile.proxyWallet,
+      name: profile.name ?? profile.pseudonym ?? null,
+      profileImage: profile.profileImage ?? null,
     });
   } catch (error) {
     console.error("Search profile API error:", error);

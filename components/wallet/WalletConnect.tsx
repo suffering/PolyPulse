@@ -73,7 +73,7 @@ export function WalletConnect({ onClose, className }: WalletConnectProps) {
       {isOpen && (
         <>
           <div
-            className="fixed inset-0 z-40"
+            className="fixed top-14 left-0 right-0 bottom-0 z-40"
             aria-hidden
             onClick={() => setIsOpen(false)}
           />

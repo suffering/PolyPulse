@@ -93,8 +93,8 @@ export default function LeaderboardPage() {
 
     const sorted = [...remaining];
     sorted.sort((a, b) => {
-      let aVal: any = (a as any)[sortColumn];
-      let bVal: any = (b as any)[sortColumn];
+      let aVal: string | number | undefined = (a as Record<string, unknown>)[sortColumn] as string | number | undefined;
+      let bVal: string | number | undefined = (b as Record<string, unknown>)[sortColumn] as string | number | undefined;
 
       if (sortColumn === "userName") {
         aVal = aVal || a.proxyWallet;

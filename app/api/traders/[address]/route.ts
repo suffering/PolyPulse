@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchTraderStats } from "@/lib/leaderboard";
+import { fetchTraderStats, type TraderStats } from "@/lib/leaderboard";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 120;
 
-const cache = new Map<string, { data: any; timestamp: number }>();
+type TraderResponse = { address: string; stats: TraderStats; lastUpdated: string };
+const cache = new Map<string, { data: TraderResponse; timestamp: number }>();
 const CACHE_TTL_MS = 2 * 60 * 1000;
 
 export async function GET(

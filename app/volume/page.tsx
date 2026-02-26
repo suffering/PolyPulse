@@ -7,7 +7,7 @@ import { formatVolume } from "@/lib/volume";
 import { useSetPageAiState } from "@/components/ai/PageAiContext";
 
 type VolumeResponse = {
-  polymarket: { day: number; month: number; allTime: number; lastUpdated: string; volume24h?: number };
+  polymarket: { volume24h?: number; week?: number; month: number; allTime: number; lastUpdated: string };
 };
 
 async function fetchVolume(): Promise<VolumeResponse> {
@@ -19,14 +19,14 @@ async function fetchVolume(): Promise<VolumeResponse> {
 function ExchangeCard({
   title,
   data,
-  firstPeriodLabel = "Last Day",
-  firstPeriodSublabel = "Last 24 hours",
+  weekLabel = "Last Week",
+  weekSublabel = "Last 7 days",
   showVolume24h = false,
 }: {
   title: string;
-  data: { day: number; month: number; allTime: number; lastUpdated: string; volume24h?: number };
-  firstPeriodLabel?: string;
-  firstPeriodSublabel?: string;
+  data: { volume24h?: number; week?: number; month: number; allTime: number; lastUpdated: string };
+  weekLabel?: string;
+  weekSublabel?: string;
   showVolume24h?: boolean;
 }) {
   return (
@@ -45,11 +45,13 @@ function ExchangeCard({
             <p className="text-xs text-slate-500 mt-1">Last 24 hours</p>
           </div>
         )}
-        <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700/30">
-          <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">{firstPeriodLabel}</p>
-          <p className="text-2xl font-bold text-green-400">{formatVolume(data.day)}</p>
-          <p className="text-xs text-slate-500 mt-1">{firstPeriodSublabel}</p>
-        </div>
+        {data.week != null && (
+          <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700/30">
+            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">{weekLabel}</p>
+            <p className="text-2xl font-bold text-green-400">{formatVolume(data.week)}</p>
+            <p className="text-xs text-slate-500 mt-1">{weekSublabel}</p>
+          </div>
+        )}
         <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700/30">
           <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Last Month</p>
           <p className="text-2xl font-bold text-blue-400">{formatVolume(data.month)}</p>
@@ -118,8 +120,8 @@ export default function VolumePage() {
             <ExchangeCard
               title="Polymarket"
               data={data.polymarket}
-              firstPeriodLabel="Last Week"
-              firstPeriodSublabel="Last 7 days"
+              weekLabel="Last Week"
+              weekSublabel="Last 7 days"
               showVolume24h
             />
           </div>

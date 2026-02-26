@@ -1,20 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchLeaderboard, fetchTradeCount, type LeaderboardParams } from "@/lib/leaderboard";
+import { fetchLeaderboard, fetchTradeCount, type LeaderboardParams, type LeaderboardCategory, type LeaderboardTimePeriod, type LeaderboardOrderBy } from "@/lib/leaderboard";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 120;
 
-let cache: { data: any; timestamp: number } | null = null;
+type LeaderboardResult = {
+  entries: Awaited<ReturnType<typeof fetchLeaderboard>>;
+  pagination: { limit: number; offset: number; hasMore: boolean };
+  lastUpdated: string;
+};
+let cache: { data: { cacheKey: string; result: LeaderboardResult }; timestamp: number } | null = null;
 const CACHE_TTL_MS = 2 * 60 * 1000;
+
+const VALID_CATEGORIES: LeaderboardCategory[] = ["OVERALL", "POLITICS", "SPORTS", "CRYPTO", "CULTURE", "MENTIONS", "WEATHER", "ECONOMICS", "TECH", "FINANCE"];
+const VALID_TIME_PERIODS: LeaderboardTimePeriod[] = ["DAY", "WEEK", "MONTH", "ALL"];
+const VALID_ORDER_BY: LeaderboardOrderBy[] = ["PNL", "VOL"];
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
 
+    const catParam = searchParams.get("category");
+    const periodParam = searchParams.get("timePeriod");
+    const orderParam = searchParams.get("orderBy");
     const params: LeaderboardParams = {
-      category: (searchParams.get("category") as any) || "OVERALL",
-      timePeriod: (searchParams.get("timePeriod") as any) || "MONTH",
-      orderBy: (searchParams.get("orderBy") as any) || "PNL",
+      category: (catParam && VALID_CATEGORIES.includes(catParam as LeaderboardCategory) ? catParam : "OVERALL") as LeaderboardCategory,
+      timePeriod: (periodParam && VALID_TIME_PERIODS.includes(periodParam as LeaderboardTimePeriod) ? periodParam : "MONTH") as LeaderboardTimePeriod,
+      orderBy: (orderParam && VALID_ORDER_BY.includes(orderParam as LeaderboardOrderBy) ? orderParam : "PNL") as LeaderboardOrderBy,
       limit: searchParams.get("limit") ? Number(searchParams.get("limit")) : 50,
       offset: searchParams.get("offset") ? Number(searchParams.get("offset")) : 0,
     };

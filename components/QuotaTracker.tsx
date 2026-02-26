@@ -5,6 +5,7 @@ interface QuotaTrackerProps {
   lastUpdated: string;
   onRefresh?: () => void;
   isLoading?: boolean;
+  rateLimited?: boolean;
 }
 
 export function QuotaTracker({
@@ -12,6 +13,7 @@ export function QuotaTracker({
   lastUpdated,
   onRefresh,
   isLoading,
+  rateLimited,
 }: QuotaTrackerProps) {
   const formattedTime = lastUpdated
     ? new Date(lastUpdated).toLocaleTimeString("en-US", {
@@ -23,7 +25,12 @@ export function QuotaTracker({
 
   return (
     <div className="flex items-center gap-4 text-xs text-slate-500 font-mono">
-      {quotaRemaining !== null && (
+      {rateLimited && (
+        <span className="text-amber-400" title="Odds API returned 429 Too Many Requests">
+          Odds API: rate limited — try again later
+        </span>
+      )}
+      {!rateLimited && quotaRemaining !== null && (
         <span>
           Odds API: <span className="text-slate-400">{quotaRemaining}</span> requests left
         </span>
