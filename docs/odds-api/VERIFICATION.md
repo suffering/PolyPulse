@@ -57,8 +57,8 @@ All match the standard conversion. ✓
 
 ## Soccer / 3-way markets
 
-- get-odds.md lists markets: `h2h`, `spreads`, `totals`, `outrights`. It does not list `h2h_3_way` in the doc.
-- Our EV API requests only `h2h` for game odds (including soccer). Matching code looks for `h2h_3_way` then `h2h`. If the API supports `h2h_3_way` for soccer (per their betting markets page), consider requesting `h2h,h2h_3_way` for soccer leagues so Draw odds are available when offered.
+- get-odds.md lists markets: `h2h`, `spreads`, `totals`, `outrights`. Soccer 1X2 is returned as `h2h` (three outcomes: Home, Away, Draw) or `h2h_3_way` depending on bookmaker. We request `h2h,h2h_3_way` for soccer so Draw odds are available.
+- **Regions**: Soccer odds are often not offered by US bookmakers for European leagues (EPL, La Liga, etc.). The Odds API EPL example uses `regions=uk`. We pass `regions=us,uk` for all soccer game and outright fetches so UK (and EU) bookmakers are included and soccer events return data. Sport keys (e.g. `soccer_epl`, `soccer_spain_la_liga`, `soccer_usa_mls`) match the [official sports list](https://the-odds-api.com/sports-odds-data/sports-apis.html).
 
 ## Summary
 

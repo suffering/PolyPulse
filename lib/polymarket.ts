@@ -224,7 +224,8 @@ export async function fetchSportsEvents(
 
 export async function fetchSeriesEvents(
   seriesId: string,
-  limit = 50
+  limit = 50,
+  options?: { end_date_min?: string; end_date_max?: string }
 ): Promise<PolymarketEvent[]> {
   const params = new URLSearchParams({
     series_id: seriesId,
@@ -234,6 +235,8 @@ export async function fetchSeriesEvents(
     order: "startDate",
     ascending: "true",
   });
+  if (options?.end_date_min) params.set("end_date_min", options.end_date_min);
+  if (options?.end_date_max) params.set("end_date_max", options.end_date_max);
   const res = await fetch(`${GAMMA_API_BASE}/events?${params}`);
   if (!res.ok) {
     const body = await getResponseErrorBody(res);
@@ -246,19 +249,39 @@ export async function fetchPolymarketBySport(
   sport: string
 ): Promise<PolymarketEvent[]> {
   const seriesId = SPORT_SERIES_MAP[sport];
-  if (seriesId) {
-    const seriesEvents = await fetchSeriesEvents(seriesId, 100);
-    const tagId = SPORT_TAG_MAP[sport];
-    if (tagId) {
-      const tagEvents = await fetchSportsEvents(tagId, 100);
-      return [...seriesEvents, ...tagEvents];
-    }
-    return seriesEvents;
-  }
-  
   const tagId = SPORT_TAG_MAP[sport];
+  const limit = 150;
+
+  if (seriesId) {
+    const now = new Date();
+    const weekEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const day = now.getDay();
+    const daysUntilSunday = day === 0 ? 0 : 7 - day;
+    weekEnd.setDate(weekEnd.getDate() + daysUntilSunday);
+    weekEnd.setHours(23, 59, 59, 999);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    monthEnd.setHours(23, 59, 59, 999);
+    const hasMonthWindow = weekEnd.getTime() < monthEnd.getTime();
+
+    const [seriesEvents, tagEvents, monthEvents] = await Promise.all([
+      fetchSeriesEvents(seriesId, limit),
+      tagId ? fetchSportsEvents(tagId, limit) : Promise.resolve([]),
+      hasMonthWindow
+        ? fetchSeriesEvents(seriesId, limit, {
+            end_date_min: weekEnd.toISOString(),
+            end_date_max: monthEnd.toISOString(),
+          })
+        : Promise.resolve([]),
+    ]);
+    const byId = new Map<string, PolymarketEvent>();
+    for (const e of [...seriesEvents, ...tagEvents, ...monthEvents]) {
+      byId.set(e.id, e);
+    }
+    return Array.from(byId.values());
+  }
+
   if (!tagId) return [];
-  return fetchSportsEvents(tagId, 100);
+  return fetchSportsEvents(tagId, limit);
 }
 
 /**

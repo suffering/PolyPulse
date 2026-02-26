@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { fetchOdds, getLastKnownQuotaRemaining } from "@/lib/odds-api";
+import { fetchOdds, getLastKnownQuotaRemaining, type OddsApiEvent } from "@/lib/odds-api";
 import { fetchPolymarketBySport } from "@/lib/polymarket";
-import { matchOutrights, matchH2HGames, matchSoccerH2H, matchPolymarketOnlyOutrights } from "@/lib/matching";
+import { matchOutrights, matchH2HGames, matchSoccerH2H, matchSoccerOutrights, matchPolymarketOnlyOutrights } from "@/lib/matching";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -70,6 +70,7 @@ const SPORT_CONFIG: Record<
   },
   mls: {
     oddsGameSport: "soccer_usa_mls",
+    oddsFuturesSport: "soccer_usa_mls",
     polymarketSport: "soccer_usa_mls",
     label: "Soccer",
     league: "MLS",
@@ -120,15 +121,27 @@ export async function GET(req: Request) {
   const oddsOptions = refreshOdds ? { skipCache: true } : undefined;
   const isSoccer = oddsGameSport.startsWith("soccer_");
   const gameMarkets = isSoccer ? "h2h,h2h_3_way" : "h2h";
+  // MLS (US league) is covered by US bookmakers; European soccer often needs UK. Use us for MLS, us+uk for others.
+  const soccerRegions =
+    oddsGameSport === "soccer_usa_mls" ? "us" : "us,uk";
+  const gameOddsOptions = isSoccer
+    ? { ...oddsOptions, regions: soccerRegions }
+    : oddsOptions;
+  const soccerFuturesRegions = soccerRegions;
 
   try {
     const [gameOddsResult, futuresOddsResult, polymarketEvents] = await Promise.all([
-      fetchOdds(oddsGameSport, apiKey, gameMarkets, oddsOptions).catch((e) => {
+      fetchOdds(oddsGameSport, apiKey, gameMarkets, gameOddsOptions).catch((e) => {
         console.warn("[EV API] Game odds fetch failed:", e instanceof Error ? e.message : e);
         return { events: [], quotaRemaining: undefined };
       }),
       config.oddsFuturesSport
-        ? fetchOdds(config.oddsFuturesSport, apiKey, "outrights", oddsOptions).catch((e) => {
+        ? fetchOdds(
+            config.oddsFuturesSport,
+            apiKey,
+            "outrights",
+            isSoccer ? { ...oddsOptions, regions: soccerFuturesRegions } : oddsOptions
+          ).catch((e) => {
             console.warn(
               "[EV API] Futures odds fetch failed:",
               e instanceof Error ? e.message : e
@@ -139,26 +152,49 @@ export async function GET(req: Request) {
       fetchPolymarketBySport(polymarketSport),
     ]);
 
+    // If soccer game odds came back empty, retry with only h2h (some bookmakers use h2h for 3-way)
+    let gameOddsToUse = gameOddsResult;
+    if (
+      isSoccer &&
+      gameOddsResult.events.length === 0 &&
+      gameMarkets === "h2h,h2h_3_way"
+    ) {
+      const fallback = await fetchOdds(
+        oddsGameSport,
+        apiKey,
+        "h2h",
+        gameOddsOptions
+      ).catch(() => ({ events: [] as OddsApiEvent[], quotaRemaining: undefined }));
+      if (fallback.events.length > 0) gameOddsToUse = fallback;
+    }
+
     const h2hOpportunities =
       sport === "nba" || sport === "mlb" || sport === "nhl" || sport === "tennis"
-        ? matchH2HGames(polymarketEvents, gameOddsResult.events, config.label, {
+        ? matchH2HGames(polymarketEvents, gameOddsToUse.events, config.label, {
             includeWithoutSportsbook: true,
           })
         : matchSoccerH2H(
             polymarketEvents,
-            gameOddsResult.events,
+            gameOddsToUse.events,
             config.label,
             leagueLabel || "MLS",
             { includeWithoutSportsbook: true }
           );
 
     const futuresOpportunities =
-      config.oddsFuturesSport
-        ? matchOutrights(polymarketEvents, futuresOddsResult.events, config.label)
-        : [];
+      sport === "mls" && config.oddsFuturesSport
+        ? matchSoccerOutrights(
+            polymarketEvents,
+            futuresOddsResult.events,
+            config.label,
+            leagueLabel || "MLS"
+          )
+        : config.oddsFuturesSport
+          ? matchOutrights(polymarketEvents, futuresOddsResult.events, config.label)
+          : [];
 
     const polymarketOnlyFutures =
-      sport === "mls"
+      sport === "mls" && !config.oddsFuturesSport
         ? matchPolymarketOnlyOutrights(polymarketEvents, config.label, leagueLabel)
         : [];
 
@@ -200,7 +236,7 @@ export async function GET(req: Request) {
     const quotaRemaining =
       getLastKnownQuotaRemaining() ??
       futuresOddsResult.quotaRemaining ??
-      gameOddsResult.quotaRemaining ??
+      gameOddsToUse.quotaRemaining ??
       null;
 
     return NextResponse.json({

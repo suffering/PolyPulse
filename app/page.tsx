@@ -105,7 +105,14 @@ export default function Home() {
     const lgCounts: Record<string, number> = {};
 
     for (const opp of opps) {
-      tfCounts[opp.timeframe]++;
+      // Futures tab only counts actual futures (no team-vs-team games)
+      const isFuturesOutright =
+        opp.timeframe === "futures" && opp.category !== "games" && opp.marketType !== "game";
+      if (opp.timeframe === "futures") {
+        if (isFuturesOutright) tfCounts.futures++;
+      } else {
+        tfCounts[opp.timeframe]++;
+      }
       tfCounts.all++;
       catCounts[opp.category]++;
       catCounts.all++;
@@ -113,7 +120,14 @@ export default function Home() {
     }
 
     let filtered = opps.filter((opp) => {
-      const tfMatch = timeframe === "all" || opp.timeframe === timeframe;
+      const tfMatch =
+        timeframe === "all"
+          ? true
+          : timeframe === "futures"
+            ? opp.timeframe === "futures" &&
+              opp.category !== "games" &&
+              opp.marketType !== "game"
+            : opp.timeframe === timeframe;
       const catMatch = category === "all" || opp.category === category;
       const leagueMatch =
         sport === "nba" || sport === "mlb" || sport === "nhl" || sport === "tennis"
@@ -322,27 +336,7 @@ export default function Home() {
               </div>
             </div>
 
-            {sport === "nba" || sport === "mlb" || sport === "nhl" || sport === "tennis" ? (
-              <div>
-                <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Category</p>
-                <div className="flex flex-wrap gap-2">
-                  {categoriesWithCounts.map((cat) => (
-                    <button
-                      key={cat}
-                      onClick={() => setCategory(cat)}
-                      className={`px-3 py-1.5 rounded-md font-mono text-sm border transition-colors ${
-                        category === cat
-                          ? "bg-amber-500/20 text-amber-400 border-amber-500/50"
-                          : "bg-slate-800/50 text-slate-400 border-slate-600 hover:border-slate-500"
-                      }`}
-                    >
-                      {cat === "all" ? "All" : getMarketCategoryLabel(cat)} (
-                      {cat === "all" ? opportunities.length : categoryCounts[cat]})
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : (
+            {sport === "mls" ? (
               <div>
                 <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">League</p>
                 <div className="flex flex-wrap gap-2">
@@ -361,7 +355,7 @@ export default function Home() {
                   ))}
                 </div>
               </div>
-            )}
+            ) : null}
 
             <div>
               <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Sort by</p>
@@ -418,7 +412,7 @@ export default function Home() {
 
         <footer className="mt-12 pt-6 border-t border-slate-800 text-xs text-slate-600">
           <p>
-            EV% = (Expected Value / Stake) × 100. Excellent: ≥5%, Good: 2-5%, Marginal: 0-2%.
+            EV% = (sharp implied prob − Polymarket price) / Polymarket price × 100. +EV when sharp prob &gt; Polymarket price. Expected profit = $100 × (sharp prob / PM price − 1). Excellent: ≥5%, Good: 2-5%, Marginal: 0-2%.
           </p>
           <p className="mt-1">
             Odds API cached 5min. Polymarket refreshed every 60s. ~16 Odds API requests/day max.

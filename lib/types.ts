@@ -96,29 +96,29 @@ export function getTimeframe(endDate: string | null): Timeframe {
   try {
     const now = new Date();
     const eventDate = new Date(endDate);
-    
+
     if (eventDate < now) return "all";
-    
+
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const todayEnd = new Date(todayStart);
     todayEnd.setDate(todayEnd.getDate() + 1);
-    
+
     if (eventDate >= todayStart && eventDate < todayEnd) return "today";
-    
+
+    // End of this week (Sunday 23:59) so "This Month" can be non-empty
     const currentDay = now.getDay();
-    const daysUntilSunday = currentDay === 0 ? 6 : (7 - currentDay);
-    const thisWeekEnd = new Date(Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate() + daysUntilSunday + 1
-    ));
-    
-    if (eventDate < thisWeekEnd) return "week";
-    
-    const thisMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    
-    if (eventDate < thisMonthEnd) return "month";
-    
+    const daysUntilSunday = currentDay === 0 ? 0 : (7 - currentDay);
+    const thisWeekEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntilSunday);
+    thisWeekEnd.setHours(23, 59, 59, 999);
+
+    if (eventDate <= thisWeekEnd) return "week";
+
+    // End of current month
+    const thisMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    thisMonthEnd.setHours(23, 59, 59, 999);
+
+    if (eventDate <= thisMonthEnd) return "month";
+
     return "futures";
   } catch {
     return "all";

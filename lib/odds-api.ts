@@ -65,16 +65,22 @@ const OUTRIGHTS_SPORTS = [
   "icehockey_nhl_championship_winner",
 ];
 
+/**
+ * Fetch odds from The Odds API (v4).
+ * @param regions - Comma-delimited bookmaker regions (e.g. "us", "us,uk"). Soccer leagues
+ *   often have little or no coverage in "us" alone; use "us,uk" for soccer to include UK/EU bookmakers.
+ */
 export async function fetchOdds(
   sport: string,
   apiKey: string,
   markets?: string,
-  options?: { skipCache?: boolean }
+  options?: { skipCache?: boolean; regions?: string }
 ): Promise<{ events: OddsApiEvent[]; quotaRemaining?: number }> {
   const defaultMarkets = OUTRIGHTS_SPORTS.includes(sport) ? "outrights" : "h2h,totals";
   const marketsParam = markets || defaultMarkets;
+  const regionsParam = options?.regions ?? "us";
 
-  const cacheKey = `odds:${sport}:${marketsParam}`;
+  const cacheKey = `odds:${sport}:${marketsParam}:${regionsParam}`;
   if (!options?.skipCache) {
     const cached = cache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
@@ -84,7 +90,7 @@ export async function fetchOdds(
     }
   }
 
-  const url = `${ODDS_API_BASE}/sports/${sport}/odds?regions=us&markets=${marketsParam}&oddsFormat=american&apiKey=${apiKey}`;
+  const url = `${ODDS_API_BASE}/sports/${sport}/odds?regions=${encodeURIComponent(regionsParam)}&markets=${encodeURIComponent(marketsParam)}&oddsFormat=american&apiKey=${apiKey}`;
   let res: Response | null = null;
   for (let attempt = 0; attempt <= RATE_LIMIT_RETRY_DELAYS_MS.length; attempt++) {
     res = await fetch(url);

@@ -15,9 +15,9 @@ export function americanToDecimal(americanOdds: number): number {
 }
 
 /**
- * American odds to implied probability (0–1).
- * Positive: 100 / (odds + 100)
- * Negative: |odds| / (|odds| + 100)
+ * Sharp book American odds to implied probability (no-vig), 0–1.
+ * Positive odds: implied = 100 / (odds + 100)
+ * Negative odds: implied = |odds| / (|odds| + 100)
  */
 export function americanToImpliedProbability(americanOdds: number): number {
   if (americanOdds > 0) {
@@ -51,17 +51,17 @@ export function getPolymarketProfitIfWin(
 }
 
 /**
- * Positive EV when Polymarket odds are better than the sportsbook (Polymarket edge).
+ * +EV when sharp book implied probability is HIGHER than Polymarket's price:
+ * Polymarket is offering better payout odds than the sharp book believes the true probability warrants.
  *
- * Better odds = lower price for the same $1 payout = lower implied probability.
- * - Polymarket implied prob = polymarket price (0–1). On Polymarket, price = probability.
- * - Sportsbook implied prob = from American odds (The Odds API).
+ * Formulas (consistent for every sport, league, category, timeframe):
+ * - Sharp implied prob: negative American → |odds|/(|odds|+100); positive → 100/(odds+100).
+ * - EV% = (sharpImpliedProb - polymarketProb) / polymarketProb (as decimal; ×100 for display).
+ * - Polymarket payout on a win = (1/polymarketProb - 1) per dollar staked.
+ * - Expected profit = (sharpImpliedProb × polymarketPayout × stake) - ((1 - sharpImpliedProb) × stake)
+ *   = stake × (sharpImpliedProb / polymarketProb - 1).
  *
- * EV% = (Sportsbook implied prob) − (Polymarket implied prob), in percentage points.
- * - When EV% > 0: Polymarket is cheaper than the book → +EV on Polymarket (show this).
- * - When EV% < 0: Sportsbook is cheaper than Polymarket → no Polymarket edge (do not show as +EV).
- *
- * Polymarket price: pass as decimal 0–1 (e.g. 0.135 for 13.5¢) or 0–100; both accepted.
+ * Polymarket price: decimal 0–1 (e.g. 0.33 for 33¢) or 0–100; both accepted.
  */
 export function calculateEV(
   stake: number,
@@ -81,15 +81,29 @@ export function calculateEV(
     Math.min(1, raw > 1 ? raw / 100 : raw)
   );
 
-  // Polymarket edge: positive when Polymarket price is lower than book (PM implied prob < book)
-  let evPercentage = (bookImpliedProb - polymarketImpliedProb) * 100;
+  if (polymarketImpliedProb <= 0) {
+    return {
+      ev: 0,
+      evPercentage: 0,
+      potentialProfit: 0,
+      expectedProfit: 0,
+      bookImpliedProb,
+    };
+  }
 
-  // Clamp to sensible range for display (do not zero out negative EV)
-  if (evPercentage > 100) evPercentage = 100;
+  // EV% = (sharpImpliedProb - polymarketProb) / polymarketProb (×100 for percentage)
+  let evPercentage = (bookImpliedProb - polymarketImpliedProb) / polymarketImpliedProb * 100;
+
+  // Clamp to sensible display range (do not zero out negative EV)
+  if (evPercentage > 500) evPercentage = 500;
   if (evPercentage < -100) evPercentage = -100;
 
+  // Profit if win: $100 stake → (1/p - 1) per dollar → stake * (1/p - 1)
   const potentialProfit = getPolymarketProfitIfWin(stake, polymarketImpliedProb);
-  const expectedProfit = stake * (evPercentage / 100);
+
+  // Expected profit = (sharpImpliedProb * polymarketPayout * stake) - ((1 - sharpImpliedProb) * stake)
+  // = stake * (sharpImpliedProb / polymarketImpliedProb - 1)
+  const expectedProfit = stake * (bookImpliedProb / polymarketImpliedProb - 1);
   const ev = expectedProfit;
 
   return {
