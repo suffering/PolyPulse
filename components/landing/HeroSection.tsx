@@ -3,19 +3,18 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { ArrowRight, TrendingUp, Activity } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface Stats {
   totalVolume: number;
   weeklyVolume: number;
 }
 
-interface EVOpportunity {
+interface TrendingMarket {
   id: string;
-  title: string;
-  evPercent: number;
-  polyPrice: number;
-  sport: string;
+  question: string;
+  volume24h: number;
+  liquidity: number;
+  yesPrice: number;
 }
 
 async function fetchStats(): Promise<Stats> {
@@ -32,21 +31,31 @@ async function fetchStats(): Promise<Stats> {
   };
 }
 
-async function fetchTopEV(): Promise<EVOpportunity[]> {
-  const res = await fetch("/api/ev?sport=nba");
+async function fetchTrendingMarkets(): Promise<TrendingMarket[]> {
+  const res = await fetch("/api/markets?limit=5");
   if (!res.ok) return [];
   const data = await res.json();
   
-  return (data.opportunities || [])
-    .filter((opp: any) => opp.evPercent > 0)
+  return (data.markets || [])
     .slice(0, 3)
-    .map((opp: any) => ({
-      id: opp.id,
-      title: opp.polymarketTitle || opp.question || "Market",
-      evPercent: opp.evPercent || 0,
-      polyPrice: opp.polyPrice || 0.5,
-      sport: opp.sport || "Sports",
-    }));
+    .map((m: any) => {
+      // Parse outcome prices to get Yes price
+      let yesPrice = 0.5;
+      try {
+        const prices = JSON.parse(m.outcomePrices || "[]");
+        if (prices.length > 0) yesPrice = parseFloat(prices[0]) || 0.5;
+      } catch {
+        yesPrice = 0.5;
+      }
+      
+      return {
+        id: m.id || m.conditionId,
+        question: m.question || m.groupItemTitle || "Market",
+        volume24h: m.volume24hr || m.volume24h || 0,
+        liquidity: m.liquidityNum || m.liquidity || 0,
+        yesPrice,
+      };
+    });
 }
 
 function formatVolume(volume: number): string {
@@ -68,29 +77,25 @@ function StatCard({ label, value, icon: Icon }: { label: string; value: string; 
   );
 }
 
-function EVPreviewCard({ opportunity }: { opportunity: EVOpportunity }) {
+function MarketPreviewCard({ market }: { market: TrendingMarket }) {
   return (
     <div className="p-2 bg-card border border-border rounded-lg hover:border-primary/30 transition-colors duration-150 card-hover">
-      <div className="flex items-start justify-between gap-2 mb-1">
-        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-          {opportunity.sport}
-        </span>
-        <span
-          className={cn(
-            "text-xs font-mono font-semibold px-1 py-0.5 rounded",
-            opportunity.evPercent >= 5
-              ? "bg-success/20 text-success"
-              : opportunity.evPercent >= 2
-              ? "bg-primary/20 text-primary"
-              : "bg-warning/20 text-warning"
-          )}
-        >
-          +{opportunity.evPercent.toFixed(1)}% EV
-        </span>
-      </div>
-      <p className="text-sm text-foreground line-clamp-2 mb-1">{opportunity.title}</p>
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <span>Poly: {(opportunity.polyPrice * 100).toFixed(0)}c</span>
+      <p className="text-sm text-foreground line-clamp-2 mb-1.5">{market.question}</p>
+      <div className="flex items-center justify-between text-xs">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <span className="font-mono">Yes: {(market.yesPrice * 100).toFixed(0)}c</span>
+          <span className="text-border">|</span>
+          <span className="font-mono">No: {((1 - market.yesPrice) * 100).toFixed(0)}c</span>
+        </div>
+        {market.volume24h > 0 && (
+          <span className="text-success font-mono">
+            ${market.volume24h >= 1000000 
+              ? `${(market.volume24h / 1000000).toFixed(1)}M` 
+              : market.volume24h >= 1000 
+                ? `${(market.volume24h / 1000).toFixed(0)}K` 
+                : market.volume24h.toFixed(0)} vol
+          </span>
+        )}
       </div>
     </div>
   );
@@ -103,9 +108,9 @@ export function HeroSection() {
     staleTime: 60000,
   });
 
-  const { data: topEV } = useQuery({
-    queryKey: ["hero-ev"],
-    queryFn: fetchTopEV,
+  const { data: trendingMarkets } = useQuery({
+    queryKey: ["hero-trending"],
+    queryFn: fetchTrendingMarkets,
     staleTime: 60000,
   });
 
@@ -167,25 +172,25 @@ export function HeroSection() {
             </div>
           </div>
 
-          {/* Right side - EV Preview Cards */}
+          {/* Right side - Trending Markets */}
           <div className="lg:pl-6">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-sm font-medium text-foreground">Top +EV Opportunities</h2>
+              <h2 className="text-sm font-medium text-foreground">Trending Markets</h2>
               <Link
-                href="/ev"
+                href="/extradata"
                 className="text-xs text-primary hover:text-primary/80 transition-colors"
               >
                 View all
               </Link>
             </div>
             <div className="space-y-2">
-              {topEV && topEV.length > 0 ? (
-                topEV.map((opp) => <EVPreviewCard key={opp.id} opportunity={opp} />)
+              {trendingMarkets && trendingMarkets.length > 0 ? (
+                trendingMarkets.map((market) => <MarketPreviewCard key={market.id} market={market} />)
               ) : (
                 <>
-                  <div className="h-[80px] bg-card border border-border rounded-lg animate-pulse" />
-                  <div className="h-[80px] bg-card border border-border rounded-lg animate-pulse" />
-                  <div className="h-[80px] bg-card border border-border rounded-lg animate-pulse" />
+                  <div className="h-[72px] bg-card border border-border rounded-lg animate-pulse" />
+                  <div className="h-[72px] bg-card border border-border rounded-lg animate-pulse" />
+                  <div className="h-[72px] bg-card border border-border rounded-lg animate-pulse" />
                 </>
               )}
             </div>
