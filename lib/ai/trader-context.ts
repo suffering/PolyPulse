@@ -158,10 +158,10 @@ export function collectTraderContext(input: CollectTraderContextInput): TraderCo
   const nowMs = Date.now();
   type PositionLike = Record<string, unknown>;
   const trueOpenPositions = openPositions.filter((p) => {
-    const curPrice = Number(p.curPrice ?? 0);
-    const currentValue = Number(p.currentValue ?? p.size * p.curPrice ?? 0);
+    const curPrice = Number(p.curPrice);
+    const currentValue = Number(p.currentValue);
 
-    const pos = p as PositionLike;
+    const pos = p as unknown as PositionLike;
     const endDateRaw =
       pos?.endDate ||
       pos?.closeTime ||
@@ -185,11 +185,11 @@ export function collectTraderContext(input: CollectTraderContextInput): TraderCo
   });
 
   const openPositionsMapped = trueOpenPositions.map((p) => {
-    const avgPriceCents = (p.avgPrice ?? 0) * 100;
-    const curPriceCents = (p.curPrice ?? 0) * 100;
-    const shares = p.size ?? 0;
-    const currentValue = p.currentValue ?? p.size * p.curPrice ?? 0;
-    const unrealized = p.cashPnl ?? 0;
+    const avgPriceCents = p.avgPrice * 100;
+    const curPriceCents = p.curPrice * 100;
+    const shares = p.size;
+    const currentValue = p.currentValue;
+    const unrealized = p.cashPnl;
     const percent =
       p.percentPnl !== undefined && p.percentPnl !== null
         ? Number(p.percentPnl)

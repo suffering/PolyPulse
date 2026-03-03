@@ -6,6 +6,15 @@ const IV_LENGTH = 12;
 const KEY_LENGTH = 256;
 const TAG_LENGTH = 128;
 
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  // WebCrypto types in TS expect ArrayBuffer-backed BufferSource.
+  if (bytes.buffer instanceof ArrayBuffer) {
+    return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+  }
+  // Fallback: copy into an ArrayBuffer-backed Uint8Array
+  return Uint8Array.from(bytes).buffer;
+}
+
 function getStoragePassword(): string {
   if (typeof window === "undefined") return "default";
   const ua = navigator.userAgent;
@@ -25,7 +34,7 @@ async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey>
   return crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
-      salt,
+      salt: toArrayBuffer(salt),
       iterations: PBKDF2_ITERATIONS,
       hash: "SHA-256",
     },
@@ -44,7 +53,7 @@ export async function encrypt(data: string, password: string): Promise<string> {
   const cipher = await crypto.subtle.encrypt(
     {
       name: "AES-GCM",
-      iv,
+      iv: toArrayBuffer(iv),
       tagLength: TAG_LENGTH,
     },
     key,
@@ -54,7 +63,11 @@ export async function encrypt(data: string, password: string): Promise<string> {
   combined.set(salt, 0);
   combined.set(iv, salt.length);
   combined.set(new Uint8Array(cipher), salt.length + iv.length);
-  return btoa(String.fromCharCode(...combined));
+  let binary = "";
+  for (let i = 0; i < combined.length; i++) {
+    binary += String.fromCharCode(combined[i] ?? 0);
+  }
+  return btoa(binary);
 }
 
 export async function decrypt(encrypted: string, password: string): Promise<string> {
@@ -66,11 +79,11 @@ export async function decrypt(encrypted: string, password: string): Promise<stri
   const dec = await crypto.subtle.decrypt(
     {
       name: "AES-GCM",
-      iv,
+      iv: toArrayBuffer(iv),
       tagLength: TAG_LENGTH,
     },
     key,
-    cipher
+    toArrayBuffer(cipher)
   );
   return new TextDecoder().decode(dec);
 }

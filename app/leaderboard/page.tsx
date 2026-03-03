@@ -93,18 +93,30 @@ export default function LeaderboardPage() {
 
     const sorted = [...remaining];
     sorted.sort((a, b) => {
-      let aVal: string | number | undefined = (a as Record<string, unknown>)[sortColumn] as string | number | undefined;
-      let bVal: string | number | undefined = (b as Record<string, unknown>)[sortColumn] as string | number | undefined;
+      const aVal: string | number | undefined = (a as unknown as Record<string, unknown>)[sortColumn] as string | number | undefined;
+      const bVal: string | number | undefined = (b as unknown as Record<string, unknown>)[sortColumn] as string | number | undefined;
 
       if (sortColumn === "userName") {
-        aVal = aVal || a.proxyWallet;
-        bVal = bVal || b.proxyWallet;
+        const aStr = String(aVal || a.proxyWallet || "");
+        const bStr = String(bVal || b.proxyWallet || "");
         return sortDirection === "asc"
-          ? aVal.localeCompare(bVal)
-          : bVal.localeCompare(aVal);
+          ? aStr.localeCompare(bStr)
+          : bStr.localeCompare(aStr);
       }
 
-      return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+      const aNum =
+        typeof aVal === "number"
+          ? aVal
+          : typeof aVal === "string"
+            ? parseFloat(aVal) || 0
+            : 0;
+      const bNum =
+        typeof bVal === "number"
+          ? bVal
+          : typeof bVal === "string"
+            ? parseFloat(bVal) || 0
+            : 0;
+      return sortDirection === "asc" ? aNum - bNum : bNum - aNum;
     });
 
     return sorted;

@@ -5,15 +5,15 @@ import { usePathname } from "next/navigation";
 import { AiChatPanel, type BuildContextResult } from "@/components/ai/AiChatPanel";
 import { usePageAiState } from "@/components/ai/PageAiContext";
 import { getCurrentPageContext } from "@/lib/ai/pageContextCollectors";
-import { collectTraderContext } from "@/lib/ai/trader-context";
+import { collectTraderContext, type CollectTraderContextInput } from "@/lib/ai/trader-context";
 
 function isTraderState(value: unknown): value is { walletAddress: string; openPositions: unknown; trades: unknown } {
+  if (!value || typeof value !== "object") return false;
+  const v = value as Record<string, unknown>;
   return (
-    value &&
-    typeof value === "object" &&
-    typeof value.walletAddress === "string" &&
-    "openPositions" in value &&
-    "trades" in value
+    typeof v.walletAddress === "string" &&
+    "openPositions" in v &&
+    "trades" in v
   );
 }
 
@@ -152,11 +152,25 @@ export function UniversalAiAssistant() {
       const mode: "active" | "closed" = isAskingAboutClosed(userMessage) ? "closed" : "active";
 
       const context = trader
-        ? collectTraderContext({
-            ...(trader as { walletAddress: string; openPositions: unknown; trades: unknown }),
-            mode,
-            dataCollectedAt: new Date().toISOString(),
-          })
+        ? (() => {
+            const t = trader as unknown as Record<string, unknown>;
+            const input: CollectTraderContextInput = {
+              walletAddress: trader.walletAddress,
+              profile: t["profile"] as CollectTraderContextInput["profile"],
+              stats: t["stats"] as CollectTraderContextInput["stats"],
+              pnl: t["pnl"] as CollectTraderContextInput["pnl"],
+              timeRange: (t["timeRange"] as CollectTraderContextInput["timeRange"] | undefined) ?? "1W",
+              openPositions: Array.isArray(t["openPositions"])
+                ? (t["openPositions"] as unknown as CollectTraderContextInput["openPositions"])
+                : [],
+              trades: Array.isArray(t["trades"])
+                ? (t["trades"] as unknown as CollectTraderContextInput["trades"])
+                : [],
+              mode,
+              dataCollectedAt: new Date().toISOString(),
+            };
+            return collectTraderContext(input);
+          })()
         : { dataCollectedAt: new Date().toISOString(), page: "trader", note: "No trader data published yet." };
 
       return { context, pathname };
@@ -170,14 +184,11 @@ export function UniversalAiAssistant() {
       if (cached && cached.filterSig === filterSig && now - cached.collectedAt < 60_000) {
         return { context: cached.context, pathname };
       }
-      const ctx = getCurrentPageContext(pathname, pageAiState.state);
+      const ctx = getCurrentPageContext(
+        pathname,
+        pageAiState.state as Parameters<typeof getCurrentPageContext>[1]
+      );
       leaderboardCacheRef.current = { filterSig, collectedAt: now, context: ctx };
-    // EV page: sport detection — inject only relevant sport(s) or summary to stay within context limits
-    if ((pathname === "/" || pathname.includes("ev")) && pageAiState.kind === "ev") {
-      const ctx = buildEVContextForMessage(pageAiState.state as EvPageState, userMessage);
-      return { context: ctx, pathname };
-    }
-
       return { context: ctx, pathname };
     }
 
@@ -185,7 +196,10 @@ export function UniversalAiAssistant() {
     const ctx =
       pageAiState.kind === "none"
         ? { dataCollectedAt: new Date().toISOString(), page: "unknown", note: "No page data published yet." }
-        : getCurrentPageContext(pathname, pageAiState.state);
+        : getCurrentPageContext(
+            pathname,
+            pageAiState.state as Parameters<typeof getCurrentPageContext>[1]
+          );
 
     return { context: ctx, pathname };
   };

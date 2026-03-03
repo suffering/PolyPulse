@@ -105,8 +105,10 @@ export default function CreatorsPage() {
         aVal = a.name.toLowerCase();
         bVal = b.name.toLowerCase();
       } else {
-        aVal = (a as Record<string, unknown>)[sortKey] ?? 0;
-        bVal = (b as Record<string, unknown>)[sortKey] ?? 0;
+        const aRaw = (a as unknown as Record<string, unknown>)[sortKey];
+        const bRaw = (b as unknown as Record<string, unknown>)[sortKey];
+        aVal = typeof aRaw === "number" || typeof aRaw === "string" ? aRaw : 0;
+        bVal = typeof bRaw === "number" || typeof bRaw === "string" ? bRaw : 0;
       }
 
       if (typeof aVal === "string" && typeof bVal === "string") {

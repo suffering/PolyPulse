@@ -8,6 +8,8 @@ import type {
 import {
   detectSportsFromMessage,
   opportunitySportToKey,
+  SPORT_KEYS,
+  SPORT_LABELS,
   type EvSportKey,
 } from "@/lib/ai/evSportDetection";
 
@@ -37,6 +39,8 @@ export type EvPageState = {
   displayed: MatchedOpportunity[];
   /** Full list for the current sport before filters */
   allForCurrentSport: MatchedOpportunity[];
+  /** Optional full EV dataset (all sports) for AI sport-detection summaries */
+  allEVDataForAI?: MatchedOpportunity[];
   quotaRemaining: number | null;
   oddsLastUpdated: string | null;
 };
@@ -157,7 +161,7 @@ export function collectEVPageContext(state: EvPageState) {
  * Build EV context for the AI using sport detection on the user's message.
  * Injects only relevant sport(s) data to stay within context limits; if no sport detected, injects summary only.
  */
-export function buildEVContextForMessage(state: EvPageState, userMessage: string): ReturnType<typeof collectEVPageContext> {
+export function buildEVContextForMessage(state: EvPageState, userMessage: string): unknown {
   const fullDataset = state.allEVDataForAI && state.allEVDataForAI.length > 0
     ? state.allEVDataForAI
     : (state.allForCurrentSport ?? state.displayed);

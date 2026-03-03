@@ -69,7 +69,7 @@ export function PnLChart({ data, isLoading, currentPnl }: PnLChartProps) {
             borderRadius: "6px",
             color: "#e2e8f0",
           }}
-          formatter={(value: number) => formatCurrency(value)}
+          formatter={(value) => formatCurrency(Number(value ?? 0))}
         />
         <Area
           type="monotone"

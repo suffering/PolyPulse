@@ -205,7 +205,7 @@ export function normalizeTeamName(name: string): string {
 function normalizeSoccerTeamName(name: string): string {
   const accentFolded = name
     .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "");
+    .replace(/[\u0300-\u036f]/g, "");
   return normalizeTeamName(accentFolded)
     .replace(/\bfc\b/g, "")
     .replace(/\bcf\b/g, "")

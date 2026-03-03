@@ -1,12 +1,13 @@
 import { buildSystemPrompt, type TraderContext } from "@/lib/ai/trader-context";
 
 function isTraderContext(value: unknown): value is TraderContext {
+  if (!value || typeof value !== "object") return false;
+  const v = value as Record<string, unknown>;
   return (
-    value &&
-    typeof value === "object" &&
-    typeof value.walletAddress === "string" &&
-    typeof value.dataCollectedAt === "string" &&
-    typeof value.profile === "object"
+    typeof v.walletAddress === "string" &&
+    typeof v.dataCollectedAt === "string" &&
+    typeof v.profile === "object" &&
+    v.profile !== null
   );
 }
 

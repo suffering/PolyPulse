@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { TraderProfileHeader } from "@/components/TraderProfileHeader";
 import { PnLChart } from "@/components/PnLChart";
@@ -52,6 +52,14 @@ function isAddress(value: string): boolean {
 }
 
 export default function SearchPage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-[#0d1117] text-slate-200 font-mono" />}>
+      <SearchPageInner />
+    </Suspense>
+  );
+}
+
+function SearchPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 

@@ -26,6 +26,8 @@ export interface PolymarketMarket {
   teamBID?: string;
   gameStartTime?: string;
   gameId?: string;
+  /** Some Gamma responses include volume at the market level. */
+  volume?: number | string;
   volumeNum?: number;
   volume24h?: number;
   /** Some Gamma responses use volume24hr; treat as equivalent to volume24h when present. */

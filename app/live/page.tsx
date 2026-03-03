@@ -17,6 +17,18 @@ type Trade = {
   proxyWallet: string;
 };
 
+type LiveTradeRaw = {
+  transactionHash?: unknown;
+  outcomeIndex?: unknown;
+  timestamp?: unknown;
+  size?: unknown;
+  title?: unknown;
+  side?: unknown;
+  outcome?: unknown;
+  price?: unknown;
+  proxyWallet?: unknown;
+};
+
 const MAX_ROWS = 100;
 
 export default function LivePage() {
@@ -51,20 +63,21 @@ export default function LivePage() {
         const newTrades: Trade[] = [];
 
         for (const raw of data) {
-          const key = `${raw.transactionHash ?? ""}-${raw.outcomeIndex ?? ""}-${raw.timestamp ?? ""}-${raw.size ?? ""}`;
+          const r = raw as LiveTradeRaw;
+          const key = `${r.transactionHash ?? ""}-${r.outcomeIndex ?? ""}-${r.timestamp ?? ""}-${r.size ?? ""}`;
           if (!key || seen.has(key)) continue;
           seen.add(key);
 
           newTrades.push({
             id: key,
-            timestamp: Number(raw.timestamp ?? 0),
-            title: String(raw.title ?? "N/A"),
-            side: raw.side === "SELL" ? "SELL" : "BUY",
-            outcome: String(raw.outcome ?? "N/A"),
-            price: Number(raw.price ?? 0),
-            size: Number(raw.size ?? 0),
-            dollarValue: Number(raw.price ?? 0) * Number(raw.size ?? 0),
-            proxyWallet: String(raw.proxyWallet ?? "N/A"),
+            timestamp: Number(r.timestamp ?? 0),
+            title: String(r.title ?? "N/A"),
+            side: r.side === "SELL" ? "SELL" : "BUY",
+            outcome: String(r.outcome ?? "N/A"),
+            price: Number(r.price ?? 0),
+            size: Number(r.size ?? 0),
+            dollarValue: Number(r.price ?? 0) * Number(r.size ?? 0),
+            proxyWallet: String(r.proxyWallet ?? "N/A"),
           });
         }
 

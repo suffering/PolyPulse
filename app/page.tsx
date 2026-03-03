@@ -6,7 +6,7 @@ import { EVCard } from "@/components/EVCard";
 import { QuotaTracker } from "@/components/QuotaTracker";
 import type { MatchedOpportunity } from "@/lib/matching";
 import type { Timeframe, MarketCategory } from "@/lib/types";
-import { getTimeframeLabel, getMarketCategoryLabel } from "@/lib/types";
+import { getTimeframeLabel } from "@/lib/types";
 import { useSetPageAiState } from "@/components/ai/PageAiContext";
 
 type UiSport = "nba" | "mls" | "mlb" | "nhl" | "tennis";
@@ -80,7 +80,7 @@ export default function Home() {
   const opportunities: MatchedOpportunity[] = data?.opportunities ?? [];
   const quotaRemaining = data?.quotaRemaining ?? null;
 
-  const { filtered, timeframeCounts, categoryCounts } = useMemo(() => {
+  const { filtered, timeframeCounts } = useMemo(() => {
     const opps: MatchedOpportunity[] = data?.opportunities ?? [];
     const tfCounts: Record<Timeframe, number> = {
       today: 0,
@@ -88,19 +88,6 @@ export default function Home() {
       month: 0,
       futures: 0,
       all: 0,
-    };
-    const catCounts: Record<MarketCategory | "all", number> = {
-      all: 0,
-      championship: 0,
-      conference: 0,
-      division: 0,
-      mvp: 0,
-      awards: 0,
-      playoffs: 0,
-      games: 0,
-      win_totals: 0,
-      stat_leaders: 0,
-      other: 0,
     };
     const lgCounts: Record<string, number> = {};
 
@@ -114,8 +101,6 @@ export default function Home() {
         tfCounts[opp.timeframe]++;
       }
       tfCounts.all++;
-      catCounts[opp.category]++;
-      catCounts.all++;
       if (opp.league) lgCounts[opp.league] = (lgCounts[opp.league] ?? 0) + 1;
     }
 
@@ -138,25 +123,8 @@ export default function Home() {
 
     filtered = sortOpportunities(filtered, sort);
 
-    return { filtered, timeframeCounts: tfCounts, categoryCounts: catCounts };
+    return { filtered, timeframeCounts: tfCounts };
   }, [data?.opportunities, timeframe, category, league, sort, sport]);
-
-  const categoriesWithCounts = useMemo(() => {
-    const cats: (MarketCategory | "all")[] = [
-      "all",
-      "championship",
-      "conference",
-      "division",
-      "mvp",
-      "awards",
-      "playoffs",
-      "games",
-      "win_totals",
-      "stat_leaders",
-      "other",
-    ];
-    return cats.filter((c) => c === "all" || categoryCounts[c] > 0);
-  }, [categoryCounts]);
 
   useEffect(() => {
     setPageAiState({
