@@ -9,12 +9,12 @@ interface Stats {
   weeklyVolume: number;
 }
 
-interface TrendingMarket {
+interface TrendingEvent {
   id: string;
-  question: string;
-  volume24h: number;
+  title: string;
+  volume: number;
   liquidity: number;
-  yesPrice: number;
+  slug: string | null;
 }
 
 async function fetchStats(): Promise<Stats> {
@@ -31,31 +31,22 @@ async function fetchStats(): Promise<Stats> {
   };
 }
 
-async function fetchTrendingMarkets(): Promise<TrendingMarket[]> {
-  const res = await fetch("/api/markets?limit=5");
+async function fetchTrendingEvents(): Promise<TrendingEvent[]> {
+  // Use /api/markets/events which returns active events sorted by volume (highest first)
+  const res = await fetch("/api/markets/events?limit=5");
   if (!res.ok) return [];
   const data = await res.json();
   
-  return (data.markets || [])
+  // API returns events sorted by volume descending, all active/non-closed
+  return (data.events || [])
     .slice(0, 3)
-    .map((m: any) => {
-      // Parse outcome prices to get Yes price
-      let yesPrice = 0.5;
-      try {
-        const prices = JSON.parse(m.outcomePrices || "[]");
-        if (prices.length > 0) yesPrice = parseFloat(prices[0]) || 0.5;
-      } catch {
-        yesPrice = 0.5;
-      }
-      
-      return {
-        id: m.id || m.conditionId,
-        question: m.question || m.groupItemTitle || "Market",
-        volume24h: m.volume24hr || m.volume24h || 0,
-        liquidity: m.liquidityNum || m.liquidity || 0,
-        yesPrice,
-      };
-    });
+    .map((e: any) => ({
+      id: e.id,
+      title: e.title || "Market",
+      volume: typeof e.volume === "string" ? parseFloat(e.volume) || 0 : (e.volume || 0),
+      liquidity: typeof e.liquidity === "string" ? parseFloat(e.liquidity) || 0 : (e.liquidity || 0),
+      slug: e.slug || null,
+    }));
 }
 
 function formatVolume(volume: number): string {
@@ -77,27 +68,30 @@ function StatCard({ label, value, icon: Icon }: { label: string; value: string; 
   );
 }
 
-function MarketPreviewCard({ market }: { market: TrendingMarket }) {
+function EventPreviewCard({ event }: { event: TrendingEvent }) {
+  const polyUrl = event.slug 
+    ? `https://polymarket.com/event/${event.slug}` 
+    : `https://polymarket.com/event/${event.id}`;
+  
   return (
-    <div className="p-2 bg-card border border-border rounded-lg hover:border-primary/30 transition-colors duration-150 card-hover">
-      <p className="text-sm text-foreground line-clamp-2 mb-1.5">{market.question}</p>
+    <a 
+      href={polyUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block p-2 bg-card border border-border rounded-lg hover:border-primary/30 transition-colors duration-150 card-hover"
+    >
+      <p className="text-sm text-foreground line-clamp-2 mb-1.5">{event.title}</p>
       <div className="flex items-center justify-between text-xs">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <span className="font-mono">Yes: {(market.yesPrice * 100).toFixed(0)}c</span>
-          <span className="text-border">|</span>
-          <span className="font-mono">No: {((1 - market.yesPrice) * 100).toFixed(0)}c</span>
-        </div>
-        {market.volume24h > 0 && (
+        <span className="text-muted-foreground font-mono">
+          OI: {formatVolume(event.liquidity)}
+        </span>
+        {event.volume > 0 && (
           <span className="text-success font-mono">
-            ${market.volume24h >= 1000000 
-              ? `${(market.volume24h / 1000000).toFixed(1)}M` 
-              : market.volume24h >= 1000 
-                ? `${(market.volume24h / 1000).toFixed(0)}K` 
-                : market.volume24h.toFixed(0)} vol
+            {formatVolume(event.volume)} vol
           </span>
         )}
       </div>
-    </div>
+    </a>
   );
 }
 
@@ -108,9 +102,9 @@ export function HeroSection() {
     staleTime: 60000,
   });
 
-  const { data: trendingMarkets } = useQuery({
-    queryKey: ["hero-trending"],
-    queryFn: fetchTrendingMarkets,
+  const { data: trendingEvents } = useQuery({
+    queryKey: ["hero-trending-events"],
+    queryFn: fetchTrendingEvents,
     staleTime: 60000,
   });
 
@@ -172,10 +166,10 @@ export function HeroSection() {
             </div>
           </div>
 
-          {/* Right side - Trending Markets */}
+          {/* Right side - Trending Events */}
           <div className="lg:pl-6">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-sm font-medium text-foreground">Trending Markets</h2>
+              <h2 className="text-sm font-medium text-foreground">Hot Markets</h2>
               <Link
                 href="/extradata"
                 className="text-xs text-primary hover:text-primary/80 transition-colors"
@@ -184,8 +178,8 @@ export function HeroSection() {
               </Link>
             </div>
             <div className="space-y-2">
-              {trendingMarkets && trendingMarkets.length > 0 ? (
-                trendingMarkets.map((market) => <MarketPreviewCard key={market.id} market={market} />)
+              {trendingEvents && trendingEvents.length > 0 ? (
+                trendingEvents.map((event) => <EventPreviewCard key={event.id} event={event} />)
               ) : (
                 <>
                   <div className="h-[72px] bg-card border border-border rounded-lg animate-pulse" />
