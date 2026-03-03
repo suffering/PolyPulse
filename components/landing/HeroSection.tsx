@@ -2,11 +2,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { ArrowRight, TrendingUp, BarChart3, Activity } from "lucide-react";
+import { ArrowRight, TrendingUp, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Stats {
-  activeMarkets: number;
   totalVolume: number;
   weeklyVolume: number;
 }
@@ -20,23 +19,14 @@ interface EVOpportunity {
 }
 
 async function fetchStats(): Promise<Stats> {
-  const [marketsRes, volumeRes] = await Promise.all([
-    fetch("/api/markets?limit=500"),
-    fetch("/api/volume"),
-  ]);
-  
-  const marketsData = await marketsRes.json();
-  const volumeData = await volumeRes.json();
-  
-  // Count active markets from the markets array
-  const activeMarkets = marketsData.markets?.length || 0;
+  const res = await fetch("/api/volume");
+  const volumeData = await res.json();
   
   // Get volume from the polymarket stats
   const totalVolume = volumeData.polymarket?.volume24h || 0;
   const weeklyVolume = volumeData.polymarket?.week || 0;
   
   return {
-    activeMarkets,
     totalVolume,
     weeklyVolume,
   };
@@ -64,11 +54,6 @@ function formatVolume(volume: number): string {
   if (volume >= 1000000) return `$${(volume / 1000000).toFixed(0)}M`;
   if (volume >= 1000) return `$${(volume / 1000).toFixed(0)}K`;
   return `$${volume.toFixed(0)}`;
-}
-
-function formatNumber(num: number): string {
-  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-  return num.toString();
 }
 
 function StatCard({ label, value, icon: Icon }: { label: string; value: string; icon: React.ElementType }) {
@@ -169,11 +154,6 @@ export function HeroSection() {
 
             {/* Stats row */}
             <div className="flex flex-wrap gap-2">
-              <StatCard
-                label="Active Markets"
-                value={stats && stats.activeMarkets > 0 ? formatNumber(stats.activeMarkets) : "---"}
-                icon={BarChart3}
-              />
               <StatCard
                 label="24h Volume"
                 value={stats && stats.totalVolume > 0 ? formatVolume(stats.totalVolume) : "---"}
