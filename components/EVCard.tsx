@@ -26,6 +26,13 @@ export function EVCard({ opportunity }: EVCardProps) {
   const hasSportsbook =
     opportunity.sportsbookName != null && opportunity.sportsbookOdds != null;
   const evPercent = opportunity.evPercent ?? 0;
+  const isMlb = opportunity.sport === "MLB";
+  const displayEvPercent = isMlb
+    ? Math.min(500, Math.max(-100, evPercent))
+    : Math.min(50, Math.max(-100, evPercent));
+
+  const formatPct = (v: number) => (isMlb && v < 10 ? v.toFixed(2) : v.toFixed(1));
+  const formatCents = (v: number) => (isMlb && v < 10 ? v.toFixed(2) : v.toFixed(1));
 
   return (
     <Card className="border-slate-700/50 bg-slate-900/50 hover:border-slate-600/50 transition-colors">
@@ -41,7 +48,7 @@ export function EVCard({ opportunity }: EVCardProps) {
               variant="outline"
               title="+EV only when Polymarket odds are better than the sportsbook (lower price, same bet)"
             >
-              {evPercent > 0 ? "+" : ""}{Math.min(50, Math.max(-100, evPercent)).toFixed(1)}% EV
+              {displayEvPercent > 0 ? "+" : ""}{displayEvPercent.toFixed(1)}% EV
             </Badge>
           ) : (
             <Badge
@@ -58,7 +65,7 @@ export function EVCard({ opportunity }: EVCardProps) {
           <div>
             <p className="text-xs text-slate-500 uppercase tracking-wider">Polymarket</p>
             <p className="font-mono text-slate-300">
-              {(opportunity.polymarketPrice * 100).toFixed(1)}¢ ({(opportunity.polymarketImpliedProb).toFixed(1)}%)
+              {formatCents(opportunity.polymarketPrice * 100)}¢ ({formatPct(opportunity.polymarketImpliedProb)}%)
             </p>
           </div>
           <div>
@@ -67,7 +74,7 @@ export function EVCard({ opportunity }: EVCardProps) {
             </p>
             <p className="font-mono text-slate-300">
               {hasSportsbook
-                ? `${formatOdds(opportunity.sportsbookOdds!)} (${(opportunity.sportsbookImpliedProb ?? 0).toFixed(1)}%)`
+                ? `${formatOdds(opportunity.sportsbookOdds!)} (${formatPct(opportunity.sportsbookImpliedProb ?? 0)}%)`
                 : "No sportsbook comparison"}
             </p>
           </div>

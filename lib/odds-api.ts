@@ -84,12 +84,22 @@ export async function fetchOdds(
   if (!options?.skipCache) {
     const cached = cache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+      if (sport === "baseball_mlb" || sport === "baseball_mlb_world_series_winner") {
+        console.log("[Odds API] MLB served from cache", {
+          sport,
+          marketsParam,
+          regionsParam,
+          eventCount: cached.data.length,
+          ageMs: Date.now() - cached.timestamp,
+        });
+      }
       const quota =
         lastKnownQuotaRemaining !== null ? lastKnownQuotaRemaining : cached.quotaRemaining;
       return { events: cached.data, quotaRemaining: quota };
     }
   }
 
+  // get-odds.md: markets default to h2h (moneyline); oddsFormat defaults to decimal — we require american so outcome.price is American odds.
   const url = `${ODDS_API_BASE}/sports/${sport}/odds?regions=${encodeURIComponent(regionsParam)}&markets=${encodeURIComponent(marketsParam)}&oddsFormat=american&apiKey=${apiKey}`;
   let res: Response | null = null;
   for (let attempt = 0; attempt <= RATE_LIMIT_RETRY_DELAYS_MS.length; attempt++) {
@@ -125,6 +135,25 @@ export async function fetchOdds(
     throw new Error(`Odds API error: expected array of events, got ${typeof raw}`);
   }
   const events: OddsApiEvent[] = raw;
+
+  // Debug: log raw MLB odds from The Odds API to verify fetch and structure
+  if (sport === "baseball_mlb" || sport === "baseball_mlb_world_series_winner") {
+    const sample = events.slice(0, 2).map((e) => ({
+      id: e.id,
+      sport_key: e.sport_key,
+      home_team: e.home_team,
+      away_team: e.away_team,
+      bookmakers: e.bookmakers?.map((b) => ({
+        key: b.key,
+        title: b.title,
+        markets: b.markets?.map((m) => ({
+          key: m.key,
+          outcomes: m.outcomes?.slice(0, 5).map((o) => ({ name: o.name, price: o.price })),
+        })),
+      })),
+    }));
+    console.log(`[Odds API] MLB raw response sport=${sport} events=${events.length}:\n${JSON.stringify(sample, null, 2)}`);
+  }
 
   if (events.length > 0) {
     cache.set(cacheKey, {

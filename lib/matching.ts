@@ -235,6 +235,38 @@ function teamNamesMatch(a: string, b: string): boolean {
   return false;
 }
 
+// MLB-only: prevent false matches from short aliases like "os" (Orioles) matching "lOS angeles".
+function mlbAliasAppears(normalizedName: string, alias: string): boolean {
+  const a = normalizeTeamName(alias);
+  if (!a) return false;
+  if (normalizedName === a) return true;
+  if (a.length <= 3) return normalizedName.split(/\s+/).includes(a);
+  return normalizedName.includes(a);
+}
+
+function mlbTeamNamesMatch(a: string, b: string): boolean {
+  const na = normalizeTeamName(a);
+  const nb = normalizeTeamName(b);
+  if (na === nb) return true;
+  if (na.includes(nb) || nb.includes(na)) return true;
+
+  const aliasesA = TEAM_ALIASES[na];
+  if (aliasesA) {
+    for (const alias of aliasesA) {
+      const normAlias = normalizeTeamName(alias);
+      if (mlbAliasAppears(nb, normAlias) || normAlias.includes(nb)) return true;
+    }
+  }
+  const aliasesB = TEAM_ALIASES[nb];
+  if (aliasesB) {
+    for (const alias of aliasesB) {
+      const normAlias = normalizeTeamName(alias);
+      if (mlbAliasAppears(na, normAlias) || normAlias.includes(na)) return true;
+    }
+  }
+  return false;
+}
+
 function soccerTeamNamesMatch(a: string, b: string): boolean {
   const na = normalizeSoccerTeamName(a);
   const nb = normalizeSoccerTeamName(b);
@@ -304,12 +336,38 @@ function hasOddsApiMatch(title: string): boolean {
   );
 }
 
+/**
+ * MLB only: whether a Polymarket event title matches the market type of an Odds API event.
+ * Each Odds API outright sport key is one market type (e.g. World Series). We must not reuse
+ * one market's odds (e.g. World Series) for another (e.g. AL Champion, AL East).
+ * Only World Series odds are fetched currently; other keys can be added when we fetch them.
+ */
+function mlbPolymarketTitleMatchesOddsEvent(pmEventTitle: string, oddsEvent: OddsApiEvent): boolean {
+  const titleLower = (pmEventTitle || "").toLowerCase();
+  const key = oddsEvent.sport_key || "";
+  if (key === "baseball_mlb_world_series_winner") return titleLower.includes("world series");
+  if (key === "baseball_mlb_american_league_winner") return titleLower.includes("american league") || (titleLower.includes("al champion") && !titleLower.includes("east") && !titleLower.includes("west") && !titleLower.includes("central"));
+  if (key === "baseball_mlb_national_league_winner") return titleLower.includes("national league") || (titleLower.includes("nl champion") && !titleLower.includes("east") && !titleLower.includes("west") && !titleLower.includes("central"));
+  if (key.includes("division") || key.includes("east") || key.includes("west") || key.includes("central")) {
+    if (titleLower.includes("al east")) return key.includes("east") || key.includes("al_east");
+    if (titleLower.includes("al west")) return key.includes("west") || key.includes("al_west");
+    if (titleLower.includes("al central")) return key.includes("central") || key.includes("al_central");
+    if (titleLower.includes("nl east")) return key.includes("east") || key.includes("nl_east");
+    if (titleLower.includes("nl west")) return key.includes("west") || key.includes("nl_west");
+    if (titleLower.includes("nl central")) return key.includes("central") || key.includes("nl_central");
+    return titleLower.includes("division");
+  }
+  return false;
+}
+
 export function matchOutrights(
   polymarketEvents: PolymarketEvent[],
   oddsEvents: OddsApiEvent[],
   sport: string
 ): MatchedOpportunity[] {
   const opportunities: MatchedOpportunity[] = [];
+  const isMlb = sport === "MLB";
+  const namesMatch = isMlb ? mlbTeamNamesMatch : teamNamesMatch;
 
   for (const pmEvent of polymarketEvents) {
     const title = pmEvent.title || "";
@@ -333,11 +391,25 @@ export function matchOutrights(
       if (polymarketPriceCents < 1) continue;
 
       if (hasOddsApiMatch(title) && category === "championship") {
+        let pushedWithSportsbook = false;
         for (const oddsEvent of oddsEvents) {
-          const bestBook =
-            getBestBookmakerForTeam(oddsEvent, outcomeName, "outrights") ||
-            getBestBookmakerForTeam(oddsEvent, outcomeName, "h2h");
+          if (isMlb && !mlbPolymarketTitleMatchesOddsEvent(title, oddsEvent)) continue;
+          const bestBook = isMlb
+            ? getBestBookmakerForTeam(oddsEvent, outcomeName, "outrights", namesMatch)
+            : getBestBookmakerForTeam(oddsEvent, outcomeName, "outrights", namesMatch) ||
+              getBestBookmakerForTeam(oddsEvent, outcomeName, "h2h", namesMatch);
           if (!bestBook) continue;
+
+          if (isMlb) {
+            const sportsbookImpliedPct = (1 / bestBook.decimalOdds) * 100;
+            // MLB-only safety: avoid short-alias false matches that can attach the wrong team odds.
+            if (sportsbookImpliedPct > polymarketImpliedProb * 5) {
+              console.warn(
+                `[matchOutrights] ${sport} skipping ${outcomeName}: polymarket=${polymarketImpliedProb.toFixed(1)}% sportsbook=${sportsbookImpliedPct.toFixed(1)}% — likely bad match`
+              );
+              continue;
+            }
+          }
 
           const stake = 100;
           const { ev, evPercentage, potentialProfit, expectedProfit } = calculateEV(
@@ -371,6 +443,25 @@ export function matchOutrights(
             profitIfWin100: potentialProfit,
             expectedProfit100: expectedProfit,
             quality,
+            marketType: getMarketType(market.question || title),
+            timeframe: getTimeframe(pmEvent.endDate),
+            category,
+          });
+          pushedWithSportsbook = true;
+        }
+        if (isMlb && !pushedWithSportsbook) {
+          opportunities.push({
+            id: `pm-only-${pmEvent.id}-${market.id}-${outcomeName}`,
+            sport,
+            matchup: title || "Championship",
+            outcome: outcomeName,
+            eventTime: pmEvent.endDate || pmEvent.startDate || "",
+            polymarketPrice,
+            polymarketImpliedProb,
+            polymarketUrl: getPolymarketUrl(pmEvent),
+            polymarketEventId: pmEvent.id,
+            polymarketMarketId: market.id,
+            polymarketQuestion: market.question || "",
             marketType: getMarketType(market.question || title),
             timeframe: getTimeframe(pmEvent.endDate),
             category,
@@ -564,7 +655,8 @@ function extractTeamOrPlayerFromQuestion(question: string): string | null {
 function getBestBookmakerForTeam(
   event: OddsApiEvent,
   teamName: string,
-  marketKey: "h2h" | "outrights" = "outrights"
+  marketKey: "h2h" | "outrights" = "outrights",
+  namesMatch: (a: string, b: string) => boolean = teamNamesMatch
 ): { bookmaker: OddsApiBookmaker; outcome: { price: number }; decimalOdds: number } | null {
   let best: { bookmaker: OddsApiBookmaker; outcome: { price: number }; decimalOdds: number } | null =
     null;
@@ -573,7 +665,7 @@ function getBestBookmakerForTeam(
     const market = bookmaker.markets.find((m) => m.key === marketKey);
     if (!market) continue;
 
-    const outcome = market.outcomes.find((o) => teamNamesMatch(o.name, teamName));
+    const outcome = market.outcomes.find((o) => namesMatch(o.name, teamName));
     if (!outcome) continue;
 
     const decimalOdds = outcome.price > 0 ? 1 + outcome.price / 100 : 1 + 100 / Math.abs(outcome.price);
@@ -618,6 +710,20 @@ export function matchH2HGames(
 ): MatchedOpportunity[] {
   const opportunities: MatchedOpportunity[] = [];
   const includeWithoutSportsbook = options?.includeWithoutSportsbook ?? false;
+  const namesMatch = sport === "MLB" ? mlbTeamNamesMatch : teamNamesMatch;
+
+  if (sport === "MLB") {
+    console.log("[matchH2HGames] MLB entry", {
+      oddsEventCount: oddsEvents.length,
+      polymarketEventCount: polymarketEvents.length,
+      sampleOddsEvents: oddsEvents.slice(0, 3).map((e) => ({
+        sport_key: e.sport_key,
+        home: e.home_team,
+        away: e.away_team,
+        bookmakerCount: e.bookmakers?.length ?? 0,
+      })),
+    });
+  }
 
   for (const pmEvent of polymarketEvents) {
     const title = (pmEvent.title || "").toLowerCase();
@@ -697,10 +803,10 @@ export function matchH2HGames(
           if (qLower.includes("will") && qLower.includes("win")) {
             const teamFromQ = extractTeamFromWinQuestion(question);
             if (teamFromQ) {
-              if (teamNamesMatch(teamFromQ, teamsFromTitle.team1)) {
+              if (namesMatch(teamFromQ, teamsFromTitle.team1)) {
                 teams = teamsFromTitle;
                 yesMeansTeam1 = true;
-              } else if (teamNamesMatch(teamFromQ, teamsFromTitle.team2)) {
+              } else if (namesMatch(teamFromQ, teamsFromTitle.team2)) {
                 teams = { team1: teamsFromTitle.team2, team2: teamsFromTitle.team1 };
                 yesMeansTeam1 = true;
               }
@@ -717,7 +823,7 @@ export function matchH2HGames(
 
       const outcomes = parseMarketOutcomes(market);
       let polymarketPrice: number | null = null;
-      const team1Outcome = outcomes.find((o) => teamNamesMatch(o.name, team1));
+      const team1Outcome = outcomes.find((o) => namesMatch(o.name, team1));
       const yesOutcome = outcomes.find((o) => o.name.toLowerCase() === "yes");
 
       if (team1Outcome && team1Outcome.price > 0) {
@@ -740,13 +846,13 @@ export function matchH2HGames(
         const eventTime = gameStartTime || oddsEvent.commence_time || pmEvent.startDate || pmEvent.endDate || "";
         const timeframeDate = gameStartTime || oddsEvent.commence_time || pmEvent.startDate || pmEvent.endDate;
         const matchesTeams =
-          (teamNamesMatch(oddsEvent.home_team, team1) && teamNamesMatch(oddsEvent.away_team, team2)) ||
-          (teamNamesMatch(oddsEvent.home_team, team2) && teamNamesMatch(oddsEvent.away_team, team1));
+          (namesMatch(oddsEvent.home_team, team1) && namesMatch(oddsEvent.away_team, team2)) ||
+          (namesMatch(oddsEvent.home_team, team2) && namesMatch(oddsEvent.away_team, team1));
 
         if (!matchesTeams) continue;
 
         matched = true;
-        const bestBook = getBestBookmakerForTeam(oddsEvent, team1, "h2h");
+        const bestBook = getBestBookmakerForTeam(oddsEvent, team1, "h2h", namesMatch);
         if (!bestBook) {
           if (includeWithoutSportsbook) {
             opportunities.push({

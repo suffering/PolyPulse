@@ -152,6 +152,20 @@ export async function GET(req: Request) {
       fetchPolymarketBySport(polymarketSport),
     ]);
 
+    if (sport === "mlb") {
+      console.log("[EV API] MLB odds fetch results", {
+        gameEventCount: gameOddsResult.events.length,
+        futuresEventCount: futuresOddsResult.events.length,
+        polymarketEventCount: polymarketEvents.length,
+        sampleGameEvents: gameOddsResult.events.slice(0, 3).map((e) => ({
+          sport_key: e.sport_key,
+          home: e.home_team,
+          away: e.away_team,
+          bookmakerCount: e.bookmakers?.length ?? 0,
+        })),
+      });
+    }
+
     // If soccer game odds came back empty, retry with only h2h (some bookmakers use h2h for 3-way)
     let gameOddsToUse = gameOddsResult;
     if (
@@ -171,7 +185,10 @@ export async function GET(req: Request) {
     const h2hOpportunities =
       sport === "nba" || sport === "mlb" || sport === "nhl" || sport === "tennis"
         ? matchH2HGames(polymarketEvents, gameOddsToUse.events, config.label, {
-            includeWithoutSportsbook: true,
+            // MLB only: if there are no current game odds returned by The Odds API,
+            // don't show Polymarket-only "games" for today/week/month (there's no active MLB slate).
+            includeWithoutSportsbook:
+              sport === "mlb" ? gameOddsToUse.events.length > 0 : true,
           })
         : matchSoccerH2H(
             polymarketEvents,

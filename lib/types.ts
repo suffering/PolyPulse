@@ -18,6 +18,7 @@ export function getMarketCategory(eventTitle: string): MarketCategory {
 
   if (t.includes("champion") && !t.includes("conference")) return "championship";
   if ((t.includes("cup") && t.includes("winner")) || t.includes("mls cup")) return "championship";
+  if (t.includes("world series")) return "championship";
   if (t.includes("conference") && (t.includes("champion") || t.includes("finals")))
     return "conference";
   if (t.includes("#1 seed") || t.includes("1 seed")) return "conference";
