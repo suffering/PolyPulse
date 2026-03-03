@@ -2,13 +2,13 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { ArrowRight, TrendingUp, Users, BarChart3 } from "lucide-react";
+import { ArrowRight, TrendingUp, BarChart3, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Stats {
   activeMarkets: number;
   totalVolume: number;
-  activeTraders: number;
+  weeklyVolume: number;
 }
 
 interface EVOpportunity {
@@ -21,17 +21,24 @@ interface EVOpportunity {
 
 async function fetchStats(): Promise<Stats> {
   const [marketsRes, volumeRes] = await Promise.all([
-    fetch("/api/markets?limit=1"),
+    fetch("/api/markets?limit=500"),
     fetch("/api/volume"),
   ]);
   
   const marketsData = await marketsRes.json();
   const volumeData = await volumeRes.json();
   
+  // Count active markets from the markets array
+  const activeMarkets = marketsData.markets?.length || 0;
+  
+  // Get volume from the polymarket stats
+  const totalVolume = volumeData.polymarket?.volume24h || 0;
+  const weeklyVolume = volumeData.polymarket?.week || 0;
+  
   return {
-    activeMarkets: marketsData.total || 1200,
-    totalVolume: volumeData.total24hVolume || 15000000,
-    activeTraders: volumeData.uniqueTraders || 8500,
+    activeMarkets,
+    totalVolume,
+    weeklyVolume,
   };
 }
 
@@ -164,18 +171,18 @@ export function HeroSection() {
             <div className="flex flex-wrap gap-2">
               <StatCard
                 label="Active Markets"
-                value={stats ? formatNumber(stats.activeMarkets) : "---"}
+                value={stats && stats.activeMarkets > 0 ? formatNumber(stats.activeMarkets) : "---"}
                 icon={BarChart3}
               />
               <StatCard
                 label="24h Volume"
-                value={stats ? formatVolume(stats.totalVolume) : "---"}
+                value={stats && stats.totalVolume > 0 ? formatVolume(stats.totalVolume) : "---"}
                 icon={TrendingUp}
               />
               <StatCard
-                label="Active Traders"
-                value={stats ? formatNumber(stats.activeTraders) : "---"}
-                icon={Users}
+                label="7d Volume"
+                value={stats && stats.weeklyVolume > 0 ? formatVolume(stats.weeklyVolume) : "---"}
+                icon={Activity}
               />
             </div>
           </div>
