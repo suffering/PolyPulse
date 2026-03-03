@@ -6,7 +6,7 @@ import { EVCard } from "@/components/EVCard";
 import { QuotaTracker } from "@/components/QuotaTracker";
 import type { MatchedOpportunity } from "@/lib/matching";
 import type { Timeframe, MarketCategory } from "@/lib/types";
-import { getTimeframeLabel, getMarketCategoryLabel } from "@/lib/types";
+import { getTimeframeLabel } from "@/lib/types";
 import { useSetPageAiState } from "@/components/ai/PageAiContext";
 
 type UiSport = "nba" | "mls" | "mlb" | "nhl" | "tennis";
@@ -141,7 +141,7 @@ export default function Home() {
     return { filtered, timeframeCounts: tfCounts, categoryCounts: catCounts };
   }, [data?.opportunities, timeframe, category, league, sort, sport]);
 
-  const categoriesWithCounts = useMemo(() => {
+  const _categoriesWithCounts = useMemo(() => {
     const cats: (MarketCategory | "all")[] = [
       "all",
       "championship",
