@@ -40,33 +40,37 @@ interface LiveTrade {
 }
 
 interface VolumeData {
-  date: string;
-  volume: number;
+  volume24h: number;
+  week: number;
+  month: number;
+  allTime: number;
 }
 
 // Data fetching functions
 async function fetchLeaderboard(): Promise<LeaderboardEntry[]> {
-  const res = await fetch("/api/leaderboard?limit=5");
+  const res = await fetch("/api/leaderboard?limit=5&orderBy=PNL&timePeriod=MONTH");
   if (!res.ok) return [];
   const data = await res.json();
-  return (data.leaderboard || []).slice(0, 5).map((entry: any, idx: number) => ({
-    rank: idx + 1,
-    name: entry.name || `Trader ${idx + 1}`,
-    address: entry.address || entry.userAddress || "",
-    profit: entry.profit || entry.pnl || 0,
-    volume: entry.volume || 0,
+  // API returns { entries: [...] } with proxyWallet, userName, vol, pnl, rank
+  return (data.entries || []).slice(0, 5).map((entry: any, idx: number) => ({
+    rank: entry.rank || idx + 1,
+    name: entry.userName || `Trader ${idx + 1}`,
+    address: entry.proxyWallet || "",
+    profit: entry.pnl || 0,
+    volume: entry.vol || 0,
   }));
 }
 
 async function fetchCreators(): Promise<Creator[]> {
-  const res = await fetch("/api/creators?limit=5");
+  const res = await fetch("/api/creators");
   if (!res.ok) return [];
   const data = await res.json();
+  // API returns { creators: [...] } with id, name, totalMarkets, totalVolume
   return (data.creators || []).slice(0, 5).map((c: any) => ({
-    id: c.id || c.address,
-    name: c.name || c.username || "Creator",
-    marketsCreated: c.marketsCreated || c.marketCount || 0,
-    totalVolume: c.totalVolume || c.volume || 0,
+    id: c.id || "",
+    name: c.name || c.handle || "Creator",
+    marketsCreated: c.totalMarkets || 0,
+    totalVolume: c.totalVolume || 0,
   }));
 }
 
@@ -74,24 +78,29 @@ async function fetchLiveTrades(): Promise<LiveTrade[]> {
   const res = await fetch("/api/live/trades?limit=8");
   if (!res.ok) return [];
   const data = await res.json();
-  return (data.trades || []).slice(0, 8).map((t: any) => ({
-    id: t.id || `${t.timestamp}-${Math.random()}`,
-    market: t.market || t.question || "Unknown Market",
-    side: t.side || (t.outcome === "Yes" ? "BUY" : "SELL"),
-    price: t.price || 0,
-    size: t.size || t.amount || 0,
-    timestamp: t.timestamp || new Date().toISOString(),
+  // API returns { trades: [...] } with title, side, outcome, price, size, timestamp, transactionHash
+  return (data.trades || []).slice(0, 8).map((t: any, idx: number) => ({
+    id: t.transactionHash || `${t.timestamp}-${idx}`,
+    market: t.title || "Unknown Market",
+    side: t.side === "SELL" ? "SELL" : "BUY",
+    price: Number(t.price) || 0,
+    size: Number(t.size) || 0,
+    timestamp: t.timestamp ? new Date(Number(t.timestamp) * 1000).toISOString() : new Date().toISOString(),
   }));
 }
 
-async function fetchVolumeData(): Promise<VolumeData[]> {
+async function fetchVolumeData(): Promise<VolumeData | null> {
   const res = await fetch("/api/volume");
-  if (!res.ok) return [];
+  if (!res.ok) return null;
   const data = await res.json();
-  return (data.dailyVolume || []).slice(-7).map((d: any) => ({
-    date: d.date || d.day,
-    volume: d.volume || d.totalVolume || 0,
-  }));
+  // API returns { polymarket: { volume24h, week, month, allTime } }
+  const pm = data.polymarket || {};
+  return {
+    volume24h: pm.volume24h || 0,
+    week: pm.week || 0,
+    month: pm.month || 0,
+    allTime: pm.allTime || 0,
+  };
 }
 
 // Utility functions
@@ -426,51 +435,46 @@ export function VolumeDashboardSection() {
     staleTime: 300000,
   });
 
-  const maxVolume = volumeData
-    ? Math.max(...volumeData.map((d) => d.volume))
-    : 0;
-
   return (
     <SectionWrapper>
       <SectionHeader
         title="Volume Dashboard"
-        description="Daily trading volume across Polymarket"
+        description="Trading volume across Polymarket"
         href="/volume"
         icon={BarChart3}
       />
-      <div className="bg-card border border-border rounded-lg p-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
         {isLoading ? (
-          <div className="h-[160px] flex items-end gap-1">
-            {Array.from({ length: 7 }).map((_, i) => (
-              <div
-                key={i}
-                className="flex-1 bg-muted rounded-t animate-pulse"
-                style={{ height: `${30 + Math.random() * 70}%` }}
-              />
-            ))}
-          </div>
-        ) : volumeData && volumeData.length > 0 ? (
-          <div className="h-[160px] flex items-end gap-1">
-            {volumeData.map((day, idx) => {
-              const height = maxVolume > 0 ? (day.volume / maxVolume) * 100 : 10;
-              return (
-                <div key={idx} className="flex-1 flex flex-col items-center gap-0.5">
-                  <div
-                    className="w-full bg-primary/80 hover:bg-primary rounded-t transition-colors cursor-default"
-                    style={{ height: `${Math.max(height, 5)}%` }}
-                    title={formatCurrency(day.volume)}
-                  />
-                  <span className="text-[10px] text-muted-foreground">
-                    {new Date(day.date).toLocaleDateString("en-US", {
-                      weekday: "short",
-                    })}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+          Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="p-3 bg-card border border-border rounded-lg animate-pulse"
+            >
+              <div className="h-[12px] w-1/2 bg-muted rounded mb-2" />
+              <div className="h-[24px] w-3/4 bg-muted rounded" />
+            </div>
+          ))
+        ) : volumeData ? (
+          <>
+            <div className="p-3 bg-card border border-border rounded-lg">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-0.5">24h Volume</p>
+              <p className="text-xl font-bold font-mono text-success">{formatCurrency(volumeData.volume24h)}</p>
+            </div>
+            <div className="p-3 bg-card border border-border rounded-lg">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-0.5">7d Volume</p>
+              <p className="text-xl font-bold font-mono text-primary">{formatCurrency(volumeData.week)}</p>
+            </div>
+            <div className="p-3 bg-card border border-border rounded-lg">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-0.5">30d Volume</p>
+              <p className="text-xl font-bold font-mono text-foreground">{formatCurrency(volumeData.month)}</p>
+            </div>
+            <div className="p-3 bg-card border border-border rounded-lg">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-0.5">All-Time</p>
+              <p className="text-xl font-bold font-mono text-foreground">{formatCurrency(volumeData.allTime)}</p>
+            </div>
+          </>
         ) : (
-          <div className="h-[160px] flex items-center justify-center text-sm text-muted-foreground">
+          <div className="col-span-full text-center py-4 text-sm text-muted-foreground">
             No volume data available
           </div>
         )}
