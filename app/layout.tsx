@@ -1,12 +1,32 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
-import { Header } from "@/components/Header";
-import { UniversalAiAssistant } from "@/components/ai/UniversalAiAssistant";
+
+const inter = Inter({ 
+  subsets: ["latin"], 
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({ 
+  subsets: ["latin"], 
+  variable: "--font-jetbrains-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
-  title: "PolyPulse +EV Engine",
-  description: "Find positive expected value bets on Polymarket vs sportsbooks",
+  title: "PolyPulse - Polymarket Intelligence Platform",
+  description: "Real-time analytics, +EV opportunities, and market intelligence for Polymarket traders",
+  icons: {
+    icon: "/logo.png",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0a0a0a",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -15,13 +35,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className="antialiased bg-[#0d1117]">
+    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+      <body className="font-sans antialiased bg-background text-foreground">
         <Providers>
-          <div id="header-portal" />
-          <Header />
           {children}
-          <UniversalAiAssistant />
         </Providers>
       </body>
     </html>

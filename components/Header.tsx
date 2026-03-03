@@ -9,7 +9,7 @@ import { useWallet } from "@/lib/wallet/use-wallet";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
-  { href: "/", label: "+EV" },
+  { href: "/ev", label: "+EV" },
   { href: "/leaderboard", label: "Leaderboard" },
   { href: "/creators", label: "Creators" },
   { href: "/volume", label: "Volume" },
@@ -40,10 +40,7 @@ function HeaderContent() {
         </Link>
         <nav className="flex items-center gap-3">
           {NAV_LINKS.map(({ href, label }) => {
-            const isActive =
-              href === "/"
-                ? pathname === "/"
-                : pathname === href || pathname.startsWith(href + "/");
+            const isActive = pathname === href || pathname.startsWith(href + "/");
             return (
               <Link
                 key={href}

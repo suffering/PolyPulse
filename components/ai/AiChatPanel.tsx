@@ -111,39 +111,39 @@ export function AiChatPanel({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-full border border-amber-500/60 bg-amber-500/20 px-4 py-2 text-sm font-medium text-amber-100 shadow-lg backdrop-blur hover:bg-amber-500/30"
+        className="fixed bottom-3 right-3 z-50 flex items-center gap-1.5 rounded-full border border-primary/60 bg-primary/20 px-3 py-1.5 text-sm font-medium text-primary-foreground shadow-lg backdrop-blur hover:bg-primary/30 transition-colors glow-primary"
       >
-        <span className="h-2 w-2 rounded-full bg-amber-300 shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
+        <span className="h-[8px] w-[8px] rounded-full bg-primary shadow-[0_0_8px_rgba(75,75,247,0.8)] animate-pulse-dot" />
         Ask AI
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-end bg-black/30 sm:items-center sm:justify-end">
-          <div className="w-full max-w-md rounded-t-2xl border border-slate-700 bg-slate-950/95 shadow-2xl sm:mr-4 sm:mb-4 sm:rounded-2xl">
-            <header className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
+        <div className="fixed inset-0 z-50 flex items-end justify-end bg-black/50 backdrop-blur-sm sm:items-center sm:justify-end">
+          <div className="w-full max-w-md rounded-t-2xl border border-border bg-card shadow-2xl sm:mr-3 sm:mb-3 sm:rounded-xl">
+            <header className="flex items-center justify-between border-b border-border px-3 py-2">
               <div>
-                <div className="text-sm font-semibold text-slate-100">{title}</div>
-                {subtitle && <div className="text-xs text-slate-400">{subtitle}</div>}
+                <div className="text-sm font-semibold text-foreground">{title}</div>
+                {subtitle && <div className="text-xs text-muted-foreground">{subtitle}</div>}
               </div>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800"
+                className="rounded-md border border-border bg-card-elevated px-2 py-1 text-xs text-foreground hover:bg-muted transition-colors"
               >
                 Close
               </button>
             </header>
 
             <div className="flex max-h-[60vh] flex-col">
-              <div className="flex-1 space-y-2 overflow-y-auto px-4 py-3 text-xs">
+              <div className="flex-1 space-y-1.5 overflow-y-auto px-3 py-2 text-xs">
                 {messages.length === 0 && suggestedPrompts.length > 0 && (
-                  <div className="mb-3 flex flex-wrap gap-2">
+                  <div className="mb-2 flex flex-wrap gap-1">
                     {suggestedPrompts.map((prompt) => (
                       <button
                         key={prompt}
                         type="button"
                         onClick={() => void sendMessage(prompt)}
-                        className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-[11px] text-slate-200 hover:bg-slate-800"
+                        className="rounded-full border border-border bg-card-elevated px-2 py-0.5 text-[11px] text-foreground hover:bg-muted hover:border-primary/30 transition-colors"
                       >
                         {prompt}
                       </button>
@@ -157,16 +157,16 @@ export function AiChatPanel({
                     className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
                   >
                     <div
-                      className={`max-w-[80%] rounded-md px-3 py-2 ${
+                      className={`max-w-[80%] rounded-md px-2 py-1.5 ${
                         m.role === "user"
-                          ? "bg-slate-800 text-slate-50"
-                          : "bg-slate-900 text-slate-100"
+                          ? "bg-primary/20 text-foreground"
+                          : "bg-card-elevated text-foreground"
                       }`}
                     >
                       <div className="whitespace-pre-wrap text-[11px]">
                         {m.content}
                       </div>
-                      <div className="mt-1 text-[10px] text-slate-500">
+                      <div className="mt-0.5 text-[10px] text-muted-foreground">
                         {m.role === "user" ? "You" : "AI"} · {m.timestamp}
                       </div>
                     </div>
@@ -174,17 +174,17 @@ export function AiChatPanel({
                 ))}
 
                 {isLoading && (
-                  <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-400">
-                    <span className="inline-flex h-1.5 w-1.5 animate-pulse rounded-full bg-slate-400" />
-                    AI is thinking…
+                  <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    <span className="inline-flex h-[6px] w-[6px] animate-pulse rounded-full bg-primary" />
+                    AI is thinking...
                   </div>
                 )}
 
-                {error && <div className="mt-1 text-[11px] text-red-400">{error}</div>}
+                {error && <div className="mt-0.5 text-[11px] text-destructive">{error}</div>}
               </div>
 
               <form
-                className="flex items-center gap-2 border-t border-slate-800 px-3 py-2"
+                className="flex items-center gap-1.5 border-t border-border px-2 py-1.5"
                 onSubmit={(e) => {
                   e.preventDefault();
                   void sendMessage(input);
@@ -194,13 +194,13 @@ export function AiChatPanel({
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask a question…"
-                  className="flex-1 rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/60"
+                  placeholder="Ask a question..."
+                  className="flex-1 rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                 />
                 <button
                   type="submit"
                   disabled={isLoading || !input.trim()}
-                  className="rounded-md border border-slate-600 bg-slate-800 px-3 py-1.5 text-xs text-slate-100 hover:bg-slate-700 disabled:opacity-50"
+                  className="rounded-md border border-border bg-primary/20 px-2 py-1 text-xs text-foreground hover:bg-primary/30 disabled:opacity-50 transition-colors"
                 >
                   Send
                 </button>

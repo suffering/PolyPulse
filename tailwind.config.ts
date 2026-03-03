@@ -45,7 +45,20 @@ const config: Config = {
   		'0.5': '0.25rem', // 4px (half-step for fine adjustments)
   	},
   	extend: {
+  		fontFamily: {
+  			sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+  			mono: ['var(--font-jetbrains-mono)', 'monospace'],
+  		},
   		colors: {
+  			'card-elevated': 'hsl(var(--card-elevated))',
+  			success: {
+  				DEFAULT: 'hsl(var(--success))',
+  				foreground: 'hsl(var(--success-foreground))'
+  			},
+  			warning: {
+  				DEFAULT: 'hsl(var(--warning))',
+  				foreground: 'hsl(var(--warning-foreground))'
+  			},
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
