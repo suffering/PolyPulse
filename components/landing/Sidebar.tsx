@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 const NAV_LINKS = [
-  { href: "/ev", label: "EV Engine", icon: Sparkles, customIcon: "/plus-circle-green.png" },
+  { href: "/ev", label: "+EV (All Sports)", icon: Sparkles, customIcon: "/plus-circle-green.png" },
   { href: "/extradata", label: "Markets", icon: FlaskConical },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/creators", label: "Creators", icon: Users },
