@@ -99,24 +99,87 @@ export function HeroContent() {
             </div>
           </div>
           
-          {/* Right - 3D Element / Stats */}
+          {/* Right - Pulse/Heartbeat Animation */}
           <div className="hidden lg:block">
-            <div className="w-[200px] h-[200px] relative">
-              {/* Abstract 3D-like element using CSS */}
-              <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-1 transform rotate-12 perspective-1000">
-                {Array.from({ length: 9 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={`rounded-sm ${
-                      i === 4 || i === 5 || i === 7 || i === 8
-                        ? "bg-primary/30 border border-primary/50"
-                        : "bg-[#111] border border-[#222]"
-                    }`}
-                    style={{
-                      transform: `translateZ(${i * 2}px)`,
-                    }}
+            <div className="w-[280px] h-[140px] relative">
+              {/* Animated Pulse Line */}
+              <svg
+                viewBox="0 0 280 140"
+                className="w-full h-full"
+                preserveAspectRatio="none"
+              >
+                {/* Glow filter */}
+                <defs>
+                  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                    <feMerge>
+                      <feMergeNode in="coloredBlur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                  <linearGradient id="pulseGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#4B4BF7" stopOpacity="0.1" />
+                    <stop offset="50%" stopColor="#4B4BF7" stopOpacity="1" />
+                    <stop offset="100%" stopColor="#4B4BF7" stopOpacity="0.1" />
+                  </linearGradient>
+                </defs>
+                
+                {/* Background grid lines */}
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <line
+                    key={`h-${i}`}
+                    x1="0"
+                    y1={i * 28}
+                    x2="280"
+                    y2={i * 28}
+                    stroke="#1a1a1a"
+                    strokeWidth="1"
                   />
                 ))}
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <line
+                    key={`v-${i}`}
+                    x1={i * 40}
+                    y1="0"
+                    x2={i * 40}
+                    y2="140"
+                    stroke="#1a1a1a"
+                    strokeWidth="1"
+                  />
+                ))}
+                
+                {/* Main pulse line */}
+                <path
+                  d="M 0 70 L 40 70 L 60 70 L 80 70 L 100 70 L 110 30 L 120 110 L 130 50 L 140 90 L 150 70 L 180 70 L 200 70 L 220 70 L 280 70"
+                  fill="none"
+                  stroke="url(#pulseGradient)"
+                  strokeWidth="2"
+                  filter="url(#glow)"
+                  className="animate-pulse-line"
+                />
+                
+                {/* Animated dot that follows the line */}
+                <circle r="4" fill="#4B4BF7" filter="url(#glow)">
+                  <animateMotion
+                    dur="2s"
+                    repeatCount="indefinite"
+                    path="M 0 70 L 40 70 L 60 70 L 80 70 L 100 70 L 110 30 L 120 110 L 130 50 L 140 90 L 150 70 L 180 70 L 200 70 L 220 70 L 280 70"
+                  />
+                </circle>
+                
+                {/* Secondary faint pulse */}
+                <path
+                  d="M 0 70 L 40 70 L 60 70 L 80 70 L 100 70 L 110 30 L 120 110 L 130 50 L 140 90 L 150 70 L 180 70 L 200 70 L 220 70 L 280 70"
+                  fill="none"
+                  stroke="#4B4BF7"
+                  strokeWidth="1"
+                  strokeOpacity="0.2"
+                />
+              </svg>
+              
+              {/* Subtle label */}
+              <div className="absolute bottom-0 right-0 text-[10px] text-[#333] uppercase tracking-widest">
+                Live Pulse
               </div>
             </div>
           </div>

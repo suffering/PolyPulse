@@ -128,3 +128,32 @@
   background-color: hsl(var(--card-elevated));
   border-color: hsl(var(--primary) / 0.3);
 }
+
+/* Pulse line animation */
+@keyframes pulse-line {
+  0%, 100% {
+    stroke-opacity: 0.6;
+  }
+  50% {
+    stroke-opacity: 1;
+  }
+}
+
+.animate-pulse-line {
+  animation: pulse-line 2s ease-in-out infinite;
+}
+
+/* Pulse line draw animation */
+@keyframes draw-line {
+  0% {
+    stroke-dashoffset: 400;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-draw-line {
+  stroke-dasharray: 400;
+  animation: draw-line 2s ease-in-out infinite;
+}
