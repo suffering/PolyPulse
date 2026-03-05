@@ -77,12 +77,9 @@ export function Sidebar() {
               </Link>
             );
           })}
-        </div>
 
-        {/* Tools Section */}
-        <div className="px-2 mt-6">
-          <p className="text-[10px] uppercase tracking-wider text-[#444] mb-2 px-2">Tools</p>
-          <div className="space-y-1">
+          {/* Tools - no section header */}
+          <div className="mt-4">
             {TOOLS_LINKS.map((link) => {
               const Icon = link.icon;
               const isActive = pathname === link.href;
@@ -102,12 +99,9 @@ export function Sidebar() {
               );
             })}
           </div>
-        </div>
 
-        {/* External Links */}
-        <div className="px-2 mt-6">
-          <p className="text-[10px] uppercase tracking-wider text-[#444] mb-2 px-2">External</p>
-          <div className="space-y-1">
+          {/* External Links - no section header */}
+          <div className="mt-4">
             <a
               href="https://polymarket.com"
               target="_blank"
