@@ -47,7 +47,7 @@ export function Sidebar() {
       </div>
 
       {/* Main Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4 sidebar-scroll">
+      <nav className="flex-1 overflow-hidden py-3">
         <div className="px-2 space-y-1">
           {/* Tools Section */}
           <div>
@@ -82,7 +82,7 @@ export function Sidebar() {
             })}
 
             {/* Additional Tools */}
-            <div className="mt-2">
+            <div className="mt-1">
               {TOOLS_LINKS.map((link) => {
                 const Icon = link.icon;
                 const isActive = pathname === link.href;
@@ -115,8 +115,8 @@ export function Sidebar() {
           </div>
 
           {/* External Links */}
-          <div className="mt-6 pt-4 border-t border-[#1a1a1a]">
-            <p className="text-[10px] uppercase tracking-wide text-[#555] px-2 mb-3 font-light">Socials</p>
+          <div className="mt-4 pt-3 border-t border-[#1a1a1a]">
+            <p className="text-[10px] uppercase tracking-wide text-[#555] px-2 mb-2 font-light">Socials</p>
             <a
               href="https://polymarket.com"
               target="_blank"
