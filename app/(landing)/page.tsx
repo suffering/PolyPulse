@@ -11,7 +11,7 @@ export default function LandingPage() {
       <Sidebar />
       
       {/* Main Content - offset by sidebar width */}
-      <main className="ml-[200px]">
+      <main className="ml-[220px]">
         <HeroContent />
       </main>
       
