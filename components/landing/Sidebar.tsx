@@ -34,7 +34,7 @@ export function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 h-screen w-[220px] bg-black border-r border-[#1a1a1a] flex flex-col z-40">
       {/* Logo */}
-      <div className="p-3 border-b border-[#1a1a1a] flex items-center justify-center">
+      <div className="p-3 border-b border-[#1a1a1a] flex flex-col items-center justify-center gap-2">
         <Link href="/">
           <Image
             src="/logo.png"
@@ -44,6 +44,7 @@ export function Sidebar() {
             className="w-[120px] h-[120px]"
           />
         </Link>
+        <p className="text-[9px] text-[#555] font-light tracking-wide">made in nyc</p>
       </div>
 
       {/* Main Navigation */}
