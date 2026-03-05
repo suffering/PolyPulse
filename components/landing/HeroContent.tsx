@@ -230,7 +230,7 @@ export function HeroContent() {
                         href={event.slug ? `https://polymarket.com/event/${event.slug}` : `https://polymarket.com/event/${event.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-between p-3 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg hover:border-[#333] transition-colors"
+                        className="flex items-center justify-between p-3 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg hover:bg-[#111] hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 transition-all duration-200 ease-out transform hover:scale-[1.02] hover:-translate-y-0.5"
                       >
                         <p className="text-white text-sm line-clamp-1 flex-1 mr-4">{event.title}</p>
                         <span className="text-green-400 font-mono text-sm whitespace-nowrap">
@@ -253,7 +253,7 @@ export function HeroContent() {
                     traders.map((trader, index) => (
                       <div
                         key={trader.id}
-                        className="flex items-center justify-between p-3 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg hover:border-[#333] transition-colors"
+                        className="flex items-center justify-between p-3 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg hover:bg-[#111] hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 transition-all duration-200 ease-out transform hover:scale-[1.02] hover:-translate-y-0.5"
                       >
                         <div className="flex items-center gap-3 flex-1">
                           <span className="text-[#666] text-sm font-medium w-6">#{index + 1}</span>
@@ -282,25 +282,25 @@ export function HeroContent() {
                 <div className="grid grid-cols-2 gap-3 animate-fade-in">
                   {volume ? (
                     <>
-                      <div className="p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
+                      <div className="p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg hover:bg-[#111] hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 transition-all duration-200 ease-out transform hover:scale-[1.02] hover:-translate-y-0.5">
                         <p className="text-[#666] text-xs mb-2">Last 24H</p>
                         <p className="text-green-400 font-mono text-lg font-semibold">
                           {formatVolume(volume.volume24h)}
                         </p>
                       </div>
-                      <div className="p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
+                      <div className="p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg hover:bg-[#111] hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 transition-all duration-200 ease-out transform hover:scale-[1.02] hover:-translate-y-0.5">
                         <p className="text-[#666] text-xs mb-2">Last Week</p>
                         <p className="text-green-400 font-mono text-lg font-semibold">
                           {formatVolume(volume.week)}
                         </p>
                       </div>
-                      <div className="p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
+                      <div className="p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg hover:bg-[#111] hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 transition-all duration-200 ease-out transform hover:scale-[1.02] hover:-translate-y-0.5">
                         <p className="text-[#666] text-xs mb-2">Last Month</p>
                         <p className="text-green-400 font-mono text-lg font-semibold">
                           {formatVolume(volume.month)}
                         </p>
                       </div>
-                      <div className="p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
+                      <div className="p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg hover:bg-[#111] hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 transition-all duration-200 ease-out transform hover:scale-[1.02] hover:-translate-y-0.5">
                         <p className="text-[#666] text-xs mb-2">All-Time</p>
                         <p className="text-green-400 font-mono text-lg font-semibold">
                           {formatVolume(volume.allTime)}
