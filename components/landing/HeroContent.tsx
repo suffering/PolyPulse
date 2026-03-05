@@ -176,11 +176,6 @@ export function HeroContent() {
                   strokeOpacity="0.2"
                 />
               </svg>
-              
-              {/* Subtle label */}
-              <div className="absolute bottom-0 right-0 text-[10px] text-[#333] uppercase tracking-widest">
-                Live Pulse
-              </div>
             </div>
           </div>
         </div>
