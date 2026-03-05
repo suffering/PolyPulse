@@ -222,7 +222,7 @@ export function HeroContent() {
             <div className="h-[380px] overflow-y-auto sidebar-scroll">
               {/* Hot Markets Slide */}
               {slides[currentSlide].type === "markets" && (
-                <div className="grid gap-3 animate-fade-in">
+                <div className="grid gap-3 animate-fade-in px-1 py-1">
                   {events && events.length > 0 ? (
                     events.map((event) => (
                       <a
@@ -248,7 +248,7 @@ export function HeroContent() {
               
               {/* Top Traders Slide */}
               {slides[currentSlide].type === "traders" && (
-                <div className="grid gap-3 animate-fade-in">
+                <div className="grid gap-3 animate-fade-in px-1 py-1">
                   {traders && traders.length > 0 ? (
                     traders.map((trader, index) => (
                       <div
@@ -279,7 +279,7 @@ export function HeroContent() {
               
               {/* Exchange Volume Slide */}
               {slides[currentSlide].type === "volume" && (
-                <div className="grid grid-cols-2 gap-3 animate-fade-in">
+                <div className="grid grid-cols-2 gap-3 animate-fade-in px-1 py-1">
                   {volume ? (
                     <>
                       <div className="p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg hover:border-[#333] hover:shadow-[0_0_20px_rgba(147,51,234,0.4)] transition-all duration-200">
