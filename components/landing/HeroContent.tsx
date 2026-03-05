@@ -130,7 +130,7 @@ export function HeroContent() {
   const slides = [
     { id: 0, type: "markets", title: "Hot Markets", description: "Highest volume events on Polymarket" },
     { id: 1, type: "traders", title: "Top Traders", description: "Best performing traders all-time" },
-    { id: 2, type: "volume", title: "Exchange Volume", description: "Polymarket volume across time periods" },
+    { id: 2, type: "volume", title: "Polymarket Volume", description: "24H, weekly, monthly, and all-time volume" },
   ];
 
   return (
