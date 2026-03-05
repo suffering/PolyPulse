@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 const NAV_LINKS = [
-  { href: "/ev", label: "EV Engine", icon: Sparkles },
+  { href: "/ev", label: "EV Engine", icon: Sparkles, customIcon: "/plus-circle-green.png" },
   { href: "/extradata", label: "Markets", icon: FlaskConical },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/creators", label: "Creators", icon: Users },
@@ -62,7 +62,17 @@ export function Sidebar() {
                     : "text-[#888] hover:text-white hover:bg-[#111]"
                 }`}
               >
-                <Icon className="w-4 h-4" />
+                {link.customIcon ? (
+                  <Image
+                    src={link.customIcon}
+                    alt=""
+                    width={16}
+                    height={16}
+                    className="w-4 h-4"
+                  />
+                ) : (
+                  <Icon className="w-4 h-4" />
+                )}
                 {link.label}
               </Link>
             );
