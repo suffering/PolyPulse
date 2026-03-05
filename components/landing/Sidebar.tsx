@@ -48,7 +48,7 @@ export function Sidebar() {
 
       {/* Main Navigation */}
       <nav className="flex-1 overflow-y-auto py-4">
-        <div className="px-4 space-y-1">
+        <div className="px-2 space-y-1">
           {NAV_LINKS.map((link) => {
             const Icon = link.icon;
             const isActive = pathname === link.href;
@@ -56,7 +56,7 @@ export function Sidebar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+                className={`flex items-center gap-2 px-2 py-2 rounded-md text-sm transition-colors ${
                   isActive
                     ? "text-primary bg-primary/10"
                     : "text-[#888] hover:text-white hover:bg-[#111]"
@@ -66,12 +66,12 @@ export function Sidebar() {
                   <Image
                     src={link.customIcon}
                     alt=""
-                    width={11}
-                    height={11}
-                    className="w-[11px] h-[11px]"
+                    width={13}
+                    height={13}
+                    className="w-[13px] h-[13px] flex-shrink-0"
                   />
                 ) : (
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-4 h-4 flex-shrink-0" />
                 )}
                 {link.label}
               </Link>
@@ -80,8 +80,8 @@ export function Sidebar() {
         </div>
 
         {/* Tools Section */}
-        <div className="px-4 mt-6">
-          <p className="text-[10px] uppercase tracking-wider text-[#444] mb-2 px-3">Tools</p>
+        <div className="px-2 mt-6">
+          <p className="text-[10px] uppercase tracking-wider text-[#444] mb-2 px-2">Tools</p>
           <div className="space-y-1">
             {TOOLS_LINKS.map((link) => {
               const Icon = link.icon;
@@ -90,13 +90,13 @@ export function Sidebar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+                  className={`flex items-center gap-2 px-2 py-2 rounded-md text-sm transition-colors ${
                     isActive
                       ? "text-primary bg-primary/10"
                       : "text-[#888] hover:text-white hover:bg-[#111]"
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-4 h-4 flex-shrink-0" />
                   {link.label}
                 </Link>
               );
@@ -105,16 +105,16 @@ export function Sidebar() {
         </div>
 
         {/* External Links */}
-        <div className="px-4 mt-6">
-          <p className="text-[10px] uppercase tracking-wider text-[#444] mb-2 px-3">External</p>
+        <div className="px-2 mt-6">
+          <p className="text-[10px] uppercase tracking-wider text-[#444] mb-2 px-2">External</p>
           <div className="space-y-1">
             <a
               href="https://polymarket.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-[#888] hover:text-white hover:bg-[#111] transition-colors"
+              className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-[#888] hover:text-white hover:bg-[#111] transition-colors"
             >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" fill="none"/>
               </svg>
               Polymarket
@@ -123,9 +123,9 @@ export function Sidebar() {
               href="https://twitter.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-[#888] hover:text-white hover:bg-[#111] transition-colors"
+              className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-[#888] hover:text-white hover:bg-[#111] transition-colors"
             >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
               </svg>
               Twitter
