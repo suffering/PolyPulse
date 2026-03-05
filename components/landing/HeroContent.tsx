@@ -21,6 +21,13 @@ interface TopTrader {
   trades: number;
 }
 
+interface ExchangeVolume {
+  volume24h: number;
+  week: number;
+  month: number;
+  allTime: number;
+}
+
 async function fetchTrendingEvents(): Promise<TrendingEvent[]> {
   const res = await fetch("/api/markets/events?limit=5");
   if (!res.ok) return [];
@@ -49,6 +56,24 @@ async function fetchTopTraders(): Promise<TopTrader[]> {
   } catch (error) {
     console.error("Failed to fetch top traders:", error);
     return [];
+  }
+}
+
+async function fetchExchangeVolume(): Promise<ExchangeVolume | null> {
+  try {
+    const res = await fetch("/api/volume");
+    if (!res.ok) return null;
+    const data = await res.json();
+    const polymarket = data.polymarket || {};
+    return {
+      volume24h: polymarket.volume24h || 0,
+      week: polymarket.week || 0,
+      month: polymarket.month || 0,
+      allTime: polymarket.allTime || 0,
+    };
+  } catch (error) {
+    console.error("Failed to fetch volume:", error);
+    return null;
   }
 }
 
@@ -96,9 +121,16 @@ export function HeroContent() {
     staleTime: 60000,
   });
 
+  const { data: volume } = useQuery({
+    queryKey: ["exchange-volume"],
+    queryFn: fetchExchangeVolume,
+    staleTime: 60000,
+  });
+
   const slides = [
     { id: 0, type: "markets", title: "Hot Markets", description: "Highest volume events on Polymarket" },
     { id: 1, type: "traders", title: "Top Traders", description: "Best performing traders all-time" },
+    { id: 2, type: "volume", title: "Exchange Volume", description: "Polymarket volume across time periods" },
   ];
 
   return (
@@ -254,6 +286,44 @@ export function HeroContent() {
                 ) : (
                   Array.from({ length: 5 }).map((_, i) => (
                     <div key={i} className="h-[60px] bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg animate-pulse" />
+                  ))
+                )}
+              </div>
+            )}
+            
+            {/* Exchange Volume Slide */}
+            {slides[currentSlide].type === "volume" && (
+              <div className="grid grid-cols-2 gap-3">
+                {volume ? (
+                  <>
+                    <div className="p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
+                      <p className="text-[#666] text-xs mb-2">Last 24H</p>
+                      <p className="text-green-400 font-mono text-lg font-semibold">
+                        {formatVolume(volume.volume24h)}
+                      </p>
+                    </div>
+                    <div className="p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
+                      <p className="text-[#666] text-xs mb-2">Last Week</p>
+                      <p className="text-green-400 font-mono text-lg font-semibold">
+                        {formatVolume(volume.week)}
+                      </p>
+                    </div>
+                    <div className="p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
+                      <p className="text-[#666] text-xs mb-2">Last Month</p>
+                      <p className="text-green-400 font-mono text-lg font-semibold">
+                        {formatVolume(volume.month)}
+                      </p>
+                    </div>
+                    <div className="p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
+                      <p className="text-[#666] text-xs mb-2">All-Time</p>
+                      <p className="text-green-400 font-mono text-lg font-semibold">
+                        {formatVolume(volume.allTime)}
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="h-[100px] bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg animate-pulse" />
                   ))
                 )}
               </div>
