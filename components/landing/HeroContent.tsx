@@ -219,7 +219,7 @@ export function HeroContent() {
             </div>
             
             {/* Slide Content Container - Fixed Height to Prevent Jumping */}
-            <div className="min-h-[340px]">
+            <div className="h-[380px] overflow-y-auto sidebar-scroll">
               {/* Hot Markets Slide */}
               {slides[currentSlide].type === "markets" && (
                 <div className="grid gap-3 animate-fade-in">
