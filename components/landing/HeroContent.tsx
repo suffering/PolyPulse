@@ -13,6 +13,14 @@ interface TrendingEvent {
   slug: string | null;
 }
 
+interface TopTrader {
+  id: string;
+  address: string;
+  pnl: number;
+  wins: number;
+  trades: number;
+}
+
 async function fetchTrendingEvents(): Promise<TrendingEvent[]> {
   const res = await fetch("/api/markets/events?limit=5");
   if (!res.ok) return [];
@@ -25,10 +33,27 @@ async function fetchTrendingEvents(): Promise<TrendingEvent[]> {
   }));
 }
 
+async function fetchTopTraders(): Promise<TopTrader[]> {
+  // Mock data for top traders - replace with actual API call
+  return [
+    { id: "1", address: "0x1234...5678", pnl: 248500, wins: 87, trades: 156 },
+    { id: "2", address: "0xabcd...ef01", pnl: 195300, wins: 72, trades: 142 },
+    { id: "3", address: "0x5678...9abc", pnl: 162400, wins: 68, trades: 128 },
+    { id: "4", address: "0xef01...2345", pnl: 145200, wins: 61, trades: 119 },
+    { id: "5", address: "0x9abc...def0", pnl: 128900, wins: 54, trades: 107 },
+  ];
+}
+
 function formatVolume(num: number): string {
   if (num >= 1000000000) return `$${(num / 1000000000).toFixed(1)}B`;
   if (num >= 1000000) return `$${(num / 1000000).toFixed(1)}M`;
   if (num >= 1000) return `$${(num / 1000).toFixed(0)}K`;
+  return `$${num.toFixed(0)}`;
+}
+
+function formatPnL(num: number): string {
+  if (num >= 1000000) return `$${(num / 1000000).toFixed(1)}M`;
+  if (num >= 1000) return `$${(num / 1000).toFixed(1)}K`;
   return `$${num.toFixed(0)}`;
 }
 
@@ -57,10 +82,15 @@ export function HeroContent() {
     staleTime: 60000,
   });
 
+  const { data: traders } = useQuery({
+    queryKey: ["top-traders"],
+    queryFn: fetchTopTraders,
+    staleTime: 60000,
+  });
+
   const slides = [
-    { id: 1, title: "EV Engine", description: "Find +EV opportunities" },
-    { id: 2, title: "Leaderboard", description: "Top traders on Polymarket" },
-    { id: 3, title: "Live Feed", description: "Real-time market activity" },
+    { id: 0, type: "markets", title: "Hot Markets", description: "Highest volume events on Polymarket" },
+    { id: 1, type: "traders", title: "Top Traders", description: "Best performing traders all-time" },
   ];
 
   return (
@@ -158,34 +188,68 @@ export function HeroContent() {
       <div className="px-8 pb-16">
         <div className="relative rounded-xl overflow-hidden bg-gradient-to-br from-primary/20 via-purple-500/20 to-pink-500/20 p-1">
           <div className="bg-black rounded-lg p-6">
-            {/* Hot Markets Display */}
+            {/* Slide Header */}
             <div className="mb-4">
-              <h3 className="text-white text-lg font-semibold mb-1">Hot Markets</h3>
-              <p className="text-[#666] text-sm">Highest volume events on Polymarket</p>
+              <h3 className="text-white text-lg font-semibold mb-1">{slides[currentSlide].title}</h3>
+              <p className="text-[#666] text-sm">{slides[currentSlide].description}</p>
             </div>
             
-            <div className="grid gap-3">
-              {events && events.length > 0 ? (
-                events.map((event) => (
-                  <a
-                    key={event.id}
-                    href={event.slug ? `https://polymarket.com/event/${event.slug}` : `https://polymarket.com/event/${event.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between p-3 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg hover:border-[#333] transition-colors"
-                  >
-                    <p className="text-white text-sm line-clamp-1 flex-1 mr-4">{event.title}</p>
-                    <span className="text-primary font-mono text-sm whitespace-nowrap">
-                      {formatVolume(event.volume)}
-                    </span>
-                  </a>
-                ))
-              ) : (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="h-[52px] bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg animate-pulse" />
-                ))
-              )}
-            </div>
+            {/* Hot Markets Slide */}
+            {slides[currentSlide].type === "markets" && (
+              <div className="grid gap-3">
+                {events && events.length > 0 ? (
+                  events.map((event) => (
+                    <a
+                      key={event.id}
+                      href={event.slug ? `https://polymarket.com/event/${event.slug}` : `https://polymarket.com/event/${event.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between p-3 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg hover:border-[#333] transition-colors"
+                    >
+                      <p className="text-white text-sm line-clamp-1 flex-1 mr-4">{event.title}</p>
+                      <span className="text-primary font-mono text-sm whitespace-nowrap">
+                        {formatVolume(event.volume)}
+                      </span>
+                    </a>
+                  ))
+                ) : (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="h-[52px] bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg animate-pulse" />
+                  ))
+                )}
+              </div>
+            )}
+            
+            {/* Top Traders Slide */}
+            {slides[currentSlide].type === "traders" && (
+              <div className="grid gap-3">
+                {traders && traders.length > 0 ? (
+                  traders.map((trader, index) => (
+                    <div
+                      key={trader.id}
+                      className="flex items-center justify-between p-3 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg hover:border-[#333] transition-colors"
+                    >
+                      <div className="flex items-center gap-3 flex-1">
+                        <span className="text-[#666] text-sm font-medium w-6">#{index + 1}</span>
+                        <div className="flex-1">
+                          <p className="text-white text-sm font-mono">{trader.address}</p>
+                          <p className="text-[#666] text-xs">
+                            {trader.wins} wins • {trader.trades} trades
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-primary font-mono text-sm whitespace-nowrap">
+                        {formatPnL(trader.pnl)}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="h-[60px] bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg animate-pulse" />
+                  ))
+                )}
+              </div>
+            )}
             
             {/* Carousel Controls */}
             <div className="flex justify-center gap-4 mt-6">
