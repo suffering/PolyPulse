@@ -19,7 +19,7 @@ const NAV_LINKS = [
   { href: "/extradata", label: "Markets", icon: FlaskConical, customIcon: "/markets-icon.png" },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy, customIcon: "/leaderboard-icon.png" },
   { href: "/creators", label: "Creators", icon: Users, customIcon: "/creators-icon.png" },
-  { href: "/volume", label: "Volume", icon: BarChart3 },
+  { href: "/volume", label: "Volume", icon: BarChart3, customIcon: "/volume-icon.png" },
 ];
 
 const TOOLS_LINKS = [
