@@ -181,3 +181,17 @@
   stroke-dasharray: 400;
   animation: draw-line 2s ease-in-out infinite;
 }
+
+/* Fade-in animation for carousel slides */
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}

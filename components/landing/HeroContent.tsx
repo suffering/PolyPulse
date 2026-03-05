@@ -218,100 +218,103 @@ export function HeroContent() {
               <p className="text-[#666] text-sm">{slides[currentSlide].description}</p>
             </div>
             
-            {/* Hot Markets Slide */}
-            {slides[currentSlide].type === "markets" && (
-              <div className="grid gap-3">
-                {events && events.length > 0 ? (
-                  events.map((event) => (
-                    <a
-                      key={event.id}
-                      href={event.slug ? `https://polymarket.com/event/${event.slug}` : `https://polymarket.com/event/${event.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-between p-3 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg hover:border-[#333] transition-colors"
-                    >
-                      <p className="text-white text-sm line-clamp-1 flex-1 mr-4">{event.title}</p>
-                      <span className="text-green-400 font-mono text-sm whitespace-nowrap">
-                        {formatVolume(event.volume)}
-                      </span>
-                    </a>
-                  ))
-                ) : (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="h-[52px] bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg animate-pulse" />
-                  ))
-                )}
-              </div>
-            )}
-            
-            {/* Top Traders Slide */}
-            {slides[currentSlide].type === "traders" && (
-              <div className="grid gap-3">
-                {traders && traders.length > 0 ? (
-                  traders.map((trader, index) => (
-                    <div
-                      key={trader.id}
-                      className="flex items-center justify-between p-3 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg hover:border-[#333] transition-colors"
-                    >
-                      <div className="flex items-center gap-3 flex-1">
-                        <span className="text-[#666] text-sm font-medium w-6">#{index + 1}</span>
-                        <div className="flex-1">
-                          <p className="text-white text-sm font-mono">{trader.address}</p>
-                          <p className="text-[#666] text-xs">
-                            {trader.trades} total trades
-                          </p>
+            {/* Slide Content Container - Fixed Height to Prevent Jumping */}
+            <div className="min-h-[340px]">
+              {/* Hot Markets Slide */}
+              {slides[currentSlide].type === "markets" && (
+                <div className="grid gap-3 animate-fade-in">
+                  {events && events.length > 0 ? (
+                    events.map((event) => (
+                      <a
+                        key={event.id}
+                        href={event.slug ? `https://polymarket.com/event/${event.slug}` : `https://polymarket.com/event/${event.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-between p-3 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg hover:border-[#333] transition-colors"
+                      >
+                        <p className="text-white text-sm line-clamp-1 flex-1 mr-4">{event.title}</p>
+                        <span className="text-green-400 font-mono text-sm whitespace-nowrap">
+                          {formatVolume(event.volume)}
+                        </span>
+                      </a>
+                    ))
+                  ) : (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <div key={i} className="h-[52px] bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg animate-pulse" />
+                    ))
+                  )}
+                </div>
+              )}
+              
+              {/* Top Traders Slide */}
+              {slides[currentSlide].type === "traders" && (
+                <div className="grid gap-3 animate-fade-in">
+                  {traders && traders.length > 0 ? (
+                    traders.map((trader, index) => (
+                      <div
+                        key={trader.id}
+                        className="flex items-center justify-between p-3 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg hover:border-[#333] transition-colors"
+                      >
+                        <div className="flex items-center gap-3 flex-1">
+                          <span className="text-[#666] text-sm font-medium w-6">#{index + 1}</span>
+                          <div className="flex-1">
+                            <p className="text-white text-sm font-mono">{trader.address}</p>
+                            <p className="text-[#666] text-xs">
+                              {trader.trades} total trades
+                            </p>
+                          </div>
                         </div>
+                        <span className="text-green-400 font-mono text-sm whitespace-nowrap">
+                          +{formatPnL(trader.pnl)}
+                        </span>
                       </div>
-                      <span className="text-green-400 font-mono text-sm whitespace-nowrap">
-                        +{formatPnL(trader.pnl)}
-                      </span>
-                    </div>
-                  ))
-                ) : (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="h-[60px] bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg animate-pulse" />
-                  ))
-                )}
-              </div>
-            )}
-            
-            {/* Exchange Volume Slide */}
-            {slides[currentSlide].type === "volume" && (
-              <div className="grid grid-cols-2 gap-3">
-                {volume ? (
-                  <>
-                    <div className="p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
-                      <p className="text-[#666] text-xs mb-2">Last 24H</p>
-                      <p className="text-green-400 font-mono text-lg font-semibold">
-                        {formatVolume(volume.volume24h)}
-                      </p>
-                    </div>
-                    <div className="p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
-                      <p className="text-[#666] text-xs mb-2">Last Week</p>
-                      <p className="text-green-400 font-mono text-lg font-semibold">
-                        {formatVolume(volume.week)}
-                      </p>
-                    </div>
-                    <div className="p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
-                      <p className="text-[#666] text-xs mb-2">Last Month</p>
-                      <p className="text-green-400 font-mono text-lg font-semibold">
-                        {formatVolume(volume.month)}
-                      </p>
-                    </div>
-                    <div className="p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
-                      <p className="text-[#666] text-xs mb-2">All-Time</p>
-                      <p className="text-green-400 font-mono text-lg font-semibold">
-                        {formatVolume(volume.allTime)}
-                      </p>
-                    </div>
-                  </>
-                ) : (
-                  Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="h-[100px] bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg animate-pulse" />
-                  ))
-                )}
-              </div>
-            )}
+                    ))
+                  ) : (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <div key={i} className="h-[60px] bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg animate-pulse" />
+                    ))
+                  )}
+                </div>
+              )}
+              
+              {/* Exchange Volume Slide */}
+              {slides[currentSlide].type === "volume" && (
+                <div className="grid grid-cols-2 gap-3 animate-fade-in">
+                  {volume ? (
+                    <>
+                      <div className="p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
+                        <p className="text-[#666] text-xs mb-2">Last 24H</p>
+                        <p className="text-green-400 font-mono text-lg font-semibold">
+                          {formatVolume(volume.volume24h)}
+                        </p>
+                      </div>
+                      <div className="p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
+                        <p className="text-[#666] text-xs mb-2">Last Week</p>
+                        <p className="text-green-400 font-mono text-lg font-semibold">
+                          {formatVolume(volume.week)}
+                        </p>
+                      </div>
+                      <div className="p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
+                        <p className="text-[#666] text-xs mb-2">Last Month</p>
+                        <p className="text-green-400 font-mono text-lg font-semibold">
+                          {formatVolume(volume.month)}
+                        </p>
+                      </div>
+                      <div className="p-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg">
+                        <p className="text-[#666] text-xs mb-2">All-Time</p>
+                        <p className="text-green-400 font-mono text-lg font-semibold">
+                          {formatVolume(volume.allTime)}
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className="h-[100px] bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg animate-pulse" />
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
             
             {/* Carousel Controls */}
             <div className="flex justify-center gap-4 mt-6">
