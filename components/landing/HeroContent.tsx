@@ -136,7 +136,7 @@ export function HeroContent() {
   return (
     <div className="min-h-screen bg-black">
       {/* Main Hero Content */}
-      <div className="px-8 pt-8 pb-12">
+      <div className="px-8 pt-8 pb-4">
         <div className="flex items-start justify-between gap-8">
           {/* Left - Text Content */}
           <div className="max-w-[600px]">
@@ -155,22 +155,6 @@ export function HeroContent() {
             <p className="text-[#888] text-base leading-snug mb-6 max-w-[500px]">
               Polymarket intelligence platform. Powered by traders. Made for traders.
             </p>
-            
-            {/* CTA Buttons */}
-            <div className="flex gap-4">
-              <Link
-                href="/ev"
-                className="inline-flex items-center justify-center min-w-[160px] px-8 py-3 bg-[#111] border border-[#333] text-white text-sm font-medium rounded-[4px] hover:bg-[#1a1a1a] hover:border-[#444] transition-colors"
-              >
-                Find +EV Bets
-              </Link>
-              <Link
-                href="/extradata"
-                className="inline-flex items-center justify-center min-w-[160px] px-8 py-3 bg-transparent border border-[#333] text-[#888] text-sm font-medium rounded-[4px] hover:text-white hover:border-[#444] transition-colors"
-              >
-                Explore Markets
-              </Link>
-            </div>
           </div>
           
           {/* Right - Pulse/Heartbeat Animation */}
