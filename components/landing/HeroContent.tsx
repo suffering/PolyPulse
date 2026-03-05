@@ -246,7 +246,7 @@ export function HeroContent() {
                           </p>
                         </div>
                       </div>
-                      <span className="text-primary font-mono text-sm whitespace-nowrap">
+                      <span className="text-green-400 font-mono text-sm whitespace-nowrap">
                         +{formatPnL(trader.pnl)}
                       </span>
                     </div>
