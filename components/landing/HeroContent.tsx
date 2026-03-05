@@ -100,80 +100,49 @@ export function HeroContent() {
           
           {/* Right - Pulse/Heartbeat Animation */}
           <div className="hidden lg:block">
-            <div className="w-[280px] h-[140px] relative">
+            <div className="w-[400px] h-[100px] relative">
               {/* Animated Pulse Line */}
               <svg
-                viewBox="0 0 280 140"
+                viewBox="0 0 400 100"
                 className="w-full h-full"
                 preserveAspectRatio="none"
               >
-                {/* Glow filter */}
+                {/* Subtle glow filter */}
                 <defs>
                   <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                    <feGaussianBlur stdDeviation="2" result="coloredBlur" />
                     <feMerge>
                       <feMergeNode in="coloredBlur" />
                       <feMergeNode in="SourceGraphic" />
                     </feMerge>
                   </filter>
                   <linearGradient id="pulseGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#4B4BF7" stopOpacity="0.1" />
-                    <stop offset="50%" stopColor="#4B4BF7" stopOpacity="1" />
-                    <stop offset="100%" stopColor="#4B4BF7" stopOpacity="0.1" />
+                    <stop offset="0%" stopColor="#4B4BF7" stopOpacity="0" />
+                    <stop offset="20%" stopColor="#4B4BF7" stopOpacity="0.4" />
+                    <stop offset="50%" stopColor="#4B4BF7" stopOpacity="0.6" />
+                    <stop offset="80%" stopColor="#4B4BF7" stopOpacity="0.4" />
+                    <stop offset="100%" stopColor="#4B4BF7" stopOpacity="0" />
                   </linearGradient>
                 </defs>
                 
-                {/* Background grid lines */}
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <line
-                    key={`h-${i}`}
-                    x1="0"
-                    y1={i * 28}
-                    x2="280"
-                    y2={i * 28}
-                    stroke="#1a1a1a"
-                    strokeWidth="1"
-                  />
-                ))}
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <line
-                    key={`v-${i}`}
-                    x1={i * 40}
-                    y1="0"
-                    x2={i * 40}
-                    y2="140"
-                    stroke="#1a1a1a"
-                    strokeWidth="1"
-                  />
-                ))}
-                
-                {/* Main pulse line */}
+                {/* Main pulse line - longer and more subtle */}
                 <path
-                  d="M 0 70 L 40 70 L 60 70 L 80 70 L 100 70 L 110 30 L 120 110 L 130 50 L 140 90 L 150 70 L 180 70 L 200 70 L 220 70 L 280 70"
+                  d="M 0 50 L 80 50 L 120 50 L 160 50 L 180 50 L 195 20 L 210 80 L 225 35 L 240 65 L 255 50 L 300 50 L 340 50 L 400 50"
                   fill="none"
                   stroke="url(#pulseGradient)"
-                  strokeWidth="2"
+                  strokeWidth="1.5"
                   filter="url(#glow)"
                   className="animate-pulse-line"
                 />
                 
                 {/* Animated dot that follows the line */}
-                <circle r="4" fill="#4B4BF7" filter="url(#glow)">
+                <circle r="3" fill="#4B4BF7" fillOpacity="0.8" filter="url(#glow)">
                   <animateMotion
-                    dur="2s"
+                    dur="3s"
                     repeatCount="indefinite"
-                    path="M 0 70 L 40 70 L 60 70 L 80 70 L 100 70 L 110 30 L 120 110 L 130 50 L 140 90 L 150 70 L 180 70 L 200 70 L 220 70 L 280 70"
+                    path="M 0 50 L 80 50 L 120 50 L 160 50 L 180 50 L 195 20 L 210 80 L 225 35 L 240 65 L 255 50 L 300 50 L 340 50 L 400 50"
                   />
                 </circle>
-                
-                {/* Secondary faint pulse */}
-                <path
-                  d="M 0 70 L 40 70 L 60 70 L 80 70 L 100 70 L 110 30 L 120 110 L 130 50 L 140 90 L 150 70 L 180 70 L 200 70 L 220 70 L 280 70"
-                  fill="none"
-                  stroke="#4B4BF7"
-                  strokeWidth="1"
-                  strokeOpacity="0.2"
-                />
               </svg>
             </div>
           </div>
