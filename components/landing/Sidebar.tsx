@@ -110,8 +110,9 @@ export function Sidebar() {
             })}
           </div>
 
-          {/* External Links - no section header */}
-          <div className="mt-4">
+          {/* External Links */}
+          <div className="mt-6 pt-4 border-t border-[#1a1a1a]">
+            <p className="text-[10px] uppercase tracking-wide text-[#555] px-2 mb-3 font-light">Socials</p>
             <a
               href="https://polymarket.com"
               target="_blank"
