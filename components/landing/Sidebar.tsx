@@ -34,7 +34,7 @@ export function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 h-screen w-[200px] bg-black border-r border-[#1a1a1a] flex flex-col z-40">
       {/* Logo */}
-      <div className="p-6 border-b border-[#1a1a1a] flex items-center justify-center">
+      <div className="p-3 border-b border-[#1a1a1a] flex items-center justify-center">
         <Link href="/">
           <Image
             src="/logo.png"
