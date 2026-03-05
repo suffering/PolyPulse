@@ -24,7 +24,7 @@ const NAV_LINKS = [
 
 const TOOLS_LINKS = [
   { href: "/live", label: "Live Feed", icon: Activity, customIcon: "/watchlist-icon.png" },
-  { href: "/search", label: "Search Wallet", icon: Search },
+  { href: "/search", label: "Search Wallet", icon: Search, customIcon: "/search-icon.png" },
   { href: "/portfolio", label: "Portfolio", icon: Wallet },
 ];
 
