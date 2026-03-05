@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 interface TrendingEvent {
@@ -34,6 +34,23 @@ function formatVolume(num: number): string {
 
 export function HeroContent() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [displayedText, setDisplayedText] = useState("");
+  const taglineText = "Heartbeat first. Headlines second. Edge always.";
+
+  useEffect(() => {
+    let index = 0;
+    const interval = setInterval(() => {
+      if (index <= taglineText.length) {
+        setDisplayedText(taglineText.slice(0, index));
+        index++;
+      } else {
+        clearInterval(interval);
+      }
+    }, 40);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const { data: events } = useQuery({
     queryKey: ["hero-events"],
     queryFn: fetchTrendingEvents,
@@ -60,8 +77,8 @@ export function HeroContent() {
             </h1>
             
             {/* Accent Tagline */}
-            <p className="text-lg md:text-xl font-semibold text-primary mb-3">
-              {"<"}Heartbeat first. Headlines second. Edge always.{">"}
+            <p className="text-lg md:text-xl font-semibold text-primary mb-3 h-[28px]">
+              {displayedText}
             </p>
             
             {/* Description */}
