@@ -215,7 +215,7 @@ export function HeroContent() {
                       className="flex items-center justify-between p-3 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg hover:border-[#333] transition-colors"
                     >
                       <p className="text-white text-sm line-clamp-1 flex-1 mr-4">{event.title}</p>
-                      <span className="text-primary font-mono text-sm whitespace-nowrap">
+                      <span className="text-green-400 font-mono text-sm whitespace-nowrap">
                         {formatVolume(event.volume)}
                       </span>
                     </a>
