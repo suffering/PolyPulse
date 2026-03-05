@@ -66,9 +66,9 @@ export function Sidebar() {
                   <Image
                     src={link.customIcon}
                     alt=""
-                    width={16}
-                    height={16}
-                    className="w-4 h-4"
+                    width={12}
+                    height={12}
+                    className="w-3 h-3"
                   />
                 ) : (
                   <Icon className="w-4 h-4" />
