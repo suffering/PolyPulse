@@ -78,7 +78,7 @@ export function HeroContent() {
             
             {/* Description */}
             <p className="text-[#888] text-base leading-relaxed mb-8 max-w-[500px]">
-              Polymarket intelligence & research platform. Powered by traders. Made for traders.
+              Polymarket intelligence platform. Powered by traders. Made for traders.
             </p>
             
             {/* CTA Buttons */}
