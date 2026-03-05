@@ -67,8 +67,8 @@ export function HeroContent() {
           <div className="max-w-[600px]">
             {/* Main Headline */}
             <h1 className="text-5xl md:text-6xl font-bold text-white leading-[1.1] mb-4">
-              Trade like a<br />
-              Wall St quant
+              Polymarket,<br />
+              unlocked.
             </h1>
             
             {/* Accent Tagline */}
