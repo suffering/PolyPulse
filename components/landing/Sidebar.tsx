@@ -47,7 +47,7 @@ export function Sidebar() {
       </div>
 
       {/* Main Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4">
+      <nav className="flex-1 overflow-y-auto py-4 sidebar-scroll">
         <div className="px-2 space-y-1">
           {/* Tools Section */}
           <div>

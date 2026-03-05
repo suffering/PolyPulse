@@ -81,6 +81,30 @@
   background-size: 48px 48px;
 }
 
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.3);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.6);
+}
+
+/* Sidebar with custom scrollbar */
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.3) transparent;
+}
+
 /* Radial gradient overlay */
 .radial-gradient-overlay {
   background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(75, 75, 247, 0.15), transparent);
