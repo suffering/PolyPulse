@@ -49,38 +49,10 @@ export function Sidebar() {
       {/* Main Navigation */}
       <nav className="flex-1 overflow-y-auto py-4">
         <div className="px-2 space-y-1">
-          {NAV_LINKS.map((link) => {
-            const Icon = link.icon;
-            const isActive = pathname === link.href;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`flex items-center gap-2 px-2 py-2 rounded-md text-sm transition-colors ${
-                  isActive
-                    ? "text-primary bg-primary/10"
-                    : "text-[#888] hover:text-white hover:bg-[#111]"
-                }`}
-              >
-                {link.customIcon ? (
-                  <Image
-                    src={link.customIcon}
-                    alt=""
-                    width={13}
-                    height={13}
-                    className="w-[13px] h-[13px] flex-shrink-0"
-                  />
-                ) : (
-                  <Icon className="w-4 h-4 flex-shrink-0" />
-                )}
-                {link.label}
-              </Link>
-            );
-          })}
-
-          {/* Tools - no section header */}
-          <div className="mt-4">
-            {TOOLS_LINKS.map((link) => {
+          {/* Tools Section */}
+          <div>
+            <p className="text-[10px] uppercase tracking-wide text-[#555] px-2 mb-3 font-light">Tools</p>
+            {NAV_LINKS.map((link) => {
               const Icon = link.icon;
               const isActive = pathname === link.href;
               return (
@@ -108,6 +80,38 @@ export function Sidebar() {
                 </Link>
               );
             })}
+
+            {/* Additional Tools */}
+            <div className="mt-2">
+              {TOOLS_LINKS.map((link) => {
+                const Icon = link.icon;
+                const isActive = pathname === link.href;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`flex items-center gap-2 px-2 py-2 rounded-md text-sm transition-colors ${
+                      isActive
+                        ? "text-primary bg-primary/10"
+                        : "text-[#888] hover:text-white hover:bg-[#111]"
+                    }`}
+                  >
+                    {link.customIcon ? (
+                      <Image
+                        src={link.customIcon}
+                        alt=""
+                        width={13}
+                        height={13}
+                        className="w-[13px] h-[13px] flex-shrink-0"
+                      />
+                    ) : (
+                      <Icon className="w-4 h-4 flex-shrink-0" />
+                    )}
+                    {link.label}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
 
           {/* External Links */}
