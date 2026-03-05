@@ -23,7 +23,7 @@ const NAV_LINKS = [
 ];
 
 const TOOLS_LINKS = [
-  { href: "/live", label: "Live Feed", icon: Activity },
+  { href: "/live", label: "Live Feed", icon: Activity, customIcon: "/watchlist-icon.png" },
   { href: "/search", label: "Search Wallet", icon: Search },
   { href: "/portfolio", label: "Portfolio", icon: Wallet },
 ];
@@ -93,7 +93,17 @@ export function Sidebar() {
                       : "text-[#888] hover:text-white hover:bg-[#111]"
                   }`}
                 >
-                  <Icon className="w-4 h-4 flex-shrink-0" />
+                  {link.customIcon ? (
+                    <Image
+                      src={link.customIcon}
+                      alt=""
+                      width={13}
+                      height={13}
+                      className="w-[13px] h-[13px] flex-shrink-0"
+                    />
+                  ) : (
+                    <Icon className="w-4 h-4 flex-shrink-0" />
+                  )}
                   {link.label}
                 </Link>
               );
