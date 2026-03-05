@@ -59,7 +59,7 @@ export function Sidebar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-2 px-2 py-2 rounded-md text-sm transition-colors ${
+                  className={`flex items-center gap-2 px-2 py-2 rounded-md text-sm transition-all duration-200 ease-out ${
                     isActive
                       ? "text-primary bg-primary/10"
                       : "text-[#888] hover:text-white hover:bg-[#111]"
@@ -90,7 +90,7 @@ export function Sidebar() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`flex items-center gap-2 px-2 py-2 rounded-md text-sm transition-colors ${
+                    className={`flex items-center gap-2 px-2 py-2 rounded-md text-sm transition-all duration-200 ease-out ${
                       isActive
                         ? "text-primary bg-primary/10"
                         : "text-[#888] hover:text-white hover:bg-[#111]"
@@ -121,7 +121,7 @@ export function Sidebar() {
               href="https://polymarket.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-[#888] hover:text-white hover:bg-[#111] transition-colors"
+              className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-[#888] hover:text-white hover:bg-[#111] transition-all duration-200 ease-out"
             >
               <Image
                 src="/polymarket-icon.png"
@@ -136,7 +136,7 @@ export function Sidebar() {
               href="https://x.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-[#888] hover:text-white hover:bg-[#111] transition-colors"
+              className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-[#888] hover:text-white hover:bg-[#111] transition-all duration-200 ease-out"
             >
               <Image
                 src="/x-icon.png"
