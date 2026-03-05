@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 interface TrendingEvent {
@@ -34,29 +34,11 @@ function formatVolume(num: number): string {
 
 export function HeroContent() {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [displayedText, setDisplayedText] = useState("");
   const { data: events } = useQuery({
     queryKey: ["hero-events"],
     queryFn: fetchTrendingEvents,
     staleTime: 60000,
   });
-
-  const taglineText = "Heartbeat first. Headlines second. Edge always.";
-
-  // Typing animation effect
-  useEffect(() => {
-    let index = 0;
-    const interval = setInterval(() => {
-      if (index < taglineText.length) {
-        setDisplayedText(taglineText.slice(0, index + 1));
-        index++;
-      } else {
-        clearInterval(interval);
-      }
-    }, 50);
-
-    return () => clearInterval(interval);
-  }, []);
 
   const slides = [
     { id: 1, title: "EV Engine", description: "Find +EV opportunities" },
@@ -78,13 +60,8 @@ export function HeroContent() {
             </h1>
             
             {/* Accent Tagline */}
-            <p className="text-lg md:text-xl font-semibold text-primary mb-3 h-[52px] leading-snug overflow-hidden flex items-start">
-              <span className="inline">
-                {displayedText}
-                {displayedText.length < taglineText.length && (
-                  <span className="animate-pulse">|</span>
-                )}
-              </span>
+            <p className="text-lg md:text-xl font-semibold text-primary mb-3">
+              {"<"}Heartbeat first. Headlines second. Edge always.{">"}
             </p>
             
             {/* Description */}
