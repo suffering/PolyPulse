@@ -118,9 +118,13 @@ export function Sidebar() {
               rel="noopener noreferrer"
               className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-[#888] hover:text-white hover:bg-[#111] transition-colors"
             >
-              <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" fill="none"/>
-              </svg>
+              <Image
+                src="/polymarket-icon.png"
+                alt=""
+                width={13}
+                height={13}
+                className="w-[13px] h-[13px] flex-shrink-0"
+              />
               Polymarket
             </a>
             <a
