@@ -78,8 +78,9 @@ export function Sidebar() {
             );
           })}
 
-          {/* Tools - no section header */}
-          <div className="mt-4">
+          {/* Tools */}
+          <div className="mt-6 pt-4 border-t border-[#1a1a1a]">
+            <p className="text-[10px] uppercase tracking-wide text-[#555] px-2 mb-3 font-light">Tools</p>
             {TOOLS_LINKS.map((link) => {
               const Icon = link.icon;
               const isActive = pathname === link.href;
