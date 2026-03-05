@@ -39,9 +39,9 @@ export function Sidebar() {
           <Image
             src="/logo.png"
             alt="PolyPulse"
-            width={72}
-            height={72}
-            className="w-[72px] h-[72px]"
+            width={96}
+            height={96}
+            className="w-[96px] h-[96px]"
           />
         </Link>
       </div>
