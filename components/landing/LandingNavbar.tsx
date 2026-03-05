@@ -32,17 +32,14 @@ export function LandingNavbar() {
     <header className="fixed top-0 left-0 right-0 z-50 h-[64px] bg-background/95 backdrop-blur-md border-b border-border">
       <div className="mx-auto h-full max-w-7xl flex items-center justify-between px-3">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-1.5 shrink-0">
+        <Link href="/" className="flex items-center shrink-0">
           <Image
             src="/logo.png"
             alt="PolyPulse"
-            width={32}
-            height={32}
-            className="w-[32px] h-[32px]"
+            width={48}
+            height={48}
+            className="w-[48px] h-[48px]"
           />
-          <span className="text-lg font-semibold text-foreground hidden sm:block">
-            PolyPulse
-          </span>
         </Link>
 
         {/* Desktop Navigation */}
