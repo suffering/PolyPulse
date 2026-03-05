@@ -34,14 +34,22 @@ async function fetchTrendingEvents(): Promise<TrendingEvent[]> {
 }
 
 async function fetchTopTraders(): Promise<TopTrader[]> {
-  // Mock data for top traders - replace with actual API call
-  return [
-    { id: "1", address: "0x1234...5678", pnl: 248500, wins: 87, trades: 156 },
-    { id: "2", address: "0xabcd...ef01", pnl: 195300, wins: 72, trades: 142 },
-    { id: "3", address: "0x5678...9abc", pnl: 162400, wins: 68, trades: 128 },
-    { id: "4", address: "0xef01...2345", pnl: 145200, wins: 61, trades: 119 },
-    { id: "5", address: "0x9abc...def0", pnl: 128900, wins: 54, trades: 107 },
-  ];
+  try {
+    const res = await fetch("/api/leaderboard?category=OVERALL&timePeriod=ALL&orderBy=PNL&limit=5");
+    if (!res.ok) return [];
+    const data = await res.json();
+    const entries = data.entries || [];
+    return entries.map((entry: any, index: number) => ({
+      id: entry.proxyWallet,
+      address: entry.userName || entry.proxyWallet,
+      pnl: entry.pnl || 0,
+      wins: 0, // Not available from API, set to 0
+      trades: entry.totalTrades || 0,
+    }));
+  } catch (error) {
+    console.error("Failed to fetch top traders:", error);
+    return [];
+  }
 }
 
 function formatVolume(num: number): string {
@@ -234,12 +242,12 @@ export function HeroContent() {
                         <div className="flex-1">
                           <p className="text-white text-sm font-mono">{trader.address}</p>
                           <p className="text-[#666] text-xs">
-                            {trader.wins} wins • {trader.trades} trades
+                            {trader.trades} total trades
                           </p>
                         </div>
                       </div>
                       <span className="text-primary font-mono text-sm whitespace-nowrap">
-                        {formatPnL(trader.pnl)}
+                        +{formatPnL(trader.pnl)}
                       </span>
                     </div>
                   ))
