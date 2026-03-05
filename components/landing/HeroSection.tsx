@@ -118,12 +118,6 @@ export function HeroSection() {
         <div className="grid lg:grid-cols-2 gap-6 items-center">
           {/* Left side - Text content */}
           <div>
-            {/* Live indicator */}
-            <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-success/10 border border-success/30 rounded-full mb-3">
-              <span className="w-[8px] h-[8px] bg-success rounded-full animate-pulse-dot" />
-              <span className="text-xs text-success font-medium">Live Data</span>
-            </div>
-
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-3 text-balance">
               Polymarket Intelligence
               <span className="text-primary"> Platform</span>
