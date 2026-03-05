@@ -44,7 +44,7 @@ export function Sidebar() {
             className="w-[120px] h-[120px]"
           />
         </Link>
-        <p className="text-[9px] text-[#777] font-light tracking-wide">made in nyc</p>
+        <p className="text-[11px] text-[#777] font-light tracking-wide">made in nyc</p>
       </div>
 
       {/* Main Navigation */}
