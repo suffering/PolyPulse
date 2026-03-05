@@ -78,11 +78,13 @@ export function HeroContent() {
             </h1>
             
             {/* Accent Tagline */}
-            <p className="text-lg md:text-xl font-semibold text-primary mb-3 min-h-[32px]">
-              {displayedText}
-              {displayedText.length < taglineText.length && (
-                <span className="animate-pulse">|</span>
-              )}
+            <p className="text-lg md:text-xl font-semibold text-primary mb-3 h-[28px] flex items-center">
+              <span>
+                {displayedText}
+                {displayedText.length < taglineText.length && (
+                  <span className="animate-pulse ml-0.5">|</span>
+                )}
+              </span>
             </p>
             
             {/* Description */}
