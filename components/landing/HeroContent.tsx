@@ -73,7 +73,7 @@ export function HeroContent() {
             
             {/* Accent Tagline */}
             <p className="text-2xl md:text-3xl font-semibold text-primary mb-6">
-              {"<"}we find edge{">"}
+              {"<"}Heartbeat first. Headlines second. Edge always.{">"}
             </p>
             
             {/* Description */}
