@@ -129,16 +129,16 @@ export function HeroSection() {
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-wrap gap-3 mb-5">
+            <div className="flex gap-4 mb-5">
               <Link
                 href="/ev"
-                className="inline-flex items-center justify-center px-6 py-2.5 bg-card border border-border text-foreground rounded-md font-medium hover:bg-card-elevated hover:border-primary/50 transition-all duration-200"
+                className="inline-flex items-center justify-center min-w-[160px] px-8 py-3 bg-[#1a1a1a] border border-[#333] text-white text-sm font-medium rounded-[4px] hover:bg-[#222] hover:border-[#444] transition-colors"
               >
                 Find +EV Bets
               </Link>
               <Link
                 href="/leaderboard"
-                className="inline-flex items-center justify-center px-6 py-2.5 border border-border text-muted-foreground rounded-md font-medium hover:text-foreground hover:border-primary/50 transition-all duration-200"
+                className="inline-flex items-center justify-center min-w-[160px] px-8 py-3 bg-transparent border border-[#333] text-[#888] text-sm font-medium rounded-[4px] hover:text-white hover:border-[#555] transition-colors"
               >
                 View Leaderboard
               </Link>
