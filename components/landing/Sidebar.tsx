@@ -82,7 +82,7 @@ export function Sidebar() {
             })}
 
             {/* Additional Tools */}
-            <div className="mt-1">
+            <div className="mt-0">
               {TOOLS_LINKS.map((link) => {
                 const Icon = link.icon;
                 const isActive = pathname === link.href;
