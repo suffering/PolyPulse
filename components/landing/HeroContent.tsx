@@ -50,13 +50,32 @@ export function HeroContent() {
     <div className="min-h-screen bg-black">
       {/* Search Bar */}
       <div className="pt-6 pb-4 px-8">
-        <div className="relative max-w-[280px]">
+        <div className="relative max-w-[320px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "rgba(255, 255, 255, 0.25)" }} />
           <input
             type="text"
-            placeholder="Search"
-            className="w-full bg-[#111] border border-[#222] rounded-md px-3 py-1.5 text-sm text-white placeholder:text-[#555] focus:outline-none focus:border-[#333]"
+            placeholder="Search markets, wallets, events..."
+            className="w-full pl-10 pr-3 py-2.5 text-sm rounded-[6px] outline-none transition-all duration-200 ease-out"
+            style={{
+              backgroundColor: "rgba(255, 255, 255, 0.04)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              color: "rgba(255, 255, 255, 0.75)",
+              boxShadow: "none",
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.4)";
+              e.currentTarget.style.boxShadow = "0 0 0 1px rgba(99, 102, 241, 0.2)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
           />
-          <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#555]" />
+          <style jsx>{`
+            input::placeholder {
+              color: rgba(255, 255, 255, 0.2);
+            }
+          `}</style>
         </div>
       </div>
 
