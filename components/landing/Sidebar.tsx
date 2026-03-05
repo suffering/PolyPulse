@@ -34,19 +34,15 @@ export function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 h-screen w-[200px] bg-black border-r border-[#1a1a1a] flex flex-col z-40">
       {/* Logo */}
-      <div className="p-4 border-b border-[#1a1a1a]">
-        <Link href="/" className="flex items-center gap-2">
+      <div className="p-6 border-b border-[#1a1a1a] flex items-center justify-center">
+        <Link href="/">
           <Image
             src="/logo.png"
             alt="PolyPulse"
-            width={36}
-            height={36}
-            className="w-[36px] h-[36px]"
+            width={72}
+            height={72}
+            className="w-[72px] h-[72px]"
           />
-          <div>
-            <span className="text-white font-semibold text-sm">PolyPulse</span>
-            <p className="text-[10px] text-[#666] leading-none">polymarket intelligence</p>
-          </div>
         </Link>
       </div>
 
