@@ -128,15 +128,19 @@ export function Sidebar() {
               Polymarket
             </a>
             <a
-              href="https://twitter.com"
+              href="https://x.com"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-[#888] hover:text-white hover:bg-[#111] transition-colors"
             >
-              <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-              </svg>
-              Twitter
+              <Image
+                src="/x-icon.png"
+                alt=""
+                width={13}
+                height={13}
+                className="w-[13px] h-[13px] flex-shrink-0"
+              />
+              X
             </a>
           </div>
         </div>
