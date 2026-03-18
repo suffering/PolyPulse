@@ -3,11 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { EVCard } from "@/components/EVCard";
-import { QuotaTracker } from "@/components/QuotaTracker";
 import type { MatchedOpportunity } from "@/lib/matching";
 import type { Timeframe, MarketCategory } from "@/lib/types";
 import { getTimeframeLabel } from "@/lib/types";
 import { useSetPageAiState } from "@/components/ai/PageAiContext";
+import Image from "next/image";
+import { RefreshCw, Wrench, Inbox, AlertCircle, Sparkles } from "lucide-react";
 
 type UiSport = "nba" | "mls" | "mlb" | "nhl" | "tennis";
 
@@ -92,7 +93,6 @@ export default function Home() {
     const lgCounts: Record<string, number> = {};
 
     for (const opp of opps) {
-      // Futures tab only counts actual futures (no team-vs-team games)
       const isFuturesOutright =
         opp.timeframe === "futures" && opp.category !== "games" && opp.marketType !== "game";
       if (opp.timeframe === "futures") {
@@ -151,30 +151,66 @@ export default function Home() {
   ]);
 
   return (
-    <div className="min-h-screen bg-[#0d1117] text-slate-200 font-mono">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <header className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">
-                PolyPulse +EV Engine
-              </h1>
-              <p className="text-slate-500 text-sm mt-1">
-                Positive expected value bets on Polymarket vs sportsbooks
-              </p>
-            </div>
-          </div>
-        </header>
+    <div className="min-h-screen bg-[#000000]">
+      {/* Main Content */}
+      <main className="ml-[200px] min-h-screen bg-[#000000] px-10 py-10 max-w-[1200px] relative">
+        {/* Animated Pulse Line - Top Right */}
+        <div className="absolute top-8 right-8 opacity-70">
+          <svg viewBox="0 0 280 60" width="280" height="60" className="animate-draw-line">
+            <path
+              d="M 10 30 L 50 30 L 55 10 L 60 50 L 65 30 L 270 30"
+              stroke="#4B4BF7"
+              strokeWidth="2"
+              fill="none"
+            />
+          </svg>
+        </div>
 
-        <div className="mb-6 flex flex-wrap items-center gap-3">
-          <QuotaTracker
-            quotaRemaining={quotaRemaining}
-            lastUpdated={data?.oddsLastUpdated ?? ""}
-            onRefresh={() => refetch()}
-            isLoading={isLoading}
-          />
+        {/* Hero Section */}
+        <div className="mb-8">
+          <h1 className="text-6xl font-black tracking-tight text-white leading-none font-sans">
+            Polymarket,<br />unlocked.
+          </h1>
+          <p className="text-[#4B4BF7] text-lg font-medium mt-4">
+            Heartbeat first. Headlines second. Edge always.
+          </p>
+          <p className="text-gray-400 text-sm max-w-lg leading-relaxed mt-2">
+            Find positive EV bets before the market corrects. Live odds vs Polymarket prices across NBA, Soccer, MLB, NHL and Tennis.
+          </p>
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-white/5 mt-8 mb-8" />
+
+        {/* Stats Bar */}
+        <div className="flex flex-wrap items-center gap-3 mb-8">
+          {/* Odds API Status */}
+          <div className="bg-[#0d0d0d] border border-white/8 rounded-full px-4 py-1.5 flex items-center gap-2">
+            <span className="text-gray-600 text-xs">Odds API:</span>
+            <span className="text-white text-sm font-mono">{quotaRemaining ?? "—"}</span>
+            <span className="text-gray-600 text-xs">requests left</span>
+          </div>
+
+          {/* Last Updated */}
+          <div className="bg-[#0d0d0d] border border-white/8 rounded-full px-4 py-1.5 flex items-center gap-2">
+            <span className="text-gray-600 text-xs">Updated:</span>
+            <span className="text-gray-300 text-sm font-mono">
+              {data?.oddsLastUpdated ? new Date(data.oddsLastUpdated).toLocaleTimeString() : "—"}
+            </span>
+          </div>
+
+          {/* Refresh Button */}
           <button
-            type="button"
+            onClick={() => refetch()}
+            disabled={isLoading}
+            className="bg-[#4B4BF7]/10 border border-[#4B4BF7]/30 text-[#4B4BF7] text-sm rounded-full px-4 py-1.5 flex items-center gap-2 hover:bg-[#4B4BF7]/20 active:scale-95 transition-all duration-150 disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
+            Refresh
+          </button>
+
+          {/* Dev Refresh Button */}
+          <button
             onClick={async () => {
               setRefreshingOdds(true);
               try {
@@ -192,110 +228,53 @@ export default function Home() {
               }
             }}
             disabled={refreshingOdds || isLoading}
-            className="rounded-md border border-amber-500/50 bg-amber-500/10 px-2 py-1 font-mono text-xs text-amber-400 hover:bg-amber-500/20 disabled:opacity-50"
+            className="bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs rounded-full px-4 py-1.5 flex items-center gap-2 hover:bg-amber-500/20 active:scale-95 transition-all duration-150 disabled:opacity-50"
           >
-            {refreshingOdds ? "Refreshing…" : "Dev: Refresh Odds API"}
+            <Wrench className="w-3.5 h-3.5" />
+            Dev: Refresh Odds API
           </button>
         </div>
 
+        {/* Filter Section */}
         {!isLoading && !isError && (
-          <div className="mb-6 space-y-4">
+          <div className="mb-8 space-y-6">
+            {/* Sport Filter */}
             <div>
-              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Sport</p>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => {
-                    setSport("nba");
-                    setLeague("all");
-                    setCategory("all");
-                    setTimeframe("all");
-                  }}
-                  className={`px-3 py-1.5 rounded-md font-mono text-sm border transition-colors ${
-                    sport === "nba"
-                      ? "bg-amber-500/20 text-amber-400 border-amber-500/50"
-                      : "bg-slate-800/50 text-slate-400 border-slate-600 hover:border-slate-500"
-                  }`}
-                  aria-pressed={sport === "nba"}
-                >
-                  NBA
-                </button>
-                <button
-                  onClick={() => {
-                    setSport("mls");
-                    setCategory("all");
-                    setTimeframe("all");
-                  }}
-                  className={`px-3 py-1.5 rounded-md font-mono text-sm border transition-colors ${
-                    sport === "mls"
-                      ? "bg-amber-500/20 text-amber-400 border-amber-500/50"
-                      : "bg-slate-800/50 text-slate-400 border-slate-600 hover:border-slate-500"
-                  }`}
-                  aria-pressed={sport === "mls"}
-                >
-                  Soccer
-                </button>
-                <button
-                  onClick={() => {
-                    setSport("mlb");
-                    setLeague("all");
-                    setCategory("all");
-                    setTimeframe("all");
-                  }}
-                  className={`px-3 py-1.5 rounded-md font-mono text-sm border transition-colors ${
-                    sport === "mlb"
-                      ? "bg-amber-500/20 text-amber-400 border-amber-500/50"
-                      : "bg-slate-800/50 text-slate-400 border-slate-600 hover:border-slate-500"
-                  }`}
-                  aria-pressed={sport === "mlb"}
-                >
-                  MLB
-                </button>
-                <button
-                  onClick={() => {
-                    setSport("nhl");
-                    setLeague("all");
-                    setCategory("all");
-                    setTimeframe("all");
-                  }}
-                  className={`px-3 py-1.5 rounded-md font-mono text-sm border transition-colors ${
-                    sport === "nhl"
-                      ? "bg-amber-500/20 text-amber-400 border-amber-500/50"
-                      : "bg-slate-800/50 text-slate-400 border-slate-600 hover:border-slate-500"
-                  }`}
-                  aria-pressed={sport === "nhl"}
-                >
-                  NHL
-                </button>
-                <button
-                  onClick={() => {
-                    setSport("tennis");
-                    setLeague("all");
-                    setCategory("all");
-                    setTimeframe("all");
-                  }}
-                  className={`px-3 py-1.5 rounded-md font-mono text-sm border transition-colors ${
-                    sport === "tennis"
-                      ? "bg-amber-500/20 text-amber-400 border-amber-500/50"
-                      : "bg-slate-800/50 text-slate-400 border-slate-600 hover:border-slate-500"
-                  }`}
-                  aria-pressed={sport === "tennis"}
-                >
-                  Tennis
-                </button>
+              <p className="text-gray-600 text-xs uppercase tracking-[0.15em] mb-3 font-medium">Sport</p>
+              <div className="flex gap-2 flex-wrap">
+                {(["nba", "mls", "mlb", "nhl", "tennis"] as const).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => {
+                      setSport(s);
+                      setLeague("all");
+                      setCategory("all");
+                      setTimeframe("all");
+                    }}
+                    className={`text-sm rounded-full px-5 py-2 transition-all duration-150 cursor-pointer active:scale-95 font-medium ${
+                      sport === s
+                        ? "bg-[#4B4BF7]/15 border border-[#4B4BF7]/50 text-[#4B4BF7] shadow-sm shadow-[#4B4BF7]/20"
+                        : "bg-[#0d0d0d] border border-white/8 text-gray-500 hover:text-gray-200 hover:border-white/20 hover:bg-white/5"
+                    }`}
+                  >
+                    {s === "mls" ? "Soccer" : s.toUpperCase()}
+                  </button>
+                ))}
               </div>
             </div>
 
+            {/* Timeframe Filter */}
             <div>
-              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Timeframe</p>
-              <div className="flex flex-wrap gap-2">
+              <p className="text-gray-600 text-xs uppercase tracking-[0.15em] mb-3 font-medium">Timeframe</p>
+              <div className="flex gap-2 flex-wrap">
                 {(["today", "week", "month", "futures", "all"] as const).map((tf) => (
                   <button
                     key={tf}
                     onClick={() => setTimeframe(tf)}
-                    className={`px-3 py-1.5 rounded-md font-mono text-sm border transition-colors ${
+                    className={`text-sm rounded-full px-5 py-2 transition-all duration-150 cursor-pointer active:scale-95 font-medium ${
                       timeframe === tf
-                        ? "bg-amber-500/20 text-amber-400 border-amber-500/50"
-                        : "bg-slate-800/50 text-slate-400 border-slate-600 hover:border-slate-500"
+                        ? "bg-amber-500/15 border border-amber-500/50 text-amber-400 shadow-sm shadow-amber-500/20"
+                        : "bg-[#0d0d0d] border border-white/8 text-gray-500 hover:text-gray-200 hover:border-white/20 hover:bg-white/5"
                     }`}
                   >
                     {getTimeframeLabel(tf)} ({timeframeCounts[tf]})
@@ -304,18 +283,19 @@ export default function Home() {
               </div>
             </div>
 
-            {sport === "mls" ? (
+            {/* Soccer League Filter */}
+            {sport === "mls" && (
               <div>
-                <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">League</p>
-                <div className="flex flex-wrap gap-2">
+                <p className="text-gray-600 text-xs uppercase tracking-[0.15em] mb-3 font-medium">League</p>
+                <div className="flex gap-2 flex-wrap">
                   {SOCCER_LEAGUES_UI.map(({ key, label }) => (
                     <button
                       key={key}
                       onClick={() => setSoccerLeague(key)}
-                      className={`px-3 py-1.5 rounded-md font-mono text-sm border transition-colors ${
+                      className={`text-sm rounded-full px-5 py-2 transition-all duration-150 cursor-pointer active:scale-95 font-medium ${
                         soccerLeague === key
-                          ? "bg-amber-500/20 text-amber-400 border-amber-500/50"
-                          : "bg-slate-800/50 text-slate-400 border-slate-600 hover:border-slate-500"
+                          ? "bg-[#4B4BF7]/15 border border-[#4B4BF7]/50 text-[#4B4BF7] shadow-sm shadow-[#4B4BF7]/20"
+                          : "bg-[#0d0d0d] border border-white/8 text-gray-500 hover:text-gray-200 hover:border-white/20 hover:bg-white/5"
                       }`}
                     >
                       {label}
@@ -323,19 +303,20 @@ export default function Home() {
                   ))}
                 </div>
               </div>
-            ) : null}
+            )}
 
+            {/* Sort Filter */}
             <div>
-              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Sort by</p>
-              <div className="flex flex-wrap gap-2">
+              <p className="text-gray-600 text-xs uppercase tracking-[0.15em] mb-3 font-medium">Sort By</p>
+              <div className="flex gap-2 flex-wrap">
                 {SORT_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
                     onClick={() => setSort(opt.value)}
-                    className={`px-3 py-1.5 rounded-md font-mono text-sm border transition-colors ${
+                    className={`text-sm rounded-full px-5 py-2 transition-all duration-150 cursor-pointer active:scale-95 font-medium ${
                       sort === opt.value
-                        ? "bg-amber-500/20 text-amber-400 border-amber-500/50"
-                        : "bg-slate-800/50 text-slate-400 border-slate-600 hover:border-slate-500"
+                        ? "bg-[#4B4BF7]/15 border border-[#4B4BF7]/50 text-[#4B4BF7] shadow-sm shadow-[#4B4BF7]/20"
+                        : "bg-[#0d0d0d] border border-white/8 text-gray-500 hover:text-gray-200 hover:border-white/20 hover:bg-white/5"
                     }`}
                   >
                     {opt.label}
@@ -346,47 +327,97 @@ export default function Home() {
           </div>
         )}
 
+        {/* Loading State */}
         {isLoading && (
-          <div className="text-center py-12 text-slate-500">
-            Loading opportunities...
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="bg-[#0d0d0d] border border-white/5 rounded-2xl p-5 animate-pulse"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="h-6 w-16 bg-white/5 rounded-full" />
+                  <div className="h-6 w-24 bg-white/5 rounded-full" />
+                </div>
+                <div className="h-5 w-full bg-white/5 rounded mb-4" />
+                <div className="border-t border-white/5 my-4" />
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <div className="h-4 w-20 bg-white/5 rounded mb-2" />
+                    <div className="h-6 w-24 bg-white/5 rounded" />
+                  </div>
+                  <div>
+                    <div className="h-4 w-20 bg-white/5 rounded mb-2" />
+                    <div className="h-6 w-24 bg-white/5 rounded" />
+                  </div>
+                </div>
+                <div className="border-t border-white/5 my-4" />
+                <div className="h-4 w-full bg-white/5 rounded mb-2" />
+                <div className="h-4 w-full bg-white/5 rounded mb-4" />
+                <div className="h-10 w-full bg-white/5 rounded-xl" />
+              </div>
+            ))}
           </div>
         )}
 
+        {/* Error State */}
         {isError && (
-          <div className="text-center py-12 text-red-400">
-            Error: {error instanceof Error ? error.message : "Failed to load"}
+          <div className="py-20 flex flex-col items-center justify-center">
+            <AlertCircle className="w-12 h-12 text-red-500/50 mx-auto" />
+            <p className="text-gray-500 text-base mt-4">Failed to load odds data</p>
+            <p className="text-gray-700 text-sm mt-2">Check your Odds API key and try refreshing.</p>
+            <button
+              onClick={() => refetch()}
+              className="bg-[#4B4BF7]/10 border border-[#4B4BF7]/30 text-[#4B4BF7] rounded-full px-6 py-2 text-sm hover:bg-[#4B4BF7]/20 active:scale-95 transition mt-6"
+            >
+              Retry
+            </button>
           </div>
         )}
 
+        {/* Empty State */}
         {!isLoading && !isError && opportunities.length === 0 && (
-          <div className="text-center py-12 text-slate-500 border border-slate-700/50 rounded-lg bg-slate-900/30">
-            No +EV opportunities found right now. Check back later.
+          <div className="py-20 flex flex-col items-center justify-center">
+            <Inbox className="w-12 h-12 text-gray-700 mx-auto" />
+            <p className="text-gray-500 text-base mt-4">No +EV opportunities found</p>
+            <p className="text-gray-700 text-sm mt-2">
+              Try selecting a different sport or timeframe.
+            </p>
           </div>
         )}
 
+        {/* No Filter Match State */}
         {!isLoading && !isError && opportunities.length > 0 && filtered.length === 0 && (
-          <div className="text-center py-12 text-slate-500 border border-slate-700/50 rounded-lg bg-slate-900/30">
-            No opportunities match the selected filters.
+          <div className="py-20 flex flex-col items-center justify-center">
+            <Inbox className="w-12 h-12 text-gray-700 mx-auto" />
+            <p className="text-gray-500 text-base mt-4">No +EV opportunities found</p>
+            <p className="text-gray-700 text-sm mt-2">
+              Try selecting a different sport or timeframe.
+            </p>
           </div>
         )}
 
+        {/* Cards Grid */}
         {!isLoading && !isError && filtered.length > 0 && (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-2 gap-4 mb-8 xl:grid-cols-2 lg:grid-cols-1">
             {filtered.map((opp) => (
               <EVCard key={opp.id} opportunity={opp} />
             ))}
           </div>
         )}
+      </main>
 
-        <footer className="mt-12 pt-6 border-t border-slate-800 text-xs text-slate-600">
-          <p>
-            EV% = (sharp implied prob − Polymarket price) / Polymarket price × 100. +EV when sharp prob &gt; Polymarket price. Expected profit = $100 × (sharp prob / PM price − 1). Excellent: ≥5%, Good: 2-5%, Marginal: 0-2%.
-          </p>
-          <p className="mt-1">
-            Odds API cached 5min. Polymarket refreshed every 60s. ~16 Odds API requests/day max.
-          </p>
-        </footer>
-      </div>
+      {/* Floating Ask AI Button */}
+      <button
+        onClick={() => {
+          // This will be handled by the UniversalAiAssistant in layout
+        }}
+        className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full px-5 py-3 flex items-center gap-2 shadow-lg shadow-amber-500/30 hover:scale-110 hover:shadow-xl hover:shadow-amber-500/50 active:scale-95 transition-all duration-200 group"
+      >
+        <Sparkles className="w-4 h-4 text-black" />
+        <span className="text-sm font-semibold text-black">Ask AI</span>
+        <div className="absolute inset-0 rounded-full bg-amber-500/20 animate-pulse group-hover:animate-none" />
+      </button>
     </div>
   );
 }
