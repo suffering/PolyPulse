@@ -55,29 +55,27 @@ export function EVCard({ opportunity }: EVCardProps) {
       className="block group"
     >
       <div className="bg-[#0a0a0a] border border-white/8 hover:border-blue-500/40 rounded-lg transition-all duration-200 overflow-hidden hover:shadow-lg hover:shadow-blue-500/20 flex flex-col h-full">
-        {/* Section 1: Sport Badge + EV Badge */}
-        <div className="px-5 py-4 flex items-center justify-between border-b border-white/5">
-          <div className={`text-xs uppercase font-semibold tracking-wider rounded-full px-3 py-1 border ${getSportBadgeColor(opportunity.sport)}`}>
-            {opportunity.sport?.toUpperCase()}
-          </div>
-          {hasSportsbook && (
-            <div className={`text-sm font-mono font-bold ${getEVBadgeColor(evPercent)}`}>
-              {displayEvPercent > 0 ? "+" : ""}{displayEvPercent.toFixed(1)}% EV
-            </div>
-          )}
-        </div>
-
-        {/* Section 2: Market Title */}
+        {/* Section 1: Matchup + Sport Badge + EV Badge */}
         <div className="px-5 py-4 border-b border-white/5">
-          <p className="text-xs text-gray-500 mb-1.5">
+          <div className="flex items-start justify-between gap-3 mb-2">
+            <div className={`text-xs uppercase font-semibold tracking-wider rounded-full px-3 py-1 border ${getSportBadgeColor(opportunity.sport)}`}>
+              {opportunity.sport?.toUpperCase()}
+            </div>
+            {hasSportsbook && (
+              <div className={`text-sm font-mono font-bold ${getEVBadgeColor(evPercent)}`}>
+                {displayEvPercent > 0 ? "+" : ""}{displayEvPercent.toFixed(1)}% EV
+              </div>
+            )}
+          </div>
+          <h2 className="text-white font-bold text-lg mb-1 group-hover:text-blue-400 transition-colors">
             {opportunity.matchup}
-          </p>
-          <h3 className="text-white font-semibold text-base group-hover:text-blue-400 transition-colors">
+          </h2>
+          <p className="text-gray-400 text-sm">
             {opportunity.outcome}
-          </h3>
+          </p>
         </div>
 
-        {/* Section 3: Odds Comparison */}
+        {/* Section 2: Odds Comparison */}
         {hasSportsbook ? (
           <div className="px-5 py-4 border-b border-white/5">
             <div className="grid grid-cols-2 gap-6">
@@ -131,7 +129,7 @@ export function EVCard({ opportunity }: EVCardProps) {
           </div>
         )}
 
-        {/* Section 4: Profit Calculations - Only show for sportsbook cards */}
+        {/* Section 3: Profit Calculations - Only show for sportsbook cards */}
         {hasSportsbook && (
           <div className="px-5 py-4 border-b border-white/5 space-y-3">
             {/* Stake to Profit */}
