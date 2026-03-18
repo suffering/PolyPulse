@@ -55,7 +55,7 @@ export function EVCard({ opportunity }: EVCardProps) {
       className="block group"
     >
       <div className="bg-[#0a0a0a] border border-white/8 hover:border-blue-500/40 rounded-lg transition-all duration-200 overflow-hidden hover:shadow-lg hover:shadow-blue-500/20 flex flex-col h-full">
-        {/* Section 1: Sport Badge + EV Badge + Outcome Title + Matchup Context */}
+        {/* Section 1: Sport Badge + EV Badge + Matchup + Outcome */}
         <div className="px-5 py-4 border-b border-white/5">
           <div className="flex items-start justify-between gap-3 mb-3">
             <div className={`text-xs uppercase font-semibold tracking-wider rounded-full px-3 py-1 border ${getSportBadgeColor(opportunity.sport)}`}>
@@ -67,12 +67,12 @@ export function EVCard({ opportunity }: EVCardProps) {
               </div>
             )}
           </div>
-          <p className="text-xs text-gray-500 mb-1.5">
+          <h2 className="text-white font-bold text-lg mb-1 group-hover:text-blue-400 transition-colors">
             {opportunity.matchup}
-          </p>
-          <h2 className="text-white font-bold text-lg group-hover:text-blue-400 transition-colors">
-            {opportunity.outcome}
           </h2>
+          <p className="text-white font-semibold text-base">
+            {opportunity.outcome}
+          </p>
         </div>
 
         {/* Section 2: Odds Comparison */}
