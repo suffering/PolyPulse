@@ -69,45 +69,69 @@ export function EVCard({ opportunity }: EVCardProps) {
 
         {/* Section 2: Market Title */}
         <div className="px-5 py-4 border-b border-white/5">
+          <p className="text-xs text-gray-500 mb-1.5">
+            {opportunity.matchup}
+          </p>
           <h3 className="text-white font-semibold text-base group-hover:text-blue-400 transition-colors">
             {opportunity.outcome}
           </h3>
         </div>
 
         {/* Section 3: Odds Comparison */}
-        <div className="px-5 py-4 border-b border-white/5">
-          <div className="grid grid-cols-2 gap-6">
-            {/* Polymarket Column */}
-            <div>
-              <p className="text-[10px] uppercase text-gray-600 tracking-wider mb-2 font-medium">Polymarket</p>
-              <p className="text-white font-mono text-lg font-semibold mb-1">
-                {formatPct(opportunity.polymarketImpliedProb)}%
-              </p>
-              <p className="text-gray-500 font-mono text-xs">
-                {formatCents(opportunity.polymarketPrice * 100)}¢
-              </p>
-            </div>
+        {hasSportsbook ? (
+          <div className="px-5 py-4 border-b border-white/5">
+            <div className="grid grid-cols-2 gap-6">
+              {/* Polymarket Column */}
+              <div>
+                <p className="text-[10px] uppercase text-gray-600 tracking-wider mb-2 font-medium">Polymarket</p>
+                <p className="text-white font-mono text-lg font-semibold mb-1">
+                  {formatPct(opportunity.polymarketImpliedProb)}%
+                </p>
+                <p className="text-gray-500 font-mono text-xs">
+                  {formatCents(opportunity.polymarketPrice * 100)}¢
+                </p>
+              </div>
 
-            {/* Sportsbook Column */}
-            <div>
-              <p className="text-[10px] uppercase text-gray-600 tracking-wider mb-2 font-medium">
-                {hasSportsbook ? opportunity.sportsbookName : "—"}
-              </p>
-              <p className="text-white font-mono text-lg font-semibold mb-1">
-                {hasSportsbook
-                  ? `${formatPct(opportunity.sportsbookImpliedProb ?? 0)}%`
-                  : "N/A"}
-              </p>
-              <p className="text-gray-500 font-mono text-xs">
-                {hasSportsbook
-                  ? formatOdds(opportunity.sportsbookOdds!)
-                  : "—"}
-              </p>
+              {/* Sportsbook Column */}
+              <div>
+                <p className="text-[10px] uppercase text-gray-600 tracking-wider mb-2 font-medium">
+                  {opportunity.sportsbookName}
+                </p>
+                <p className="text-white font-mono text-lg font-semibold mb-1">
+                  {formatPct(opportunity.sportsbookImpliedProb ?? 0)}%
+                </p>
+                <p className="text-gray-500 font-mono text-xs">
+                  {formatOdds(opportunity.sportsbookOdds!)}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="px-5 py-4 border-b border-white/5">
+            <div className="grid grid-cols-2 gap-6">
+              {/* Polymarket Column */}
+              <div>
+                <p className="text-[10px] uppercase text-gray-600 tracking-wider mb-2 font-medium">Polymarket</p>
+                <p className="text-white font-mono text-lg font-semibold mb-1">
+                  {formatPct(opportunity.polymarketImpliedProb)}%
+                </p>
+                <p className="text-gray-500 font-mono text-xs">
+                  {formatCents(opportunity.polymarketPrice * 100)}¢
+                </p>
+              </div>
 
-        {/* Section 4: Profit Calculations */}
+              {/* Polymarket Only Column */}
+              <div>
+                <p className="text-[10px] uppercase text-gray-600 tracking-wider mb-2 font-medium">NO BOOK YET</p>
+                <div className="inline-flex items-center rounded-full px-2.5 py-1 bg-amber-500/10 border border-amber-500/30 text-xs text-amber-400/70 font-medium">
+                  Polymarket only
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Section 4: Profit Calculations - Only show for sportsbook cards */}
         {hasSportsbook && (
           <div className="px-5 py-4 border-b border-white/5 space-y-3">
             {/* Stake to Profit */}
