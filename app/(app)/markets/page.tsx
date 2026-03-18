@@ -228,7 +228,7 @@ export default function MarketsPage() {
         )}
 
         {!isError && (
-          <div className="flex-1 flex flex-col gap-8">
+          <div className="flex-1 flex gap-8 min-h-0">
             {/* Active Markets Table */}
             <section className="border border-white/8 rounded-lg bg-[#0a0a0a] overflow-hidden flex flex-col flex-1 min-h-0">
               <div className="px-6 py-4 border-b border-white/5 bg-[#0d0d0d] shrink-0">
