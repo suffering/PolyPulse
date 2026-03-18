@@ -4,10 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { PolymarketEvent, PolymarketMarket } from "@/lib/polymarket";
 import { useSetPageAiState } from "@/components/ai/PageAiContext";
-import { Inbox, AlertCircle } from "lucide-react";
 
 const PAGE_SIZE = 100;
-const ROWS_PER_PAGE = 25;
+const ROWS_PER_PAGE = 50;
 
 type EventsResponse = {
   events: PolymarketEvent[];
@@ -207,157 +206,187 @@ export default function MarketsPage() {
 
   return (
     <div className="min-h-screen bg-[#000000]">
-      <main className="ml-[200px] min-h-screen bg-[#000000] px-10 py-10 max-w-[1200px] relative">
-        {/* Error State */}
+      <main className="ml-[200px] min-h-screen bg-[#000000] px-8 py-8 flex flex-col">
+        {/* Search Bar */}
+        <div className="mb-8">
+          <input
+            type="search"
+            placeholder="Search markets..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setClientPage(1);
+            }}
+            className="w-full px-4 py-3 rounded-lg border border-white/8 bg-[#0d0d0d] text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20 text-base"
+          />
+        </div>
+
         {isError && (
-          <div className="py-20 flex flex-col items-center justify-center">
-            <AlertCircle className="w-12 h-12 text-red-500/50 mx-auto" />
-            <p className="text-gray-500 text-base mt-4">Failed to load market data</p>
-            <p className="text-gray-700 text-sm mt-2">
-              {error instanceof Error ? error.message : "Please try refreshing the page."}
-            </p>
+          <div className="text-center py-12 text-red-400">
+            Error: {error instanceof Error ? error.message : "Failed to load data"}
           </div>
         )}
 
         {!isError && (
-          <>
-            {/* Search Bar */}
-            <div className="mb-8">
-              <input
-                type="search"
-                placeholder="Search markets..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setClientPage(1);
-                }}
-                className="w-full max-w-sm px-4 py-2 rounded-full bg-[#0d0d0d] border border-white/8 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/40 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-sm"
-              />
-            </div>
-
-            {/* Data Panels */}
-            <div className="grid grid-cols-2 gap-6 mb-8">
-              {/* Active Markets Panel */}
-              <div className="bg-[#0a0a0a] border border-white/8 hover:border-blue-500/40 rounded-lg transition-all duration-200 overflow-hidden flex flex-col">
-                <div className="px-5 py-4 border-b border-white/5">
-                  <h2 className="text-sm font-semibold text-white uppercase tracking-wider">
-                    Active Markets
-                  </h2>
-                </div>
-                
-                {eventsLoading && offsetEvents === 0 ? (
-                  <div className="p-6 text-center text-gray-600 text-sm flex-1">Loading...</div>
-                ) : pageEvents.length === 0 ? (
-                  <div className="p-6 text-center text-gray-600 text-sm flex-1 flex flex-col items-center justify-center">
-                    <Inbox className="w-8 h-8 text-gray-700 mb-2" />
-                    <p>No markets found</p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-white/5">
-                    {pageEvents.map((event) => (
-                      <a
-                        key={event.id}
-                        href={getEventUrl(event)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-5 py-3 flex items-center justify-between hover:bg-white/5 transition-colors group"
-                      >
-                        <span className="text-sm text-gray-400 group-hover:text-blue-400 transition-colors truncate flex-1 mr-3">
-                          {event.title ?? event.id}
-                        </span>
-                        <span className="text-green-400 font-mono text-sm whitespace-nowrap">
-                          {formatCurrency(toNumber(event.liquidity))}
-                        </span>
-                      </a>
-                    ))}
-                  </div>
-                )}
+          <div className="flex-1 flex flex-col gap-8">
+            {/* Active Markets Table */}
+            <section className="border border-white/8 rounded-lg bg-[#0a0a0a] overflow-hidden flex flex-col flex-1 min-h-0">
+              <div className="px-6 py-4 border-b border-white/5 bg-[#0d0d0d] shrink-0">
+                <h2 className="text-base font-semibold text-white">
+                  Polymarket Active Markets
+                </h2>
               </div>
-
-              {/* Active Questions Panel */}
-              <div className="bg-[#0a0a0a] border border-white/8 hover:border-blue-500/40 rounded-lg transition-all duration-200 overflow-hidden flex flex-col">
-                <div className="px-5 py-4 border-b border-white/5">
-                  <h2 className="text-sm font-semibold text-white uppercase tracking-wider">
-                    Active Questions
-                  </h2>
+              {eventsLoading && offsetEvents === 0 ? (
+                <div className="p-8 text-center text-gray-500">Loading...</div>
+              ) : pageEvents.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">No markets found</div>
+              ) : (
+                <div className="overflow-y-auto flex-1 min-h-0">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="sticky top-0 bg-[#0d0d0d] border-b border-white/5 z-10">
+                      <tr>
+                        <th className="px-6 py-3 text-sm font-semibold text-gray-400 uppercase tracking-wider">
+                          Question
+                        </th>
+                        <th className="px-6 py-3 text-sm font-semibold text-gray-400 uppercase tracking-wider text-right">
+                          Open Interest
+                        </th>
+                        <th className="px-6 py-3 text-sm font-semibold text-gray-400 uppercase tracking-wider text-right">
+                          Notional Volume
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {pageEvents.map((event) => (
+                        <tr
+                          key={event.id}
+                          className="hover:bg-white/5 transition-colors"
+                        >
+                          <td className="px-6 py-4">
+                            <a
+                              href={getEventUrl(event)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-400 hover:text-blue-300 underline text-base break-words"
+                            >
+                              {event.title ?? event.id}
+                            </a>
+                          </td>
+                          <td className="px-6 py-4 text-white text-base text-right font-mono">
+                            {formatCurrency(toNumber(event.liquidity))}
+                          </td>
+                          <td className="px-6 py-4 text-white text-base text-right font-mono">
+                            {formatCurrency(toNumber(event.volume))}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-                
-                {marketsLoading && offsetMarkets === 0 ? (
-                  <div className="p-6 text-center text-gray-600 text-sm flex-1">Loading...</div>
-                ) : pageMarkets.length === 0 ? (
-                  <div className="p-6 text-center text-gray-600 text-sm flex-1 flex flex-col items-center justify-center">
-                    <Inbox className="w-8 h-8 text-gray-700 mb-2" />
-                    <p>No questions found</p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-white/5">
-                    {pageMarkets.map((market) => (
-                      <a
-                        key={market.id}
-                        href={getMarketUrl(market)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-5 py-3 flex items-center justify-between hover:bg-white/5 transition-colors group"
-                      >
-                        <span className="text-sm text-gray-400 group-hover:text-blue-400 transition-colors truncate flex-1 mr-3">
-                          {market.question ?? market.groupItemTitle ?? market.id}
-                        </span>
-                        <span className="text-green-400 font-mono text-sm whitespace-nowrap">
-                          {formatCurrency(market.liquidityNum)}
-                        </span>
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+              )}
+            </section>
 
-            {/* Footer with Pagination */}
-            {showFooter && (
-              <div className="flex items-center justify-between gap-4 px-4 py-3 bg-[#0d0d0d] border border-white/8 rounded-full">
-                <span className="text-gray-600 text-xs">
-                  {totalFilteredEvents.toLocaleString("en-US")} markets • {totalFilteredMarkets.toLocaleString("en-US")} questions
+            {/* Active Questions Table */}
+            <section className="border border-white/8 rounded-lg bg-[#0a0a0a] overflow-hidden flex flex-col flex-1 min-h-0">
+              <div className="px-6 py-4 border-b border-white/5 bg-[#0d0d0d] shrink-0">
+                <h2 className="text-base font-semibold text-white">
+                  Polymarket Active Questions
+                </h2>
+              </div>
+              {marketsLoading && offsetMarkets === 0 ? (
+                <div className="p-8 text-center text-gray-500">Loading...</div>
+              ) : pageMarkets.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">No questions found</div>
+              ) : (
+                <div className="overflow-y-auto flex-1 min-h-0">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="sticky top-0 bg-[#0d0d0d] border-b border-white/5 z-10">
+                      <tr>
+                        <th className="px-6 py-3 text-sm font-semibold text-gray-400 uppercase tracking-wider">
+                          Market
+                        </th>
+                        <th className="px-6 py-3 text-sm font-semibold text-gray-400 uppercase tracking-wider text-right">
+                          Open Interest
+                        </th>
+                        <th className="px-6 py-3 text-sm font-semibold text-gray-400 uppercase tracking-wider text-right">
+                          Notional Volume
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {pageMarkets.map((market) => (
+                        <tr
+                          key={market.id}
+                          className="hover:bg-white/5 transition-colors"
+                        >
+                          <td className="px-6 py-4">
+                            <a
+                              href={getMarketUrl(market)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-400 hover:text-blue-300 underline text-base break-words"
+                            >
+                              {market.question ?? market.groupItemTitle ?? market.id}
+                            </a>
+                          </td>
+                          <td className="px-6 py-4 text-white text-base text-right font-mono">
+                            {formatCurrency(market.liquidityNum)}
+                          </td>
+                          <td className="px-6 py-4 text-white text-base text-right font-mono">
+                            {formatCurrency(market.volumeNum)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          </div>
+        )}
+
+        {/* Footer Pagination */}
+        {showFooter && (
+          <div className="mt-8 flex items-center justify-between gap-4 px-6 py-4 border border-white/8 rounded-lg bg-[#0d0d0d] shrink-0">
+            <div className="text-gray-500 text-sm">
+              {totalFilteredEvents.toLocaleString("en-US")} markets, {totalFilteredMarkets.toLocaleString("en-US")} questions
+            </div>
+            <div className="flex items-center gap-3">
+              {hasMoreGlobal && (
+                <button
+                  type="button"
+                  onClick={loadMore}
+                  disabled={isFetching}
+                  className="px-4 py-2 rounded-lg border border-white/8 bg-white/5 text-white hover:bg-white/10 disabled:opacity-50 text-sm font-medium transition-colors"
+                >
+                  {isFetching ? "Loading..." : "Load more"}
+                </button>
+              )}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => goToPage(page - 1)}
+                  disabled={page <= 1}
+                  className="p-2 rounded-lg border border-white/8 text-gray-400 hover:text-white hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  aria-label="Previous page"
+                >
+                  ←
+                </button>
+                <span className="text-gray-500 text-sm">
+                  {page} of {totalPages}
                 </span>
-                
-                <div className="flex items-center gap-2">
-                  {hasMoreGlobal && (
-                    <button
-                      type="button"
-                      onClick={loadMore}
-                      disabled={isFetching}
-                      className="text-xs rounded-full px-3 py-1.5 bg-[#0d0d0d] border border-white/8 text-gray-400 hover:text-gray-200 hover:border-white/20 hover:bg-white/5 disabled:opacity-50 transition-all duration-150 active:scale-95"
-                    >
-                      {isFetching ? "Loading..." : "Load more"}
-                    </button>
-                  )}
-                  
-                  <div className="flex items-center gap-1 ml-auto">
-                    <button
-                      type="button"
-                      onClick={() => goToPage(page - 1)}
-                      disabled={page <= 1}
-                      className="p-1.5 rounded-full text-gray-500 hover:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                      aria-label="Previous page"
-                    >
-                      ←
-                    </button>
-                    <span className="text-gray-600 text-xs px-2">
-                      {page} of {totalPages}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => goToPage(page + 1)}
-                      disabled={page >= totalPages}
-                      className="p-1.5 rounded-full text-gray-500 hover:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                      aria-label="Next page"
-                    >
-                      →
-                    </button>
-                  </div>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => goToPage(page + 1)}
+                  disabled={page >= totalPages}
+                  className="p-2 rounded-lg border border-white/8 text-gray-400 hover:text-white hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  aria-label="Next page"
+                >
+                  →
+                </button>
               </div>
-            )}
-          </>
+            </div>
+          </div>
         )}
       </main>
     </div>
