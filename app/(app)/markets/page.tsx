@@ -253,7 +253,7 @@ export default function MarketsPage() {
                     <p>No markets found</p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-white/5 overflow-y-auto flex-1 max-h-[500px]">
+                  <div className="divide-y divide-white/5">
                     {pageEvents.map((event) => (
                       <a
                         key={event.id}
@@ -290,7 +290,7 @@ export default function MarketsPage() {
                     <p>No questions found</p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-white/5 overflow-y-auto flex-1 max-h-[500px]">
+                  <div className="divide-y divide-white/5">
                     {pageMarkets.map((market) => (
                       <a
                         key={market.id}
