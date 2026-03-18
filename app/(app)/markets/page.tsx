@@ -207,20 +207,6 @@ export default function MarketsPage() {
   return (
     <div className="min-h-screen bg-[#000000]">
       <main className="ml-[200px] min-h-screen bg-[#000000] px-8 py-8 flex flex-col">
-        {/* Search Bar */}
-        <div className="mb-8">
-          <input
-            type="search"
-            placeholder="Search markets..."
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setClientPage(1);
-            }}
-            className="w-full px-4 py-3 rounded-lg border border-white/8 bg-[#0d0d0d] text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20 text-base"
-          />
-        </div>
-
         {isError && (
           <div className="text-center py-12 text-red-400">
             Error: {error instanceof Error ? error.message : "Failed to load data"}
@@ -230,8 +216,8 @@ export default function MarketsPage() {
         {!isError && (
           <div className="flex-1 flex gap-8 min-h-0">
             {/* Active Markets Table */}
-            <section className="border border-white/8 rounded-lg bg-[#0a0a0a] overflow-hidden flex flex-col flex-1 min-h-0">
-              <div className="px-6 py-4 border-b border-white/5 bg-[#0d0d0d] shrink-0">
+            <section className="border border-[#4B4BF7]/20 rounded-lg bg-[#0a0a0a] overflow-hidden flex flex-col flex-1 min-h-0">
+              <div className="px-6 py-4 border-b border-[#4B4BF7]/20 bg-[#0d0d0d] shrink-0">
                 <h2 className="text-base font-semibold text-white">
                   Polymarket Active Markets
                 </h2>
@@ -243,39 +229,39 @@ export default function MarketsPage() {
               ) : (
                 <div className="overflow-y-auto flex-1 min-h-0">
                   <table className="w-full text-left border-collapse">
-                    <thead className="sticky top-0 bg-[#0d0d0d] border-b border-white/5 z-10">
+                    <thead className="sticky top-0 bg-[#0d0d0d] border-b border-[#4B4BF7]/20 z-10">
                       <tr>
-                        <th className="px-6 py-3 text-sm font-semibold text-gray-400 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-sm font-semibold text-[#4B4BF7] uppercase tracking-wider">
                           Question
                         </th>
-                        <th className="px-6 py-3 text-sm font-semibold text-gray-400 uppercase tracking-wider text-right">
+                        <th className="px-6 py-3 text-sm font-semibold text-[#4B4BF7] uppercase tracking-wider text-right">
                           Open Interest
                         </th>
-                        <th className="px-6 py-3 text-sm font-semibold text-gray-400 uppercase tracking-wider text-right">
+                        <th className="px-6 py-3 text-sm font-semibold text-[#4B4BF7] uppercase tracking-wider text-right">
                           Notional Volume
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5">
+                    <tbody className="divide-y divide-[#4B4BF7]/10">
                       {pageEvents.map((event) => (
                         <tr
                           key={event.id}
-                          className="hover:bg-white/5 transition-colors"
+                          className="hover:bg-[#4B4BF7]/5 transition-colors"
                         >
                           <td className="px-6 py-4">
                             <a
                               href={getEventUrl(event)}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-400 hover:text-blue-300 underline text-base break-words"
+                              className="text-[#4B4BF7] hover:text-[#6B6BFF] underline text-base break-words"
                             >
                               {event.title ?? event.id}
                             </a>
                           </td>
-                          <td className="px-6 py-4 text-white text-base text-right font-mono">
+                          <td className="px-6 py-4 text-[#00D084] text-base text-right font-mono">
                             {formatCurrency(toNumber(event.liquidity))}
                           </td>
-                          <td className="px-6 py-4 text-white text-base text-right font-mono">
+                          <td className="px-6 py-4 text-[#00D084] text-base text-right font-mono">
                             {formatCurrency(toNumber(event.volume))}
                           </td>
                         </tr>
@@ -287,8 +273,8 @@ export default function MarketsPage() {
             </section>
 
             {/* Active Questions Table */}
-            <section className="border border-white/8 rounded-lg bg-[#0a0a0a] overflow-hidden flex flex-col flex-1 min-h-0">
-              <div className="px-6 py-4 border-b border-white/5 bg-[#0d0d0d] shrink-0">
+            <section className="border border-[#4B4BF7]/20 rounded-lg bg-[#0a0a0a] overflow-hidden flex flex-col flex-1 min-h-0">
+              <div className="px-6 py-4 border-b border-[#4B4BF7]/20 bg-[#0d0d0d] shrink-0">
                 <h2 className="text-base font-semibold text-white">
                   Polymarket Active Questions
                 </h2>
@@ -300,39 +286,39 @@ export default function MarketsPage() {
               ) : (
                 <div className="overflow-y-auto flex-1 min-h-0">
                   <table className="w-full text-left border-collapse">
-                    <thead className="sticky top-0 bg-[#0d0d0d] border-b border-white/5 z-10">
+                    <thead className="sticky top-0 bg-[#0d0d0d] border-b border-[#4B4BF7]/20 z-10">
                       <tr>
-                        <th className="px-6 py-3 text-sm font-semibold text-gray-400 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-sm font-semibold text-[#4B4BF7] uppercase tracking-wider">
                           Market
                         </th>
-                        <th className="px-6 py-3 text-sm font-semibold text-gray-400 uppercase tracking-wider text-right">
+                        <th className="px-6 py-3 text-sm font-semibold text-[#4B4BF7] uppercase tracking-wider text-right">
                           Open Interest
                         </th>
-                        <th className="px-6 py-3 text-sm font-semibold text-gray-400 uppercase tracking-wider text-right">
+                        <th className="px-6 py-3 text-sm font-semibold text-[#4B4BF7] uppercase tracking-wider text-right">
                           Notional Volume
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5">
+                    <tbody className="divide-y divide-[#4B4BF7]/10">
                       {pageMarkets.map((market) => (
                         <tr
                           key={market.id}
-                          className="hover:bg-white/5 transition-colors"
+                          className="hover:bg-[#4B4BF7]/5 transition-colors"
                         >
                           <td className="px-6 py-4">
                             <a
                               href={getMarketUrl(market)}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-400 hover:text-blue-300 underline text-base break-words"
+                              className="text-[#4B4BF7] hover:text-[#6B6BFF] underline text-base break-words"
                             >
                               {market.question ?? market.groupItemTitle ?? market.id}
                             </a>
                           </td>
-                          <td className="px-6 py-4 text-white text-base text-right font-mono">
+                          <td className="px-6 py-4 text-[#00D084] text-base text-right font-mono">
                             {formatCurrency(market.liquidityNum)}
                           </td>
-                          <td className="px-6 py-4 text-white text-base text-right font-mono">
+                          <td className="px-6 py-4 text-[#00D084] text-base text-right font-mono">
                             {formatCurrency(market.volumeNum)}
                           </td>
                         </tr>
@@ -347,7 +333,7 @@ export default function MarketsPage() {
 
         {/* Footer Pagination */}
         {showFooter && (
-          <div className="mt-8 flex items-center justify-between gap-4 px-6 py-4 border border-white/8 rounded-lg bg-[#0d0d0d] shrink-0">
+          <div className="mt-8 flex items-center justify-between gap-4 px-6 py-4 border border-[#4B4BF7]/20 rounded-lg bg-[#0d0d0d] shrink-0">
             <div className="text-gray-500 text-sm">
               {totalFilteredEvents.toLocaleString("en-US")} markets, {totalFilteredMarkets.toLocaleString("en-US")} questions
             </div>
@@ -357,7 +343,7 @@ export default function MarketsPage() {
                   type="button"
                   onClick={loadMore}
                   disabled={isFetching}
-                  className="px-4 py-2 rounded-lg border border-white/8 bg-white/5 text-white hover:bg-white/10 disabled:opacity-50 text-sm font-medium transition-colors"
+                  className="px-4 py-2 rounded-lg border border-[#4B4BF7]/20 bg-[#4B4BF7]/5 text-[#4B4BF7] hover:bg-[#4B4BF7]/10 disabled:opacity-50 text-sm font-medium transition-colors"
                 >
                   {isFetching ? "Loading..." : "Load more"}
                 </button>
@@ -367,7 +353,7 @@ export default function MarketsPage() {
                   type="button"
                   onClick={() => goToPage(page - 1)}
                   disabled={page <= 1}
-                  className="p-2 rounded-lg border border-white/8 text-gray-400 hover:text-white hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 rounded-lg border border-[#4B4BF7]/20 text-[#4B4BF7] hover:bg-[#4B4BF7]/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   aria-label="Previous page"
                 >
                   ←
@@ -379,7 +365,7 @@ export default function MarketsPage() {
                   type="button"
                   onClick={() => goToPage(page + 1)}
                   disabled={page >= totalPages}
-                  className="p-2 rounded-lg border border-white/8 text-gray-400 hover:text-white hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 rounded-lg border border-[#4B4BF7]/20 text-[#4B4BF7] hover:bg-[#4B4BF7]/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   aria-label="Next page"
                 >
                   →
