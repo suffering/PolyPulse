@@ -7,8 +7,7 @@ import type { MatchedOpportunity } from "@/lib/matching";
 import type { Timeframe, MarketCategory } from "@/lib/types";
 import { getTimeframeLabel } from "@/lib/types";
 import { useSetPageAiState } from "@/components/ai/PageAiContext";
-import Image from "next/image";
-import { RefreshCw, Wrench, Inbox, AlertCircle, Sparkles } from "lucide-react";
+import { Inbox, AlertCircle, Sparkles } from "lucide-react";
 
 type UiSport = "nba" | "mls" | "mlb" | "nhl" | "tennis";
 
@@ -68,7 +67,6 @@ export default function Home() {
   const [league, setLeague] = useState<string | "all">("all");
   const [soccerLeague, setSoccerLeague] = useState<SoccerLeagueKey>("mls");
   const [sort, setSort] = useState<SortOption>("highest_ev");
-  const [refreshingOdds, setRefreshingOdds] = useState(false);
   const queryClient = useQueryClient();
   const setPageAiState = useSetPageAiState();
 
@@ -154,87 +152,6 @@ export default function Home() {
     <div className="min-h-screen bg-[#000000]">
       {/* Main Content */}
       <main className="ml-[200px] min-h-screen bg-[#000000] px-10 py-10 max-w-[1200px] relative">
-        {/* Animated Pulse Line - Top Right */}
-        <div className="absolute top-8 right-8 opacity-70">
-          <svg viewBox="0 0 280 60" width="280" height="60" className="animate-draw-line">
-            <path
-              d="M 10 30 L 50 30 L 55 10 L 60 50 L 65 30 L 270 30"
-              stroke="#4B4BF7"
-              strokeWidth="2"
-              fill="none"
-            />
-          </svg>
-        </div>
-
-        {/* Hero Section */}
-        <div className="mb-8">
-          <h1 className="text-6xl font-black tracking-tight text-white leading-none font-sans">
-            Polymarket,<br />unlocked.
-          </h1>
-          <p className="text-[#4B4BF7] text-lg font-medium mt-4">
-            Heartbeat first. Headlines second. Edge always.
-          </p>
-          <p className="text-gray-400 text-sm max-w-lg leading-relaxed mt-2">
-            Find positive EV bets before the market corrects. Live odds vs Polymarket prices across NBA, Soccer, MLB, NHL and Tennis.
-          </p>
-        </div>
-
-        {/* Divider */}
-        <div className="border-t border-white/5 mt-8 mb-8" />
-
-        {/* Stats Bar */}
-        <div className="flex flex-wrap items-center gap-3 mb-8">
-          {/* Odds API Status */}
-          <div className="bg-[#0d0d0d] border border-white/8 rounded-full px-4 py-1.5 flex items-center gap-2">
-            <span className="text-gray-600 text-xs">Odds API:</span>
-            <span className="text-white text-sm font-mono">{quotaRemaining ?? "—"}</span>
-            <span className="text-gray-600 text-xs">requests left</span>
-          </div>
-
-          {/* Last Updated */}
-          <div className="bg-[#0d0d0d] border border-white/8 rounded-full px-4 py-1.5 flex items-center gap-2">
-            <span className="text-gray-600 text-xs">Updated:</span>
-            <span className="text-gray-300 text-sm font-mono">
-              {data?.oddsLastUpdated ? new Date(data.oddsLastUpdated).toLocaleTimeString() : "—"}
-            </span>
-          </div>
-
-          {/* Refresh Button */}
-          <button
-            onClick={() => refetch()}
-            disabled={isLoading}
-            className="bg-[#4B4BF7]/10 border border-[#4B4BF7]/30 text-[#4B4BF7] text-sm rounded-full px-4 py-1.5 flex items-center gap-2 hover:bg-[#4B4BF7]/20 active:scale-95 transition-all duration-150 disabled:opacity-50"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
-            Refresh
-          </button>
-
-          {/* Dev Refresh Button */}
-          <button
-            onClick={async () => {
-              setRefreshingOdds(true);
-              try {
-                const result = await fetchEV(
-                  sport,
-                  sport === "mls" ? soccerLeague : undefined,
-                  true
-                );
-                queryClient.setQueryData(
-                  ["ev", sport, sport === "mls" ? soccerLeague : undefined],
-                  result
-                );
-              } finally {
-                setRefreshingOdds(false);
-              }
-            }}
-            disabled={refreshingOdds || isLoading}
-            className="bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs rounded-full px-4 py-1.5 flex items-center gap-2 hover:bg-amber-500/20 active:scale-95 transition-all duration-150 disabled:opacity-50"
-          >
-            <Wrench className="w-3.5 h-3.5" />
-            Dev: Refresh Odds API
-          </button>
-        </div>
-
         {/* Filter Section */}
         {!isLoading && !isError && (
           <div className="mb-8 space-y-6">
