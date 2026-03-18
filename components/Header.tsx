@@ -29,6 +29,11 @@ function HeaderContent() {
   const pathname = usePathname() ?? "/";
   const { isConnected } = useWallet();
 
+  // Hide header on EV page
+  if (pathname === "/ev") {
+    return null;
+  }
+
   return (
     <header className="sticky top-0 z-[100] isolate border-b border-slate-800 bg-[#0d1117]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0d1117]/80">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">

@@ -1,8 +1,5 @@
 "use client";
 
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import type { MatchedOpportunity } from "@/lib/matching";
 
 interface EVCardProps {
@@ -14,12 +11,28 @@ function formatOdds(american: number): string {
   return String(Math.round(american));
 }
 
-function getEVColor(ev: number): string {
-  if (ev >= 5) return "bg-emerald-500/20 text-emerald-400 border-emerald-500/50";
-  if (ev > 0) return "bg-blue-500/20 text-blue-400 border-blue-500/50";
-  if (Math.abs(ev) < 0.05) return "bg-slate-500/20 text-slate-400 border-slate-500/50";
-  if (ev > -5) return "bg-amber-500/20 text-amber-400 border-amber-500/50";
-  return "bg-red-500/20 text-red-400 border-red-500/50";
+function getSportBadgeColor(sport: string): string {
+  switch (sport?.toUpperCase()) {
+    case "NBA":
+      return "bg-amber-500/20 text-amber-400 border-amber-500/50";
+    case "MLS":
+      return "bg-blue-500/20 text-blue-400 border-blue-500/50";
+    case "MLB":
+      return "bg-green-500/20 text-green-400 border-green-500/50";
+    case "NHL":
+      return "bg-cyan-500/20 text-cyan-400 border-cyan-500/50";
+    case "TENNIS":
+      return "bg-purple-500/20 text-purple-400 border-purple-500/50";
+    default:
+      return "bg-gray-500/20 text-gray-400 border-gray-500/50";
+  }
+}
+
+function getEVBadgeColor(ev: number): string {
+  if (ev >= 10) return "text-green-400 font-semibold";
+  if (ev >= 5) return "text-green-400";
+  if (ev >= 0) return "text-green-300";
+  return "text-gray-400";
 }
 
 export function EVCard({ opportunity }: EVCardProps) {
@@ -35,79 +48,94 @@ export function EVCard({ opportunity }: EVCardProps) {
   const formatCents = (v: number) => (isMlb && v < 10 ? v.toFixed(2) : v.toFixed(1));
 
   return (
-    <Card className="border-slate-700/50 bg-slate-900/50 hover:border-slate-600/50 transition-colors">
-      <CardHeader className="pb-2">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <h3 className="font-mono text-sm text-slate-300">{opportunity.matchup}</h3>
-            <p className="font-semibold text-white mt-0.5">{opportunity.outcome}</p>
+    <a
+      href={opportunity.polymarketUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block group"
+    >
+      <div className="bg-[#0a0a0a] border border-white/8 hover:border-blue-500/40 rounded-lg transition-all duration-200 overflow-hidden hover:shadow-lg hover:shadow-blue-500/20 flex flex-col h-full">
+        {/* Section 1: Sport Badge + EV Badge */}
+        <div className="px-5 py-4 flex items-center justify-between border-b border-white/5">
+          <div className={`text-xs uppercase font-semibold tracking-wider rounded-full px-3 py-1 border ${getSportBadgeColor(opportunity.sport)}`}>
+            {opportunity.sport?.toUpperCase()}
           </div>
-          {hasSportsbook ? (
-            <Badge
-              className={`font-mono ${getEVColor(evPercent)} border`}
-              variant="outline"
-              title="+EV only when Polymarket odds are better than the sportsbook (lower price, same bet)"
-            >
+          {hasSportsbook && (
+            <div className={`text-sm font-mono font-bold ${getEVBadgeColor(evPercent)}`}>
               {displayEvPercent > 0 ? "+" : ""}{displayEvPercent.toFixed(1)}% EV
-            </Badge>
-          ) : (
-            <Badge
-              className="font-mono bg-slate-500/20 text-slate-400 border-slate-500/50"
-              variant="outline"
-            >
-              Polymarket only
-            </Badge>
+            </div>
           )}
         </div>
-      </CardHeader>
-      <CardContent className="space-y-3 text-sm">
-        <div className="grid grid-cols-2 gap-3 text-slate-400">
-          <div>
-            <p className="text-xs text-slate-500 uppercase tracking-wider">Polymarket</p>
-            <p className="font-mono text-slate-300">
-              {formatCents(opportunity.polymarketPrice * 100)}¢ ({formatPct(opportunity.polymarketImpliedProb)}%)
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-slate-500 uppercase tracking-wider">
-              {hasSportsbook ? opportunity.sportsbookName : "—"}
-            </p>
-            <p className="font-mono text-slate-300">
-              {hasSportsbook
-                ? `${formatOdds(opportunity.sportsbookOdds!)} (${formatPct(opportunity.sportsbookImpliedProb ?? 0)}%)`
-                : "No sportsbook comparison"}
-            </p>
+
+        {/* Section 2: Market Title */}
+        <div className="px-5 py-4 border-b border-white/5">
+          <h3 className="text-white font-semibold text-base group-hover:text-blue-400 transition-colors">
+            {opportunity.outcome}
+          </h3>
+        </div>
+
+        {/* Section 3: Odds Comparison */}
+        <div className="px-5 py-4 border-b border-white/5">
+          <div className="grid grid-cols-2 gap-6">
+            {/* Polymarket Column */}
+            <div>
+              <p className="text-[10px] uppercase text-gray-600 tracking-wider mb-1.5 font-medium">Polymarket</p>
+              <p className="text-white font-mono text-base font-semibold mb-1">
+                {formatCents(opportunity.polymarketPrice * 100)}¢
+              </p>
+              <p className="text-gray-500 font-mono text-xs">
+                {formatPct(opportunity.polymarketImpliedProb)}%
+              </p>
+            </div>
+
+            {/* Sportsbook Column */}
+            <div>
+              <p className="text-[10px] uppercase text-gray-600 tracking-wider mb-1.5 font-medium">
+                {hasSportsbook ? opportunity.sportsbookName : "—"}
+              </p>
+              <p className="text-white font-mono text-base font-semibold mb-1">
+                {hasSportsbook
+                  ? formatOdds(opportunity.sportsbookOdds!)
+                  : "N/A"}
+              </p>
+              <p className="text-gray-500 font-mono text-xs">
+                {hasSportsbook
+                  ? `${formatPct(opportunity.sportsbookImpliedProb ?? 0)}%`
+                  : "—"}
+              </p>
+            </div>
           </div>
         </div>
 
+        {/* Section 4: Profit Calculations */}
         {hasSportsbook && (
-          <div className="pt-2 border-t border-slate-700/50 space-y-1">
-            <p className="text-xs text-slate-500">
-              $100 stake → ${Math.round(opportunity.profitIfWin100 ?? 0).toLocaleString()} profit if win
-            </p>
-            <p className="text-xs text-slate-500">
-              Expected profit (on Polymarket bet): {(opportunity.expectedProfit100 ?? 0) >= 0 ? "$" : "-$"}
-              {Math.abs(opportunity.expectedProfit100 ?? 0).toFixed(2)}
-            </p>
+          <div className="px-5 py-4 border-b border-white/5 space-y-3">
+            {/* Stake to Profit */}
+            <div className="flex items-center justify-between">
+              <p className="text-gray-600 text-sm">$100 stake:</p>
+              <p className="text-green-400 font-mono text-sm font-semibold">
+                ${Math.round(opportunity.profitIfWin100 ?? 0).toLocaleString()} profit if win
+              </p>
+            </div>
+
+            {/* Expected Profit */}
+            <div className="flex items-center justify-between">
+              <p className="text-gray-600 text-sm">Expected profit:</p>
+              <p className="text-green-400 font-mono text-base font-bold">
+                {(opportunity.expectedProfit100 ?? 0) >= 0 ? "$" : "-$"}
+                {Math.abs(opportunity.expectedProfit100 ?? 0).toFixed(2)}
+              </p>
+            </div>
           </div>
         )}
 
-        <Button
-          asChild
-          variant="outline"
-          size="sm"
-          className="w-full border-slate-600 hover:bg-slate-800 hover:border-slate-500"
-        >
-          <a
-            href={opportunity.polymarketUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-slate-300"
-          >
+        {/* Button */}
+        <div className="px-5 py-4 mt-auto">
+          <div className="w-full text-center px-4 py-3 bg-[#0d0d0d] border border-white/8 group-hover:bg-blue-500/10 group-hover:border-blue-500/40 group-hover:text-blue-400 text-gray-400 text-sm font-medium rounded-lg transition-all duration-200">
             Bet on Polymarket →
-          </a>
-        </Button>
-      </CardContent>
-    </Card>
+          </div>
+        </div>
+      </div>
+    </a>
   );
 }
