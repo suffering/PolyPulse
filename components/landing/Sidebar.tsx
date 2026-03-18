@@ -16,7 +16,7 @@ import {
 
 const NAV_LINKS = [
   { href: "/ev", label: "+EV", icon: Sparkles, customIcon: "/plus-circle-green.png" },
-  { href: "/extradata", label: "Markets", icon: FlaskConical, customIcon: "/markets-icon.png" },
+  { href: "/markets", label: "Markets", icon: FlaskConical, customIcon: "/markets-icon.png" },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy, customIcon: "/leaderboard-icon.png" },
   { href: "/creators", label: "Creators", icon: Users, customIcon: "/creators-icon.png" },
   { href: "/volume", label: "Volume", icon: BarChart3, customIcon: "/volume-icon.png" },

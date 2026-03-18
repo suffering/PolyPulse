@@ -164,7 +164,7 @@ export function HeroSection() {
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-sm font-medium text-foreground">Hot Markets</h2>
               <Link
-                href="/extradata"
+                href="/markets"
                 className="text-xs text-primary hover:text-primary/80 transition-colors"
               >
                 View all

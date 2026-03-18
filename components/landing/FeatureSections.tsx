@@ -532,26 +532,26 @@ export function MarketsSection() {
       <SectionHeader
         title="Explore Markets"
         description="Browse active markets and upcoming events"
-        href="/extradata"
+        href="/markets"
         icon={ExternalLink}
       />
       <div className="grid sm:grid-cols-3 gap-2">
         <Link
-          href="/extradata?category=politics"
+          href="/markets?category=politics"
           className="p-3 bg-card border border-border rounded-lg hover:border-primary/30 hover:bg-card-elevated transition-all duration-150"
         >
           <p className="text-lg font-semibold text-foreground">Politics</p>
           <p className="text-xs text-muted-foreground">Elections, policy, global events</p>
         </Link>
         <Link
-          href="/extradata?category=sports"
+          href="/markets?category=sports"
           className="p-3 bg-card border border-border rounded-lg hover:border-primary/30 hover:bg-card-elevated transition-all duration-150"
         >
           <p className="text-lg font-semibold text-foreground">Sports</p>
           <p className="text-xs text-muted-foreground">Games, championships, player props</p>
         </Link>
         <Link
-          href="/extradata?category=crypto"
+          href="/markets?category=crypto"
           className="p-3 bg-card border border-border rounded-lg hover:border-primary/30 hover:bg-card-elevated transition-all duration-150"
         >
           <p className="text-lg font-semibold text-foreground">Crypto</p>

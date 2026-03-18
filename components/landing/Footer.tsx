@@ -12,7 +12,7 @@ const FOOTER_LINKS = {
   ],
   Explore: [
     { label: "Creators", href: "/creators" },
-    { label: "Markets", href: "/extradata" },
+    { label: "Markets", href: "/markets" },
     { label: "Search Wallet", href: "/search" },
     { label: "Portfolio", href: "/portfolio" },
   ],

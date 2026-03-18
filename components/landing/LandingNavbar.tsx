@@ -13,7 +13,7 @@ const NAV_LINKS = [
   { href: "/creators", label: "Creators" },
   { href: "/live", label: "Live Feed" },
   { href: "/volume", label: "Volume" },
-  { href: "/extradata", label: "Markets" },
+  { href: "/markets", label: "Markets" },
 ] as const;
 
 export function LandingNavbar() {

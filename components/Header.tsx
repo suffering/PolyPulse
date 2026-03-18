@@ -13,7 +13,7 @@ const NAV_LINKS = [
   { href: "/leaderboard", label: "Leaderboard" },
   { href: "/creators", label: "Creators" },
   { href: "/volume", label: "Volume" },
-  { href: "/extradata", label: "Extra Data" },
+  { href: "/markets", label: "Markets" },
   { href: "/live", label: "Live Feed" },
   { href: "/search", label: "Search Wallet" },
 ] as const;
