@@ -79,28 +79,28 @@ export function EVCard({ opportunity }: EVCardProps) {
           <div className="grid grid-cols-2 gap-6">
             {/* Polymarket Column */}
             <div>
-              <p className="text-[10px] uppercase text-gray-600 tracking-wider mb-1.5 font-medium">Polymarket</p>
-              <p className="text-white font-mono text-base font-semibold mb-1">
-                {formatCents(opportunity.polymarketPrice * 100)}¢
+              <p className="text-[10px] uppercase text-gray-600 tracking-wider mb-2 font-medium">Polymarket</p>
+              <p className="text-white font-mono text-lg font-semibold mb-1">
+                {formatPct(opportunity.polymarketImpliedProb)}%
               </p>
               <p className="text-gray-500 font-mono text-xs">
-                {formatPct(opportunity.polymarketImpliedProb)}%
+                {formatCents(opportunity.polymarketPrice * 100)}¢
               </p>
             </div>
 
             {/* Sportsbook Column */}
             <div>
-              <p className="text-[10px] uppercase text-gray-600 tracking-wider mb-1.5 font-medium">
+              <p className="text-[10px] uppercase text-gray-600 tracking-wider mb-2 font-medium">
                 {hasSportsbook ? opportunity.sportsbookName : "—"}
               </p>
-              <p className="text-white font-mono text-base font-semibold mb-1">
+              <p className="text-white font-mono text-lg font-semibold mb-1">
                 {hasSportsbook
-                  ? formatOdds(opportunity.sportsbookOdds!)
+                  ? `${formatPct(opportunity.sportsbookImpliedProb ?? 0)}%`
                   : "N/A"}
               </p>
               <p className="text-gray-500 font-mono text-xs">
                 {hasSportsbook
-                  ? `${formatPct(opportunity.sportsbookImpliedProb ?? 0)}%`
+                  ? formatOdds(opportunity.sportsbookOdds!)
                   : "—"}
               </p>
             </div>
