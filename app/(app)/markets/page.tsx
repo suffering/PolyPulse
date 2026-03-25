@@ -6,7 +6,7 @@ import type { PolymarketEvent, PolymarketMarket } from "@/lib/polymarket";
 import { useSetPageAiState } from "@/components/ai/PageAiContext";
 
 const PAGE_SIZE = 100;
-const ROWS_PER_PAGE = 50;
+const ROWS_PER_PAGE = 100;
 
 type EventsResponse = {
   events: PolymarketEvent[];
