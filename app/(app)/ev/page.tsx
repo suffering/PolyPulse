@@ -151,7 +151,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#000000]">
       <main className="min-h-screen bg-[#000000] py-10 pl-[220px] flex flex-col items-center">
-        <div className="w-full max-w-[1100px] px-8 mx-auto">
+        <div className="w-full max-w-7xl mx-auto px-6">
         {/* Filter Section */}
         {!isLoading && !isError && (
           <div className="mb-8 space-y-6">
@@ -316,7 +316,7 @@ export default function Home() {
 
         {/* Cards Grid */}
         {!isLoading && !isError && filtered.length > 0 && (
-          <div className="w-full grid grid-cols-4 gap-6 px-8 mb-8 justify-center xl:grid-cols-4 lg:grid-cols-1">
+          <div className="w-full grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
             {filtered.map((opp) => (
               <EVCard key={opp.id} opportunity={opp} />
             ))}

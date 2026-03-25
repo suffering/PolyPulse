@@ -54,20 +54,20 @@ export function EVCard({ opportunity }: EVCardProps) {
       rel="noopener noreferrer"
       className="block group"
     >
-      <div className="bg-[#0a0a0a] border border-white/8 hover:border-blue-500/40 rounded-lg transition-all duration-200 overflow-hidden hover:shadow-lg hover:shadow-blue-500/20 flex flex-col h-full min-h-[320px]">
+      <div className="bg-[#0a0a0a] border border-white/8 hover:border-blue-500/40 rounded-lg transition-all duration-200 overflow-hidden hover:shadow-lg hover:shadow-blue-500/20 flex flex-col h-full min-h-[320px] min-w-0">
         {/* Section 1: Sport Badge + EV Badge + Matchup + Outcome */}
         <div className="p-6 border-b border-white/5">
-          <div className="flex items-start justify-between gap-3 mb-3">
-            <div className={`text-xs uppercase font-semibold tracking-wider rounded-full px-3 py-1 border ${getSportBadgeColor(opportunity.sport)}`}>
+          <div className="flex items-center gap-1 flex-nowrap">
+            <div className={`text-xs uppercase font-semibold tracking-wider rounded-full px-3 py-1 border shrink-0 ${getSportBadgeColor(opportunity.sport)}`}>
               {opportunity.sport?.toUpperCase()}
             </div>
             {hasSportsbook && (
-              <div className={`text-sm font-mono font-bold ${getEVBadgeColor(evPercent)}`}>
+              <div className={`text-sm font-mono font-bold shrink-0 ${getEVBadgeColor(evPercent)}`}>
                 {displayEvPercent > 0 ? "+" : ""}{displayEvPercent.toFixed(1)}% EV
               </div>
             )}
           </div>
-          <h2 className="text-white font-bold text-lg mb-1 group-hover:text-blue-400 transition-colors">
+          <h2 className="text-white font-bold text-base leading-snug mb-1 group-hover:text-blue-400 transition-colors">
             {opportunity.matchup}
           </h2>
           <p className="text-white font-semibold text-base">
