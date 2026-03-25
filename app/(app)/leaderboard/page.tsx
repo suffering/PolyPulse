@@ -185,13 +185,13 @@ export default function LeaderboardPage() {
 
         <div className="mb-8 space-y-5">
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-white/30 mb-2">Category</p>
+            <p className="text-[10px] uppercase tracking-widest text-white/30 mb-3">Category</p>
             <div className="flex flex-wrap gap-2">
               {CATEGORIES.map((cat) => (
                 <button
                   key={cat.value}
                   onClick={() => { setCategory(cat.value); setPage(0); }}
-                  className={`px-4 py-1.5 rounded-full text-xs border transition-all duration-150 cursor-pointer ${
+                  className={`px-5 py-2.5 rounded-full text-sm font-medium border transition-all duration-150 cursor-pointer ${
                     category === cat.value
                       ? "text-[#4B4BF7] border-[#4B4BF7] bg-[#4B4BF7]/10 shadow-[0_0_12px_rgba(75,75,247,0.2)]"
                       : "text-white/50 border-white/10 bg-transparent hover:border-white/30 hover:text-white/80"
@@ -204,13 +204,13 @@ export default function LeaderboardPage() {
           </div>
 
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-white/30 mb-2">Time Period</p>
+            <p className="text-[10px] uppercase tracking-widest text-white/30 mb-3">Time Period</p>
             <div className="flex flex-wrap gap-2">
               {TIME_PERIODS.map((tp) => (
                 <button
                   key={tp.value}
                   onClick={() => { setTimePeriod(tp.value); setPage(0); }}
-                  className={`px-4 py-1.5 rounded-full text-xs border transition-all duration-150 cursor-pointer ${
+                  className={`px-5 py-2.5 rounded-full text-sm font-medium border transition-all duration-150 cursor-pointer ${
                     timePeriod === tp.value
                       ? "text-[#4B4BF7] border-[#4B4BF7] bg-[#4B4BF7]/10 shadow-[0_0_12px_rgba(75,75,247,0.2)]"
                       : "text-white/50 border-white/10 bg-transparent hover:border-white/30 hover:text-white/80"
@@ -223,13 +223,13 @@ export default function LeaderboardPage() {
           </div>
 
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-white/30 mb-2">Sort By</p>
+            <p className="text-[10px] uppercase tracking-widest text-white/30 mb-3">Sort By</p>
             <div className="flex flex-wrap gap-2">
               {ORDER_BY.map((ob) => (
                 <button
                   key={ob.value}
                   onClick={() => { setOrderBy(ob.value); setPage(0); }}
-                  className={`px-4 py-1.5 rounded-full text-xs border transition-all duration-150 cursor-pointer ${
+                  className={`px-5 py-2.5 rounded-full text-sm font-medium border transition-all duration-150 cursor-pointer ${
                     orderBy === ob.value
                       ? "text-[#4B4BF7] border-[#4B4BF7] bg-[#4B4BF7]/10 shadow-[0_0_12px_rgba(75,75,247,0.2)]"
                       : "text-white/50 border-white/10 bg-transparent hover:border-white/30 hover:text-white/80"
@@ -271,8 +271,8 @@ export default function LeaderboardPage() {
               <div className="mb-10">
                 <p className="text-[10px] uppercase tracking-widest text-white/30 mb-5">Top 3 Traders</p>
                 <div className="grid grid-cols-3 gap-4">
-                  {/* Podium order: #2, #1, #3 */}
-                  {[topThree[1], topThree[0], topThree[2]].filter(Boolean).map((entry) => (
+                  {/* Left to right: #1, #2, #3 */}
+                  {topThree.map((entry) => (
                     <LeaderboardCard
                       key={entry.proxyWallet}
                       rank={entry.rank}

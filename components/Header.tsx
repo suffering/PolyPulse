@@ -29,8 +29,8 @@ function HeaderContent() {
   const pathname = usePathname() ?? "/";
   const { isConnected } = useWallet();
 
-  // Hide header on EV and Markets pages
-  if (pathname === "/ev" || pathname === "/markets") {
+  // Hide header on EV, Markets, and Leaderboard pages
+  if (pathname === "/ev" || pathname === "/markets" || pathname === "/leaderboard") {
     return null;
   }
 
