@@ -149,12 +149,9 @@ export default function Home() {
   ]);
 
   return (
-    <div className="min-h-screen bg-[#000000] flex">
-      {/* Sidebar spacer */}
-      <div className="w-[200px] shrink-0" />
-      {/* Main Content - centers in remaining space */}
-      <main className="flex-1 min-h-screen bg-[#000000] px-10 py-10 flex flex-col items-center">
-        {/* Content wrapper */}
+    <div className="min-h-screen bg-[#000000]">
+      <main className="min-h-screen bg-[#000000] py-10 pl-[220px]">
+        <div className="flex flex-col items-center px-10">
         <div className="w-full max-w-[1100px]">
         {/* Filter Section */}
         {!isLoading && !isError && (
@@ -326,6 +323,7 @@ export default function Home() {
             ))}
           </div>
         )}
+        </div>
         </div>
       </main>
 
