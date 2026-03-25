@@ -54,9 +54,9 @@ export function EVCard({ opportunity }: EVCardProps) {
       rel="noopener noreferrer"
       className="block group"
     >
-      <div className="bg-[#0a0a0a] border border-white/8 hover:border-blue-500/40 rounded-lg transition-all duration-200 overflow-hidden hover:shadow-lg hover:shadow-blue-500/20 flex flex-col h-full">
+      <div className="bg-[#0a0a0a] border border-white/8 hover:border-blue-500/40 rounded-lg transition-all duration-200 overflow-hidden hover:shadow-lg hover:shadow-blue-500/20 flex flex-col h-full min-h-[320px]">
         {/* Section 1: Sport Badge + EV Badge + Matchup + Outcome */}
-        <div className="px-5 py-4 border-b border-white/5">
+        <div className="p-6 border-b border-white/5">
           <div className="flex items-start justify-between gap-3 mb-3">
             <div className={`text-xs uppercase font-semibold tracking-wider rounded-full px-3 py-1 border ${getSportBadgeColor(opportunity.sport)}`}>
               {opportunity.sport?.toUpperCase()}
@@ -77,7 +77,7 @@ export function EVCard({ opportunity }: EVCardProps) {
 
         {/* Section 2: Odds Comparison */}
         {hasSportsbook ? (
-          <div className="px-5 py-4 border-b border-white/5">
+          <div className="p-6 border-b border-white/5">
             <div className="grid grid-cols-2 gap-6">
               {/* Polymarket Column */}
               <div>
@@ -105,7 +105,7 @@ export function EVCard({ opportunity }: EVCardProps) {
             </div>
           </div>
         ) : (
-          <div className="px-5 py-4 border-b border-white/5">
+          <div className="p-6 border-b border-white/5">
             <div className="grid grid-cols-2 gap-6">
               {/* Polymarket Column */}
               <div>
@@ -131,7 +131,7 @@ export function EVCard({ opportunity }: EVCardProps) {
 
         {/* Section 3: Profit Calculations - Only show for sportsbook cards */}
         {hasSportsbook && (
-          <div className="px-5 py-4 border-b border-white/5 space-y-3">
+          <div className="p-6 border-b border-white/5 space-y-3">
             {/* Stake to Profit */}
             <div className="flex items-center justify-between">
               <p className="text-gray-600 text-sm">$100 stake:</p>
@@ -152,7 +152,7 @@ export function EVCard({ opportunity }: EVCardProps) {
         )}
 
         {/* Button */}
-        <div className="px-5 py-4 mt-auto">
+        <div className="p-6 mt-auto">
           <div className="w-full text-center px-4 py-3 bg-[#0d0d0d] border border-white/8 group-hover:bg-blue-500/10 group-hover:border-blue-500/40 group-hover:text-blue-400 text-gray-400 text-sm font-medium rounded-lg transition-all duration-200">
             Bet on Polymarket →
           </div>

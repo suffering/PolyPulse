@@ -316,7 +316,7 @@ export default function Home() {
 
         {/* Cards Grid */}
         {!isLoading && !isError && filtered.length > 0 && (
-          <div className="w-full grid grid-cols-4 gap-4 mb-8 justify-center xl:grid-cols-4 lg:grid-cols-1">
+          <div className="w-full grid grid-cols-4 gap-6 px-8 mb-8 justify-center xl:grid-cols-4 lg:grid-cols-1">
             {filtered.map((opp) => (
               <EVCard key={opp.id} opportunity={opp} />
             ))}
