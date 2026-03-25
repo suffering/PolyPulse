@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { Header } from "@/components/Header";
 
-const HIDDEN_PATHS = ["/ev", "/markets", "/leaderboard"];
+const HIDDEN_PATHS = ["/ev", "/markets", "/leaderboard", "/creators"];
 
 export function ConditionalHeader() {
   const pathname = usePathname() ?? "/";
