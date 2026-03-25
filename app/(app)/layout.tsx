@@ -1,4 +1,4 @@
-import { Header } from "@/components/Header";
+import { ConditionalHeader } from "@/components/ConditionalHeader";
 import { UniversalAiAssistant } from "@/components/ai/UniversalAiAssistant";
 
 export default function AppLayout({
@@ -8,8 +8,7 @@ export default function AppLayout({
 }) {
   return (
     <>
-      <div id="header-portal" />
-      <Header />
+      <ConditionalHeader />
       {children}
       <UniversalAiAssistant />
     </>
