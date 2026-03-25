@@ -151,7 +151,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#000000]">
       <main className="min-h-screen bg-[#000000] py-10 pl-[220px]">
-        <div className="flex flex-col items-center px-10">
+        <div className="px-4">
         <div className="w-full max-w-[1100px]">
         {/* Filter Section */}
         {!isLoading && !isError && (
