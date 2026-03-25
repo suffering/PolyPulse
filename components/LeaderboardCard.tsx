@@ -20,11 +20,25 @@ function formatCurrency(value: number): string {
   return `$${value.toFixed(2)}`;
 }
 
+function getRankCardClass(rank: number): string {
+  if (rank === 1) return "border-yellow-400/30 shadow-[0_0_35px_rgba(234,179,8,0.12)] scale-105";
+  if (rank === 2) return "border-slate-400/20 shadow-[0_0_20px_rgba(148,163,184,0.07)]";
+  if (rank === 3) return "border-amber-700/20 shadow-[0_0_20px_rgba(180,83,9,0.07)]";
+  return "border-white/10";
+}
+
+function getRankAvatarRing(rank: number): string {
+  if (rank === 1) return "ring-2 ring-yellow-400/50";
+  if (rank === 2) return "ring-2 ring-slate-400/40";
+  if (rank === 3) return "ring-2 ring-amber-700/40";
+  return "";
+}
+
 function getRankBadgeClass(rank: number): string {
-  if (rank === 1) return "bg-amber-500/20 text-amber-400 border-amber-500/50";
-  if (rank === 2) return "bg-slate-400/20 text-slate-300 border-slate-400/50";
-  if (rank === 3) return "bg-orange-600/20 text-orange-400 border-orange-600/50";
-  return "bg-slate-700/50 text-slate-400 border-slate-600/50";
+  if (rank === 1) return "bg-yellow-400/10 text-yellow-400";
+  if (rank === 2) return "bg-slate-400/10 text-slate-400";
+  if (rank === 3) return "bg-amber-800/10 text-amber-600";
+  return "bg-white/5 text-white/40";
 }
 
 export function LeaderboardCard({
@@ -42,53 +56,32 @@ export function LeaderboardCard({
   return (
     <div
       onClick={() => router.push(`/traders/${walletAddress}`)}
-      className="border border-slate-700/50 rounded-lg bg-slate-900/30 p-6 hover:bg-slate-800/40 transition-colors cursor-pointer"
+      className={`bg-[#0f0f14] border rounded-2xl p-6 flex flex-col items-center gap-3 transition-all duration-200 cursor-pointer ${getRankCardClass(rank)}`}
     >
-      <div className="flex items-start gap-4">
-        <div className="flex-shrink-0">
-          <div className="h-16 w-16 rounded-full bg-slate-800 border border-slate-700 overflow-hidden flex items-center justify-center text-xl text-slate-400">
-            {profileImage ? (
-              <img
-                src={profileImage}
-                alt={displayName}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <span>
-                {walletAddress.slice(2, 4).toUpperCase()}
-              </span>
-            )}
-          </div>
-        </div>
+      <div className={`w-16 h-16 rounded-full bg-white/10 overflow-hidden flex items-center justify-center text-white/60 text-sm font-mono ${getRankAvatarRing(rank)}`}>
+        {profileImage ? (
+          <img src={profileImage} alt={displayName} className="w-full h-full object-cover rounded-full" />
+        ) : (
+          <span>{walletAddress.slice(2, 4).toUpperCase()}</span>
+        )}
+      </div>
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
-            <span
-              className={`inline-block px-2 py-0.5 rounded text-xs font-bold border ${getRankBadgeClass(
-                rank
-              )}`}
-            >
-              #{rank}
-            </span>
-          </div>
+      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${getRankBadgeClass(rank)}`}>
+        #{rank}
+      </span>
 
-          <h3 className="text-lg font-bold text-white mb-1 truncate">
-            {displayName}
-          </h3>
+      <p className="text-white font-semibold text-sm tracking-tight text-center truncate w-full text-center">
+        {displayName}
+      </p>
 
-          <p className="text-xs text-slate-400 mb-3">
-            Total Trades: {totalTrades !== null && totalTrades !== undefined
-              ? totalTrades === 4000
-                ? "4,000+"
-                : totalTrades.toLocaleString()
-              : "—"}
-          </p>
+      <p className="text-white/30 text-xs font-mono">
+        Total Trades: {totalTrades !== null && totalTrades !== undefined
+          ? totalTrades === 4000 ? "4,000+" : totalTrades.toLocaleString()
+          : "—"}
+      </p>
 
-          <div className={`text-2xl font-bold ${isPositive ? "text-emerald-400" : "text-red-400"}`}>
-            {isPositive ? "+" : ""}
-            {formatCurrency(pnl)}
-          </div>
-        </div>
+      <div className={`text-2xl font-bold font-mono ${isPositive ? "text-[#4ade80]" : "text-red-400"}`}>
+        {isPositive ? "+" : ""}{formatCurrency(pnl)}
       </div>
     </div>
   );
