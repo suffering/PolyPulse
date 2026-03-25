@@ -150,9 +150,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#000000]">
-      <main className="min-h-screen bg-[#000000] py-10 pl-[220px]">
-        <div className="px-4">
-        <div className="w-full max-w-[1100px]">
+      <main className="min-h-screen bg-[#000000] py-10 pl-[220px] flex flex-col items-center">
+        <div className="w-full max-w-[1100px] px-8">
         {/* Filter Section */}
         {!isLoading && !isError && (
           <div className="mb-8 space-y-6">
@@ -323,7 +322,6 @@ export default function Home() {
             ))}
           </div>
         )}
-        </div>
         </div>
       </main>
 
