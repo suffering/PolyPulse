@@ -151,7 +151,9 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#000000]">
       {/* Main Content */}
-      <main className="ml-[200px] min-h-screen bg-[#000000] px-10 py-10 max-w-[1200px] mx-auto relative flex flex-col">
+      <main className="ml-[200px] min-h-screen bg-[#000000] px-10 py-10 relative flex flex-col items-center w-full">
+        {/* Content wrapper for max-width centering */}
+        <div className="w-full max-w-[1200px]">
         {/* Filter Section */}
         {!isLoading && !isError && (
           <div className="mb-8 space-y-6">
@@ -322,6 +324,7 @@ export default function Home() {
             ))}
           </div>
         )}
+        </div>
       </main>
 
       {/* Floating Ask AI Button */}
