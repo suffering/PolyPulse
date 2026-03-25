@@ -149,11 +149,13 @@ export default function Home() {
   ]);
 
   return (
-    <div className="min-h-screen bg-[#000000]">
-      {/* Main Content */}
-      <main className="ml-[200px] min-h-screen bg-[#000000] px-10 py-10 relative flex flex-col items-center w-full">
-        {/* Content wrapper for max-width centering */}
-        <div className="w-full max-w-[1200px]">
+    <div className="min-h-screen bg-[#000000] flex">
+      {/* Sidebar spacer */}
+      <div className="w-[200px] shrink-0" />
+      {/* Main Content - centers in remaining space */}
+      <main className="flex-1 min-h-screen bg-[#000000] px-10 py-10 flex flex-col items-center">
+        {/* Content wrapper */}
+        <div className="w-full max-w-[1100px]">
         {/* Filter Section */}
         {!isLoading && !isError && (
           <div className="mb-8 space-y-6">
