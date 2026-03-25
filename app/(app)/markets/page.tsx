@@ -216,28 +216,31 @@ export default function MarketsPage() {
         {!isError && (
           <div className="flex-1 flex gap-8 min-h-0">
             {/* Active Markets Table */}
-            <section className="border border-[#4B4BF7]/20 rounded-lg bg-[#0a0a0a] overflow-hidden flex flex-col flex-1 min-h-0">
-              <div className="px-6 py-4 border-b border-[#4B4BF7]/20 bg-[#0d0d0d] shrink-0">
-                <h2 className="text-base font-semibold text-white">
-                  Polymarket Active Markets
-                </h2>
+            <section className="bg-[#0f0f13] border border-white/10 rounded-xl overflow-hidden flex flex-col flex-1 min-h-0">
+              <div className="px-6 py-4 border-b border-[#4B4BF7]/30 bg-[#0d0d0d] shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-6 bg-[#4B4BF7] rounded-full"></div>
+                  <h2 className="text-lg font-semibold tracking-tight text-white">
+                    Polymarket Active Markets
+                  </h2>
+                </div>
               </div>
               {eventsLoading && offsetEvents === 0 ? (
                 <div className="p-8 text-center text-gray-500">Loading...</div>
               ) : pageEvents.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">No markets found</div>
               ) : (
-                <div className="overflow-y-auto flex-1 min-h-0">
+                <div className="overflow-y-auto flex-1 min-h-0 relative">
                   <table className="w-full text-left border-collapse">
-                    <thead className="sticky top-0 bg-[#0d0d0d] border-b border-[#4B4BF7]/20 z-10">
+                    <thead className="sticky top-0 bg-[#0d0d0d] border-b border-[#4B4BF7]/50 z-10">
                       <tr>
-                        <th className="px-6 py-3 text-sm font-semibold text-[#4B4BF7] uppercase tracking-wider">
+                        <th className="px-6 py-3 text-xs font-semibold text-[#4B4BF7] uppercase tracking-widest">
                           Question
                         </th>
-                        <th className="px-6 py-3 text-sm font-semibold text-[#4B4BF7] uppercase tracking-wider text-right">
+                        <th className="px-6 py-3 text-xs font-semibold text-[#4B4BF7] uppercase tracking-widest text-right">
                           Open Interest
                         </th>
-                        <th className="px-6 py-3 text-sm font-semibold text-[#4B4BF7] uppercase tracking-wider text-right">
+                        <th className="px-6 py-3 text-xs font-semibold text-[#4B4BF7] uppercase tracking-widest text-right">
                           Notional Volume
                         </th>
                       </tr>
@@ -246,7 +249,7 @@ export default function MarketsPage() {
                       {pageEvents.map((event) => (
                         <tr
                           key={event.id}
-                          className="hover:bg-[#4B4BF7]/5 transition-colors"
+                          className="hover:bg-white/5 transition-colors duration-150 cursor-pointer border-l-2 border-transparent hover:border-l-[#4B4BF7]"
                         >
                           <td className="px-6 py-4">
                             <a
@@ -268,33 +271,38 @@ export default function MarketsPage() {
                       ))}
                     </tbody>
                   </table>
+                  {/* Gradient fade overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#0f0f13] to-transparent pointer-events-none"></div>
                 </div>
               )}
             </section>
 
             {/* Active Questions Table */}
-            <section className="border border-[#4B4BF7]/20 rounded-lg bg-[#0a0a0a] overflow-hidden flex flex-col flex-1 min-h-0">
-              <div className="px-6 py-4 border-b border-[#4B4BF7]/20 bg-[#0d0d0d] shrink-0">
-                <h2 className="text-base font-semibold text-white">
-                  Polymarket Active Questions
-                </h2>
+            <section className="bg-[#0f0f13] border border-white/10 rounded-xl overflow-hidden flex flex-col flex-1 min-h-0">
+              <div className="px-6 py-4 border-b border-[#4B4BF7]/30 bg-[#0d0d0d] shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-6 bg-[#4B4BF7] rounded-full"></div>
+                  <h2 className="text-lg font-semibold tracking-tight text-white">
+                    Polymarket Active Questions
+                  </h2>
+                </div>
               </div>
               {marketsLoading && offsetMarkets === 0 ? (
                 <div className="p-8 text-center text-gray-500">Loading...</div>
               ) : pageMarkets.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">No questions found</div>
               ) : (
-                <div className="overflow-y-auto flex-1 min-h-0">
+                <div className="overflow-y-auto flex-1 min-h-0 relative">
                   <table className="w-full text-left border-collapse">
-                    <thead className="sticky top-0 bg-[#0d0d0d] border-b border-[#4B4BF7]/20 z-10">
+                    <thead className="sticky top-0 bg-[#0d0d0d] border-b border-[#4B4BF7]/50 z-10">
                       <tr>
-                        <th className="px-6 py-3 text-sm font-semibold text-[#4B4BF7] uppercase tracking-wider">
+                        <th className="px-6 py-3 text-xs font-semibold text-[#4B4BF7] uppercase tracking-widest">
                           Market
                         </th>
-                        <th className="px-6 py-3 text-sm font-semibold text-[#4B4BF7] uppercase tracking-wider text-right">
+                        <th className="px-6 py-3 text-xs font-semibold text-[#4B4BF7] uppercase tracking-widest text-right">
                           Open Interest
                         </th>
-                        <th className="px-6 py-3 text-sm font-semibold text-[#4B4BF7] uppercase tracking-wider text-right">
+                        <th className="px-6 py-3 text-xs font-semibold text-[#4B4BF7] uppercase tracking-widest text-right">
                           Notional Volume
                         </th>
                       </tr>
@@ -303,7 +311,7 @@ export default function MarketsPage() {
                       {pageMarkets.map((market) => (
                         <tr
                           key={market.id}
-                          className="hover:bg-[#4B4BF7]/5 transition-colors"
+                          className="hover:bg-white/5 transition-colors duration-150 cursor-pointer border-l-2 border-transparent hover:border-l-[#4B4BF7]"
                         >
                           <td className="px-6 py-4">
                             <a
@@ -325,6 +333,8 @@ export default function MarketsPage() {
                       ))}
                     </tbody>
                   </table>
+                  {/* Gradient fade overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#0f0f13] to-transparent pointer-events-none"></div>
                 </div>
               )}
             </section>
