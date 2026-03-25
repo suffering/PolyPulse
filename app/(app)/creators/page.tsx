@@ -56,7 +56,9 @@ function SortHeader({
     <button
       type="button"
       onClick={() => onSortChange(sortKey)}
-      className="flex items-center gap-1 text-xs font-medium text-slate-400 uppercase tracking-wider hover:text-slate-200"
+      className={`flex items-center gap-1 text-[10px] font-medium uppercase tracking-widest transition-colors duration-150 ${
+        isActive ? "text-[#4B4BF7]" : "text-white/30 hover:text-white/60"
+      }`}
     >
       <span>{label}</span>
       <span className="text-[10px]">{arrow}</span>
@@ -135,15 +137,15 @@ export default function CreatorsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0d1117] text-slate-200 font-mono">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-[#04040a] text-white">
+      <div className="max-w-7xl mx-auto px-6 py-10">
         <header className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">
+              <h1 className="text-2xl font-bold tracking-tight text-white">
                 Polymarket Creators
               </h1>
-              <p className="text-slate-500 text-sm mt-1">
+              <p className="text-sm text-white/40 mt-1">
                 Creator-level market statistics from the Polymarket Gamma API
               </p>
               {/* NOTE: Creator-level stats are aggregated from event + market data; 
@@ -151,33 +153,33 @@ export default function CreatorsPage() {
             </div>
             <Link
               href="/"
-              className="px-4 py-2 rounded-md border border-slate-600 bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 transition-colors text-sm"
+              className="bg-white/5 border border-white/10 text-white/60 text-sm px-4 py-2 rounded-xl hover:border-[#4B4BF7]/50 hover:text-white transition-all duration-150"
             >
               ← Back to EV Engine
             </Link>
           </div>
           {data?.lastUpdated && (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-white/25 font-mono mt-2">
               Last updated: {new Date(data.lastUpdated).toLocaleString()}
             </p>
           )}
-          <p className="text-[10px] text-slate-600 mt-1">
+          <p className="text-xs text-white/20 mt-1">
             Wallet addresses are fetched via profile search API (best-effort; may be missing for some creators).
             Click wallet address to copy full address.
           </p>
         </header>
 
-        <section className="border border-slate-700/50 rounded-lg bg-slate-900/30 p-4 flex flex-col min-h-0">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
-            <div className="flex items-center gap-2">
+        <section className="bg-[#0a0a0f] border border-white/10 rounded-2xl overflow-hidden flex flex-col min-h-0">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-6 border-b border-white/5">
+            <div className="flex items-center gap-3">
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search creators..."
-                className="w-56 bg-slate-900/60 border border-slate-700/70 rounded-md px-3 py-1.5 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500/70 focus:border-amber-500/70"
+                className="w-72 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white/80 placeholder:text-white/25 focus:outline-none focus:border-[#4B4BF7]/50 transition-all duration-150"
               />
-              <span className="text-[10px] text-slate-500">
+              <span className="text-xs text-white/30 font-mono">
                 {filteredAndSorted.length} creators
               </span>
             </div>
@@ -200,9 +202,9 @@ export default function CreatorsPage() {
           {!isLoading && !isError && filteredAndSorted.length > 0 && (
             <div className="overflow-y-auto overflow-x-auto max-h-[60vh] min-h-0">
               <table className="w-full text-left border-collapse min-w-[900px]">
-                <thead className="sticky top-0 bg-slate-900/80 border-b border-slate-700/60 z-10">
+                <thead className="sticky top-0 bg-[#0a0a0f] border-b border-[#4B4BF7]/20 z-10">
                   <tr>
-                    <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider w-[260px]">
+                    <th className="px-6 py-4 text-[10px] uppercase tracking-widest text-white/30 w-[260px]">
                       <SortHeader
                         label="Creator"
                         sortKey="name"
@@ -211,10 +213,10 @@ export default function CreatorsPage() {
                         onSortChange={handleSortChange}
                       />
                     </th>
-                    <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-[10px] uppercase tracking-widest text-white/30">
                       Wallet
                     </th>
-                    <th className="px-3 py-2 text-right">
+                    <th className="px-6 py-4 text-right">
                       <SortHeader
                         label="Total Markets"
                         sortKey="totalMarkets"
@@ -223,7 +225,7 @@ export default function CreatorsPage() {
                         onSortChange={handleSortChange}
                       />
                     </th>
-                    <th className="px-3 py-2 text-right">
+                    <th className="px-6 py-4 text-right">
                       <SortHeader
                         label="Active Markets"
                         sortKey="activeMarkets"
@@ -232,7 +234,7 @@ export default function CreatorsPage() {
                         onSortChange={handleSortChange}
                       />
                     </th>
-                    <th className="px-3 py-2 text-right">
+                    <th className="px-6 py-4 text-right">
                       <SortHeader
                         label="Total Volume"
                         sortKey="totalVolume"
@@ -241,7 +243,7 @@ export default function CreatorsPage() {
                         onSortChange={handleSortChange}
                       />
                     </th>
-                    <th className="px-3 py-2 text-right">
+                    <th className="px-6 py-4 text-right">
                       <SortHeader
                         label="Open Interest"
                         sortKey="openInterest"
@@ -256,18 +258,18 @@ export default function CreatorsPage() {
                   {filteredAndSorted.map((creator) => (
                     <tr
                       key={creator.id}
-                      className="border-b border-slate-800/70 transition-colors"
+                      className="border-b border-white/5 border-l-2 border-l-transparent hover:bg-white/5 hover:border-l-[#4B4BF7] transition-all duration-150 cursor-pointer"
                     >
-                      <td className="px-3 py-2 text-xs">
-                        <div className="flex items-center gap-2">
-                          <div className="h-7 w-7 rounded-full bg-slate-800/80 border border-slate-700/70 flex items-center justify-center text-[10px] text-slate-300 overflow-hidden">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-sm text-white/40 overflow-hidden ring-1 ring-white/10">
                             {creator.image ? (
                               // We intentionally avoid guessing anything if image is missing; we just fall back to initials.
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
                                 src={creator.image}
                                 alt={creator.name}
-                                className="h-full w-full object-cover"
+                                className="w-9 h-9 object-cover rounded-full"
                               />
                             ) : (
                               <span>
@@ -287,25 +289,25 @@ export default function CreatorsPage() {
                                   href={creator.url}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="text-[11px] font-semibold text-slate-100 hover:text-amber-400 truncate"
+                                  className="text-sm font-medium text-white/80 hover:text-[#4B4BF7] truncate transition-colors duration-150"
                                 >
                                   {creator.name}
                                 </a>
                               ) : (
-                                <span className="text-[11px] font-semibold text-slate-100 truncate">
+                                <span className="text-sm font-medium text-white/80 truncate">
                                   {creator.name}
                                 </span>
                               )}
                             </div>
                             {creator.handle && (
-                              <div className="text-[10px] text-slate-500 truncate">
+                              <div className="text-xs text-white/30 truncate">
                                 @{creator.handle}
                               </div>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="px-3 py-2 text-xs">
+                      <td className="px-6 py-4">
                         {creator.walletAddress ? (
                           <button
                             type="button"
@@ -322,26 +324,30 @@ export default function CreatorsPage() {
                                 document.body.removeChild(textArea);
                               }
                             }}
-                            className="text-slate-300 hover:text-amber-400 font-mono transition-colors cursor-pointer"
+                            className="text-xs font-mono text-white/40 hover:text-[#4B4BF7] transition-colors duration-150 cursor-pointer"
                             title={`Click to copy full address: ${creator.walletAddress}`}
                           >
                             {`${creator.walletAddress.slice(0, 6)}...${creator.walletAddress.slice(-4)}`}
                           </button>
                         ) : (
-                          <span className="text-slate-500">—</span>
+                          <span className="text-xs font-mono text-white/25">—</span>
                         )}
                       </td>
-                      <td className="px-3 py-2 text-xs text-right text-slate-100">
+                      <td className="px-6 py-4 text-sm font-mono text-white/60">
                         {creator.totalMarkets.toLocaleString("en-US")}
                       </td>
-                      <td className="px-3 py-2 text-xs text-right text-slate-100">
-                        {creator.activeMarkets.toLocaleString("en-US")}
+                      <td className="px-6 py-4 text-sm font-mono">
+                        <span className={creator.activeMarkets > 0 ? "text-[#4ade80]" : "text-white/25"}>
+                          {creator.activeMarkets.toLocaleString("en-US")}
+                        </span>
                       </td>
-                      <td className="px-3 py-2 text-xs text-right text-emerald-400">
+                      <td className="px-6 py-4 text-sm font-mono text-white/80">
                         {formatCurrency(creator.totalVolume)}
                       </td>
-                      <td className="px-3 py-2 text-xs text-right text-sky-400">
-                        {formatCurrency(creator.openInterest)}
+                      <td className="px-6 py-4 text-sm font-mono">
+                        <span className={creator.openInterest > 0 ? "text-[#4ade80]" : "text-white/25"}>
+                          {formatCurrency(creator.openInterest)}
+                        </span>
                       </td>
                     </tr>
                   ))}
