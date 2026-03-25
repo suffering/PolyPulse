@@ -159,8 +159,8 @@ export default function Home() {
           <div className="mb-8 space-y-6">
             {/* Sport Filter */}
             <div>
-              <p className="text-gray-600 text-xs uppercase tracking-[0.15em] mb-3 font-medium">Sport</p>
-              <div className="flex gap-2 flex-wrap">
+              <p className="text-gray-600 text-xs uppercase tracking-[0.15em] mb-3 font-medium text-center">Sport</p>
+              <div className="flex gap-2 flex-wrap justify-center">
                 {(["nba", "mls", "mlb", "nhl", "tennis"] as const).map((s) => (
                   <button
                     key={s}
@@ -184,8 +184,8 @@ export default function Home() {
 
             {/* Timeframe Filter */}
             <div>
-              <p className="text-gray-600 text-xs uppercase tracking-[0.15em] mb-3 font-medium">Timeframe</p>
-              <div className="flex gap-2 flex-wrap">
+              <p className="text-gray-600 text-xs uppercase tracking-[0.15em] mb-3 font-medium text-center">Timeframe</p>
+              <div className="flex gap-2 flex-wrap justify-center">
                 {(["today", "week", "month", "futures", "all"] as const).map((tf) => (
                   <button
                     key={tf}
@@ -205,8 +205,8 @@ export default function Home() {
             {/* Soccer League Filter */}
             {sport === "mls" && (
               <div>
-                <p className="text-gray-600 text-xs uppercase tracking-[0.15em] mb-3 font-medium">League</p>
-                <div className="flex gap-2 flex-wrap">
+                <p className="text-gray-600 text-xs uppercase tracking-[0.15em] mb-3 font-medium text-center">League</p>
+                <div className="flex gap-2 flex-wrap justify-center">
                   {SOCCER_LEAGUES_UI.map(({ key, label }) => (
                     <button
                       key={key}
@@ -226,8 +226,8 @@ export default function Home() {
 
             {/* Sort Filter */}
             <div>
-              <p className="text-gray-600 text-xs uppercase tracking-[0.15em] mb-3 font-medium">Sort By</p>
-              <div className="flex gap-2 flex-wrap">
+              <p className="text-gray-600 text-xs uppercase tracking-[0.15em] mb-3 font-medium text-center">Sort By</p>
+              <div className="flex gap-2 flex-wrap justify-center">
                 {SORT_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
