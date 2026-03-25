@@ -18,20 +18,6 @@ function formatCurrency(value: number): string {
   return `$${value.toFixed(2)}`;
 }
 
-export function LeaderboardTable({
-  entries,
-  onSort,
-  sortColumn,
-  sortDirection,
-}: LeaderboardTableProps) {
-  const router = useRouter();
-
-  const handleSort = (column: string) => {
-    if (onSort) {
-      onSort(column);
-    }
-  };
-
 function getRankColor(rank: number): string {
   if (rank === 1) return "text-yellow-400 font-bold font-mono text-sm";
   if (rank === 2) return "text-slate-400 font-bold font-mono text-sm";
@@ -95,7 +81,7 @@ export function LeaderboardTable({
               <tr
                 key={entry.proxyWallet}
                 onClick={() => router.push(`/traders/${entry.proxyWallet}`)}
-                className="grid-cols-5 border-b border-white/5 border-l-2 border-l-transparent hover:bg-white/5 hover:border-l-[#4B4BF7] transition-all duration-150 cursor-pointer"
+                className="border-b border-white/5 border-l-2 border-l-transparent hover:bg-white/5 hover:border-l-[#4B4BF7] transition-all duration-150 cursor-pointer"
               >
                 <td className={`px-5 py-3 ${getRankColor(entry.rank)}`}>
                   #{entry.rank}
