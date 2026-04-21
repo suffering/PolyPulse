@@ -77,8 +77,8 @@ function sortOpportunities(opps: MatchedOpportunity[], sort: SortOption): Matche
 function pillClass(active: boolean) {
   return `text-[13px] rounded-full px-4 py-1.5 transition-all duration-150 cursor-pointer active:scale-95 font-medium ${
     active
-      ? "bg-white text-[#04040a] border border-white"
-      : "bg-transparent border border-white/10 text-white/55 hover:text-white hover:border-white/25"
+      ? "bg-white text-[#04040a] border border-white hover:bg-white/90 hover:shadow-[0_0_12px_rgba(255,255,255,0.15)]"
+      : "bg-transparent border border-white/10 text-white/55 hover:text-white hover:border-white/25 hover:shadow-[0_0_12px_rgba(255,255,255,0.08)]"
   }`;
 }
 
