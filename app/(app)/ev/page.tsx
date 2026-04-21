@@ -51,13 +51,27 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
 ];
 
 function sortOpportunities(opps: MatchedOpportunity[], sort: SortOption): MatchedOpportunity[] {
-  const sorted = [...opps];
+  // An opportunity has a real EV value only when we have sportsbook odds to compare against Polymarket.
+  const hasRealEv = (o: MatchedOpportunity) =>
+    o.sportsbookName != null &&
+    o.sportsbookOdds != null &&
+    typeof o.evPercent === "number" &&
+    Number.isFinite(o.evPercent);
+
+  const withEv = opps.filter(hasRealEv);
+  const withoutEv = opps.filter((o) => !hasRealEv(o));
+
   if (sort === "highest_ev") {
-    sorted.sort((a, b) => (b.evPercent ?? -999) - (a.evPercent ?? -999));
+    // Highest positive EV first, then descending.
+    withEv.sort((a, b) => (b.evPercent as number) - (a.evPercent as number));
   } else {
-    sorted.sort((a, b) => (a.evPercent ?? -999) - (b.evPercent ?? -999));
+    // Lowest (most negative) EV first, ascending.
+    withEv.sort((a, b) => (a.evPercent as number) - (b.evPercent as number));
   }
-  return sorted;
+
+  // Cards without a comparable sportsbook (no real EV) always fall to the end,
+  // regardless of sort direction, so sorting feels predictable.
+  return [...withEv, ...withoutEv];
 }
 
 function pillClass(active: boolean) {
