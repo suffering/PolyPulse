@@ -35,11 +35,8 @@ async function fetchMarketsPage(offset: number): Promise<MarketsResponse> {
 }
 
 function formatCurrency(value: number | null | undefined): string {
-  if (value == null || !Number.isFinite(value)) return "$0.0";
-  return `$${value.toLocaleString("en-US", {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  })}`;
+  if (value == null || !Number.isFinite(value)) return "$0";
+  return `$${Math.round(value).toLocaleString("en-US")}`;
 }
 
 function toNumber(value: unknown): number {
@@ -205,8 +202,8 @@ export default function MarketsPage() {
   ]);
 
   return (
-    <div className="min-h-screen bg-[#000000]">
-      <main className="ml-[200px] min-h-screen bg-[#000000] px-8 py-4 flex flex-col">
+    <div className="min-h-screen bg-[#04040a]">
+      <main className="ml-[200px] min-h-screen bg-[#04040a] px-6 py-6 flex flex-col">
         {isError && (
           <div className="text-center py-12 text-red-400">
             Error: {error instanceof Error ? error.message : "Failed to load data"}
@@ -214,127 +211,121 @@ export default function MarketsPage() {
         )}
 
         {!isError && (
-          <div className="flex-1 flex gap-8 min-h-0">
+          <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-0">
             {/* Active Markets Table */}
-            <section className="bg-[#0f0f13] border border-white/10 rounded-xl overflow-hidden flex flex-col flex-1 min-h-0">
-              <div className="px-6 py-4 border-b border-[#4B4BF7]/30 bg-[#0d0d0d] shrink-0">
-                <div className="flex items-center gap-2">
-                  <div className="w-1 h-6 bg-[#4B4BF7] rounded-full"></div>
-                  <h2 className="text-lg font-semibold tracking-tight text-white">
-                    Polymarket Active Markets
-                  </h2>
-                </div>
+            <section className="bg-[#0d0d14] border border-[#1a1a2e] rounded-xl overflow-hidden flex flex-col min-h-0 p-4">
+              <div className="flex items-center gap-3 px-2 pb-4 shrink-0">
+                <div className="w-1 h-5 bg-[#4B4BF7]"></div>
+                <h2 className="text-base font-medium text-white">
+                  Polymarket Active Markets
+                </h2>
               </div>
+
               {eventsLoading && offsetEvents === 0 ? (
-                <div className="p-8 text-center text-gray-500">Loading...</div>
+                <div className="p-8 text-center text-white/40 text-sm">Loading...</div>
               ) : pageEvents.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">No markets found</div>
+                <div className="p-8 text-center text-white/40 text-sm">No markets found</div>
               ) : (
-                <div className="overflow-y-auto flex-1 min-h-0 relative">
+                <div className="overflow-y-auto flex-1 min-h-0">
                   <table className="w-full text-left border-collapse">
-                    <thead className="sticky top-0 bg-[#0d0d0d] border-b border-[#4B4BF7]/50 z-10">
-                      <tr>
-                        <th className="px-6 py-3 text-xs font-semibold text-[#4B4BF7] uppercase tracking-widest">
+                    <thead className="sticky top-0 bg-[#0d0d14] z-10">
+                      <tr className="border-b border-[#1a1a2e]">
+                        <th className="px-4 py-3 text-[11px] font-medium text-[#4B4BF7] uppercase tracking-[0.15em]">
                           Question
                         </th>
-                        <th className="px-6 py-3 text-xs font-semibold text-[#4B4BF7] uppercase tracking-widest text-right">
+                        <th className="px-4 py-3 text-[11px] font-medium text-[#4B4BF7] uppercase tracking-[0.15em] text-right">
                           Open Interest
                         </th>
-                        <th className="px-6 py-3 text-xs font-semibold text-[#4B4BF7] uppercase tracking-widest text-right">
+                        <th className="px-4 py-3 text-[11px] font-medium text-[#4B4BF7] uppercase tracking-[0.15em] text-right">
                           Notional Volume
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#4B4BF7]/10">
+                    <tbody>
                       {pageEvents.map((event) => (
                         <tr
                           key={event.id}
-                          className="hover:bg-white/5 transition-colors duration-150 cursor-pointer border-l-2 border-transparent hover:border-l-[#4B4BF7]"
+                          className="border-b border-[#1a1a2e]"
                         >
-                          <td className="px-6 py-4">
+                          <td className="px-4 py-4 align-top">
                             <a
                               href={getEventUrl(event)}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-[#4B4BF7] hover:text-[#6B6BFF] underline text-base break-words"
+                              className="text-[#4B4BF7] hover:opacity-70 transition-opacity text-sm break-words"
                             >
                               {event.title ?? event.id}
                             </a>
                           </td>
-                          <td className="px-6 py-4 text-[#00D084] text-base text-right font-mono">
+                          <td className="px-4 py-4 text-[#4ade80] text-sm text-right font-mono whitespace-nowrap align-top">
                             {formatCurrency(toNumber(event.liquidity))}
                           </td>
-                          <td className="px-6 py-4 text-[#00D084] text-base text-right font-mono">
+                          <td className="px-4 py-4 text-[#4ade80] text-sm text-right font-mono whitespace-nowrap align-top">
                             {formatCurrency(toNumber(event.volume))}
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
-                  {/* Gradient fade overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#0f0f13] to-transparent pointer-events-none"></div>
                 </div>
               )}
             </section>
 
             {/* Active Questions Table */}
-            <section className="bg-[#0f0f13] border border-white/10 rounded-xl overflow-hidden flex flex-col flex-1 min-h-0">
-              <div className="px-6 py-4 border-b border-[#4B4BF7]/30 bg-[#0d0d0d] shrink-0">
-                <div className="flex items-center gap-2">
-                  <div className="w-1 h-6 bg-[#4B4BF7] rounded-full"></div>
-                  <h2 className="text-lg font-semibold tracking-tight text-white">
-                    Polymarket Active Questions
-                  </h2>
-                </div>
+            <section className="bg-[#0d0d14] border border-[#1a1a2e] rounded-xl overflow-hidden flex flex-col min-h-0 p-4">
+              <div className="flex items-center gap-3 px-2 pb-4 shrink-0">
+                <div className="w-1 h-5 bg-[#4B4BF7]"></div>
+                <h2 className="text-base font-medium text-white">
+                  Polymarket Active Questions
+                </h2>
               </div>
+
               {marketsLoading && offsetMarkets === 0 ? (
-                <div className="p-8 text-center text-gray-500">Loading...</div>
+                <div className="p-8 text-center text-white/40 text-sm">Loading...</div>
               ) : pageMarkets.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">No questions found</div>
+                <div className="p-8 text-center text-white/40 text-sm">No questions found</div>
               ) : (
-                <div className="overflow-y-auto flex-1 min-h-0 relative">
+                <div className="overflow-y-auto flex-1 min-h-0">
                   <table className="w-full text-left border-collapse">
-                    <thead className="sticky top-0 bg-[#0d0d0d] border-b border-[#4B4BF7]/50 z-10">
-                      <tr>
-                        <th className="px-6 py-3 text-xs font-semibold text-[#4B4BF7] uppercase tracking-widest">
+                    <thead className="sticky top-0 bg-[#0d0d14] z-10">
+                      <tr className="border-b border-[#1a1a2e]">
+                        <th className="px-4 py-3 text-[11px] font-medium text-[#4B4BF7] uppercase tracking-[0.15em]">
                           Market
                         </th>
-                        <th className="px-6 py-3 text-xs font-semibold text-[#4B4BF7] uppercase tracking-widest text-right">
+                        <th className="px-4 py-3 text-[11px] font-medium text-[#4B4BF7] uppercase tracking-[0.15em] text-right">
                           Open Interest
                         </th>
-                        <th className="px-6 py-3 text-xs font-semibold text-[#4B4BF7] uppercase tracking-widest text-right">
+                        <th className="px-4 py-3 text-[11px] font-medium text-[#4B4BF7] uppercase tracking-[0.15em] text-right">
                           Notional Volume
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#4B4BF7]/10">
+                    <tbody>
                       {pageMarkets.map((market) => (
                         <tr
                           key={market.id}
-                          className="hover:bg-white/5 transition-colors duration-150 cursor-pointer border-l-2 border-transparent hover:border-l-[#4B4BF7]"
+                          className="border-b border-[#1a1a2e]"
                         >
-                          <td className="px-6 py-4">
+                          <td className="px-4 py-4 align-top">
                             <a
                               href={getMarketUrl(market)}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-[#4B4BF7] hover:text-[#6B6BFF] underline text-base break-words"
+                              className="text-[#4B4BF7] hover:opacity-70 transition-opacity text-sm break-words"
                             >
                               {market.question ?? market.groupItemTitle ?? market.id}
                             </a>
                           </td>
-                          <td className="px-6 py-4 text-[#00D084] text-base text-right font-mono">
+                          <td className="px-4 py-4 text-[#4ade80] text-sm text-right font-mono whitespace-nowrap align-top">
                             {formatCurrency(market.liquidityNum)}
                           </td>
-                          <td className="px-6 py-4 text-[#00D084] text-base text-right font-mono">
+                          <td className="px-4 py-4 text-[#4ade80] text-sm text-right font-mono whitespace-nowrap align-top">
                             {formatCurrency(market.volumeNum)}
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
-                  {/* Gradient fade overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#0f0f13] to-transparent pointer-events-none"></div>
                 </div>
               )}
             </section>
@@ -343,9 +334,9 @@ export default function MarketsPage() {
 
         {/* Footer Pagination */}
         {showFooter && (
-          <div className="mt-8 flex items-center justify-between gap-4 px-6 py-4 border border-[#4B4BF7]/20 rounded-lg bg-[#0d0d0d] shrink-0">
-            <div className="text-gray-500 text-sm">
-              {totalFilteredEvents.toLocaleString("en-US")} markets, {totalFilteredMarkets.toLocaleString("en-US")} questions
+          <div className="mt-6 flex items-center justify-between gap-4 px-4 py-3 border border-[#1a1a2e] rounded-xl bg-[#0d0d14] shrink-0">
+            <div className="text-white/40 text-xs font-mono">
+              {totalFilteredEvents.toLocaleString("en-US")} markets · {totalFilteredMarkets.toLocaleString("en-US")} questions
             </div>
             <div className="flex items-center gap-3">
               {hasMoreGlobal && (
@@ -353,7 +344,7 @@ export default function MarketsPage() {
                   type="button"
                   onClick={loadMore}
                   disabled={isFetching}
-                  className="px-4 py-2 rounded-lg border border-[#4B4BF7]/20 bg-[#4B4BF7]/5 text-[#4B4BF7] hover:bg-[#4B4BF7]/10 disabled:opacity-50 text-sm font-medium transition-colors"
+                  className="px-3 py-1.5 rounded-md border border-[#1a1a2e] text-[#4B4BF7] hover:border-[#4B4BF7]/40 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-medium transition-colors"
                 >
                   {isFetching ? "Loading..." : "Load more"}
                 </button>
@@ -363,19 +354,19 @@ export default function MarketsPage() {
                   type="button"
                   onClick={() => goToPage(page - 1)}
                   disabled={page <= 1}
-                  className="p-2 rounded-lg border border-[#4B4BF7]/20 text-[#4B4BF7] hover:bg-[#4B4BF7]/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="w-7 h-7 rounded-md border border-[#1a1a2e] text-[#4B4BF7] hover:border-[#4B4BF7]/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs"
                   aria-label="Previous page"
                 >
                   ←
                 </button>
-                <span className="text-gray-500 text-sm">
-                  {page} of {totalPages}
+                <span className="text-white/40 text-xs font-mono">
+                  {page} / {totalPages}
                 </span>
                 <button
                   type="button"
                   onClick={() => goToPage(page + 1)}
                   disabled={page >= totalPages}
-                  className="p-2 rounded-lg border border-[#4B4BF7]/20 text-[#4B4BF7] hover:bg-[#4B4BF7]/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="w-7 h-7 rounded-md border border-[#1a1a2e] text-[#4B4BF7] hover:border-[#4B4BF7]/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs"
                   aria-label="Next page"
                 >
                   →
