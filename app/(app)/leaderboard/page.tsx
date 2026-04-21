@@ -84,9 +84,17 @@ export default function LeaderboardPage() {
     refetchInterval: 5 * 60 * 1000,
   });
 
-  const entries = data?.entries || [];
-  const topThree = entries.slice(0, 3);
-  const remaining = entries.slice(3);
+  // Memoize entries/topThree/remaining so their references are stable across renders.
+  // Without this, `entries.slice(...)` returns a new array on every render, which
+  // invalidates the `sortedEntries` useMemo and causes the `setPageAiState` effect
+  // below to fire every render → provider state update → re-render → infinite loop
+  // that pegs the main thread and makes the Sidebar appear unclickable.
+  const entries = useMemo<LeaderboardEntry[]>(
+    () => data?.entries ?? [],
+    [data?.entries]
+  );
+  const topThree = useMemo(() => entries.slice(0, 3), [entries]);
+  const remaining = useMemo(() => entries.slice(3), [entries]);
 
   const sortedEntries = useMemo(() => {
     if (!sortColumn || sortColumn === "rank") return remaining;
