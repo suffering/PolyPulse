@@ -183,7 +183,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#04040a]">
-      <main className="min-h-screen py-10 pl-[220px] flex flex-col items-center">
+      <main className="min-h-screen py-10 flex flex-col items-center">
         <div className="w-full max-w-7xl mx-auto px-6">
           {/* Page Header */}
           <header className="mb-10">

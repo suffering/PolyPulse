@@ -203,7 +203,7 @@ export default function MarketsPage() {
 
   return (
     <div className="min-h-screen bg-[#04040a]">
-      <main className="ml-[200px] min-h-screen bg-[#04040a] px-6 py-6 flex flex-col">
+      <main className="min-h-screen bg-[#04040a] px-6 py-6 flex flex-col">
         {isError && (
           <div className="text-center py-12 text-red-400">
             Error: {error instanceof Error ? error.message : "Failed to load data"}

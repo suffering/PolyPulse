@@ -1,4 +1,4 @@
-import { ConditionalHeader } from "@/components/ConditionalHeader";
+import { AppShell } from "@/components/AppShell";
 import { UniversalAiAssistant } from "@/components/ai/UniversalAiAssistant";
 
 export default function AppLayout({
@@ -8,8 +8,7 @@ export default function AppLayout({
 }) {
   return (
     <>
-      <ConditionalHeader />
-      {children}
+      <AppShell>{children}</AppShell>
       <UniversalAiAssistant />
     </>
   );
