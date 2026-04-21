@@ -60,6 +60,14 @@ function sortOpportunities(opps: MatchedOpportunity[], sort: SortOption): Matche
   return sorted;
 }
 
+function pillClass(active: boolean) {
+  return `text-sm rounded-full px-5 py-2 transition-all duration-150 cursor-pointer active:scale-95 font-medium ${
+    active
+      ? "bg-[#4B4BF7] border border-[#4B4BF7] text-white shadow-[0_0_20px_rgba(75,75,247,0.35)]"
+      : "bg-[#0e0e1a] border border-white/10 text-white/60 hover:text-white hover:border-[#4B4BF7]/40 hover:bg-white/5"
+  }`;
+}
+
 export default function Home() {
   const [sport, setSport] = useState<UiSport>("nba");
   const [timeframe, setTimeframe] = useState<Timeframe>("all");
@@ -148,193 +156,219 @@ export default function Home() {
     data?.oddsLastUpdated,
   ]);
 
+  // Find the highest EV% in the filtered set to highlight the top card with a subtle glow
+  const topEv = useMemo(() => {
+    if (!filtered.length) return null;
+    const top = filtered.reduce<MatchedOpportunity | null>((best, opp) => {
+      const ev = opp.evPercent ?? -999;
+      if (!best) return opp;
+      return ev > (best.evPercent ?? -999) ? opp : best;
+    }, null);
+    return top?.id ?? null;
+  }, [filtered]);
+
   return (
-    <div className="min-h-screen bg-[#000000]">
-      <main className="min-h-screen bg-[#000000] py-10 pl-[220px] flex flex-col items-center">
+    <div className="min-h-screen bg-[#04040a]">
+      <main className="min-h-screen py-10 pl-[220px] flex flex-col items-center">
         <div className="w-full max-w-7xl mx-auto px-6">
-        {/* Filter Section */}
-        {!isLoading && !isError && (
-          <div className="mb-8 space-y-6">
-            {/* Sport Filter */}
-            <div>
-              <p className="text-gray-600 text-xs uppercase tracking-[0.15em] mb-3 font-medium text-center">Sport</p>
-              <div className="flex gap-2 flex-wrap justify-center">
-                {(["nba", "mls", "mlb", "nhl", "tennis"] as const).map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => {
-                      setSport(s);
-                      setLeague("all");
-                      setCategory("all");
-                      setTimeframe("all");
-                    }}
-                    className={`text-sm rounded-full px-5 py-2 transition-all duration-150 cursor-pointer active:scale-95 font-medium ${
-                      sport === s
-                        ? "bg-[#4B4BF7]/15 border border-[#4B4BF7]/50 text-[#4B4BF7] shadow-sm shadow-[#4B4BF7]/20"
-                        : "bg-[#0d0d0d] border border-white/8 text-gray-500 hover:text-gray-200 hover:border-white/20 hover:bg-white/5"
-                    }`}
-                  >
-                    {s === "mls" ? "Soccer" : s.toUpperCase()}
-                  </button>
-                ))}
-              </div>
+          {/* Page Header */}
+          <header className="mb-10">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-1 h-6 bg-[#4B4BF7] rounded-full" />
+              <h1 className="text-2xl font-bold tracking-tight text-white">
+                +EV Engine
+              </h1>
             </div>
-
-            {/* Timeframe Filter */}
-            <div>
-              <p className="text-gray-600 text-xs uppercase tracking-[0.15em] mb-3 font-medium text-center">Timeframe</p>
-              <div className="flex gap-2 flex-wrap justify-center">
-                {(["today", "week", "month", "futures", "all"] as const).map((tf) => (
-                  <button
-                    key={tf}
-                    onClick={() => setTimeframe(tf)}
-                    className={`text-sm rounded-full px-5 py-2 transition-all duration-150 cursor-pointer active:scale-95 font-medium ${
-                      timeframe === tf
-                        ? "bg-amber-500/15 border border-amber-500/50 text-amber-400 shadow-sm shadow-amber-500/20"
-                        : "bg-[#0d0d0d] border border-white/8 text-gray-500 hover:text-gray-200 hover:border-white/20 hover:bg-white/5"
-                    }`}
-                  >
-                    {getTimeframeLabel(tf)} ({timeframeCounts[tf]})
-                  </button>
-                ))}
-              </div>
+            <div className="flex items-center gap-2 pl-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#4ade80] animate-pulse inline-block" />
+              <span className="text-xs text-white/40 font-mono">
+                Live · scanning sportsbook vs polymarket edges
+              </span>
             </div>
+          </header>
 
-            {/* Soccer League Filter */}
-            {sport === "mls" && (
+          {/* Filter Section */}
+          {!isLoading && !isError && (
+            <div className="mb-10 space-y-6">
+              {/* Sport Filter */}
               <div>
-                <p className="text-gray-600 text-xs uppercase tracking-[0.15em] mb-3 font-medium text-center">League</p>
-                <div className="flex gap-2 flex-wrap justify-center">
-                  {SOCCER_LEAGUES_UI.map(({ key, label }) => (
+                <p className="text-[10px] uppercase tracking-widest text-white/30 mb-3 font-medium">
+                  Sport
+                </p>
+                <div className="flex gap-2 flex-wrap">
+                  {(["nba", "mls", "mlb", "nhl", "tennis"] as const).map((s) => (
                     <button
-                      key={key}
-                      onClick={() => setSoccerLeague(key)}
-                      className={`text-sm rounded-full px-5 py-2 transition-all duration-150 cursor-pointer active:scale-95 font-medium ${
-                        soccerLeague === key
-                          ? "bg-[#4B4BF7]/15 border border-[#4B4BF7]/50 text-[#4B4BF7] shadow-sm shadow-[#4B4BF7]/20"
-                          : "bg-[#0d0d0d] border border-white/8 text-gray-500 hover:text-gray-200 hover:border-white/20 hover:bg-white/5"
-                      }`}
+                      key={s}
+                      onClick={() => {
+                        setSport(s);
+                        setLeague("all");
+                        setCategory("all");
+                        setTimeframe("all");
+                      }}
+                      className={pillClass(sport === s)}
                     >
-                      {label}
+                      {s === "mls" ? "Soccer" : s.toUpperCase()}
                     </button>
                   ))}
                 </div>
               </div>
-            )}
 
-            {/* Sort Filter */}
-            <div>
-              <p className="text-gray-600 text-xs uppercase tracking-[0.15em] mb-3 font-medium text-center">Sort By</p>
-              <div className="flex gap-2 flex-wrap justify-center">
-                {SORT_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setSort(opt.value)}
-                    className={`text-sm rounded-full px-5 py-2 transition-all duration-150 cursor-pointer active:scale-95 font-medium ${
-                      sort === opt.value
-                        ? "bg-[#4B4BF7]/15 border border-[#4B4BF7]/50 text-[#4B4BF7] shadow-sm shadow-[#4B4BF7]/20"
-                        : "bg-[#0d0d0d] border border-white/8 text-gray-500 hover:text-gray-200 hover:border-white/20 hover:bg-white/5"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+              {/* Timeframe Filter */}
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-white/30 mb-3 font-medium">
+                  Timeframe
+                </p>
+                <div className="flex gap-2 flex-wrap">
+                  {(["today", "week", "month", "futures", "all"] as const).map((tf) => (
+                    <button
+                      key={tf}
+                      onClick={() => setTimeframe(tf)}
+                      className={pillClass(timeframe === tf)}
+                    >
+                      <span>{getTimeframeLabel(tf)}</span>
+                      <span className="ml-1.5 font-mono text-xs opacity-70">
+                        ({timeframeCounts[tf]})
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Soccer League Filter */}
+              {sport === "mls" && (
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-white/30 mb-3 font-medium">
+                    League
+                  </p>
+                  <div className="flex gap-2 flex-wrap">
+                    {SOCCER_LEAGUES_UI.map(({ key, label }) => (
+                      <button
+                        key={key}
+                        onClick={() => setSoccerLeague(key)}
+                        className={pillClass(soccerLeague === key)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Sort Filter */}
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-white/30 mb-3 font-medium">
+                  Sort By
+                </p>
+                <div className="flex gap-2 flex-wrap">
+                  {SORT_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setSort(opt.value)}
+                      className={pillClass(sort === opt.value)}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Loading State */}
-        {isLoading && (
-          <div className="grid grid-cols-2 gap-4 mb-8">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className="bg-[#0d0d0d] border border-white/5 rounded-2xl p-5 animate-pulse"
+          {/* Loading State */}
+          {isLoading && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="bg-[#0e0e1a] border border-white/5 rounded-2xl p-6 animate-pulse"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="h-6 w-16 bg-white/5 rounded-full" />
+                    <div className="h-6 w-24 bg-white/5 rounded-full" />
+                  </div>
+                  <div className="h-5 w-full bg-white/5 rounded mb-4" />
+                  <div className="border-t border-white/5 my-4" />
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <div className="h-4 w-20 bg-white/5 rounded mb-2" />
+                      <div className="h-6 w-24 bg-white/5 rounded" />
+                    </div>
+                    <div>
+                      <div className="h-4 w-20 bg-white/5 rounded mb-2" />
+                      <div className="h-6 w-24 bg-white/5 rounded" />
+                    </div>
+                  </div>
+                  <div className="border-t border-white/5 my-4" />
+                  <div className="h-4 w-full bg-white/5 rounded mb-2" />
+                  <div className="h-4 w-full bg-white/5 rounded mb-4" />
+                  <div className="h-10 w-full bg-white/5 rounded-xl" />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Error State */}
+          {isError && (
+            <div className="py-20 flex flex-col items-center justify-center bg-[#0e0e1a] border border-white/10 rounded-2xl">
+              <AlertCircle className="w-12 h-12 text-red-500/60 mx-auto" />
+              <p className="text-white/60 text-base mt-4">Failed to load odds data</p>
+              <p className="text-white/30 text-sm mt-2">Check your Odds API key and try refreshing.</p>
+              <button
+                onClick={() => refetch()}
+                className="bg-[#4B4BF7]/15 border border-[#4B4BF7]/40 text-[#4B4BF7] rounded-full px-6 py-2 text-sm hover:bg-[#4B4BF7]/25 hover:border-[#4B4BF7]/60 active:scale-95 transition mt-6"
               >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="h-6 w-16 bg-white/5 rounded-full" />
-                  <div className="h-6 w-24 bg-white/5 rounded-full" />
-                </div>
-                <div className="h-5 w-full bg-white/5 rounded mb-4" />
-                <div className="border-t border-white/5 my-4" />
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <div className="h-4 w-20 bg-white/5 rounded mb-2" />
-                    <div className="h-6 w-24 bg-white/5 rounded" />
-                  </div>
-                  <div>
-                    <div className="h-4 w-20 bg-white/5 rounded mb-2" />
-                    <div className="h-6 w-24 bg-white/5 rounded" />
-                  </div>
-                </div>
-                <div className="border-t border-white/5 my-4" />
-                <div className="h-4 w-full bg-white/5 rounded mb-2" />
-                <div className="h-4 w-full bg-white/5 rounded mb-4" />
-                <div className="h-10 w-full bg-white/5 rounded-xl" />
-              </div>
-            ))}
-          </div>
-        )}
+                Retry
+              </button>
+            </div>
+          )}
 
-        {/* Error State */}
-        {isError && (
-          <div className="py-20 flex flex-col items-center justify-center">
-            <AlertCircle className="w-12 h-12 text-red-500/50 mx-auto" />
-            <p className="text-gray-500 text-base mt-4">Failed to load odds data</p>
-            <p className="text-gray-700 text-sm mt-2">Check your Odds API key and try refreshing.</p>
-            <button
-              onClick={() => refetch()}
-              className="bg-[#4B4BF7]/10 border border-[#4B4BF7]/30 text-[#4B4BF7] rounded-full px-6 py-2 text-sm hover:bg-[#4B4BF7]/20 active:scale-95 transition mt-6"
-            >
-              Retry
-            </button>
-          </div>
-        )}
+          {/* Empty State */}
+          {!isLoading && !isError && opportunities.length === 0 && (
+            <div className="py-20 flex flex-col items-center justify-center bg-[#0e0e1a] border border-white/10 rounded-2xl">
+              <Inbox className="w-12 h-12 text-white/20 mx-auto" />
+              <p className="text-white/60 text-base mt-4">No +EV opportunities found</p>
+              <p className="text-white/30 text-sm mt-2">
+                Try selecting a different sport or timeframe.
+              </p>
+            </div>
+          )}
 
-        {/* Empty State */}
-        {!isLoading && !isError && opportunities.length === 0 && (
-          <div className="py-20 flex flex-col items-center justify-center">
-            <Inbox className="w-12 h-12 text-gray-700 mx-auto" />
-            <p className="text-gray-500 text-base mt-4">No +EV opportunities found</p>
-            <p className="text-gray-700 text-sm mt-2">
-              Try selecting a different sport or timeframe.
-            </p>
-          </div>
-        )}
+          {/* No Filter Match State */}
+          {!isLoading && !isError && opportunities.length > 0 && filtered.length === 0 && (
+            <div className="py-20 flex flex-col items-center justify-center bg-[#0e0e1a] border border-white/10 rounded-2xl">
+              <Inbox className="w-12 h-12 text-white/20 mx-auto" />
+              <p className="text-white/60 text-base mt-4">No +EV opportunities found</p>
+              <p className="text-white/30 text-sm mt-2">
+                Try selecting a different sport or timeframe.
+              </p>
+            </div>
+          )}
 
-        {/* No Filter Match State */}
-        {!isLoading && !isError && opportunities.length > 0 && filtered.length === 0 && (
-          <div className="py-20 flex flex-col items-center justify-center">
-            <Inbox className="w-12 h-12 text-gray-700 mx-auto" />
-            <p className="text-gray-500 text-base mt-4">No +EV opportunities found</p>
-            <p className="text-gray-700 text-sm mt-2">
-              Try selecting a different sport or timeframe.
-            </p>
-          </div>
-        )}
-
-        {/* Cards Grid */}
-        {!isLoading && !isError && filtered.length > 0 && (
-          <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
-            {filtered.map((opp) => (
-              <EVCard key={opp.id} opportunity={opp} />
-            ))}
-          </div>
-        )}
+          {/* Cards Grid */}
+          {!isLoading && !isError && filtered.length > 0 && (
+            <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+              {filtered.map((opp) => (
+                <EVCard
+                  key={opp.id}
+                  opportunity={opp}
+                  isTopEv={opp.id === topEv && (opp.evPercent ?? 0) > 0}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </main>
 
       {/* Floating Ask AI Button */}
       <button
         onClick={() => {
-          // This will be handled by the UniversalAiAssistant in layout
+          // Handled by the UniversalAiAssistant in layout
         }}
-        className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full px-5 py-3 flex items-center gap-2 shadow-lg shadow-amber-500/30 hover:scale-110 hover:shadow-xl hover:shadow-amber-500/50 active:scale-95 transition-all duration-200 group"
+        className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-[#4B4BF7] to-[#7B4BF7] rounded-full px-5 py-3 flex items-center gap-2 shadow-lg shadow-[#4B4BF7]/40 hover:scale-105 hover:shadow-xl hover:shadow-[#4B4BF7]/60 active:scale-95 transition-all duration-200 group"
       >
-        <Sparkles className="w-4 h-4 text-black" />
-        <span className="text-sm font-semibold text-black">Ask AI</span>
-        <div className="absolute inset-0 rounded-full bg-amber-500/20 animate-pulse group-hover:animate-none" />
+        <Sparkles className="w-4 h-4 text-white" />
+        <span className="text-sm font-semibold text-white">Ask AI</span>
+        <div className="absolute inset-0 rounded-full bg-[#4B4BF7]/20 animate-pulse group-hover:animate-none pointer-events-none" />
       </button>
     </div>
   );
