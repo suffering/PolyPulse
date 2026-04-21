@@ -138,26 +138,10 @@ export default function CreatorsPage() {
   return (
     <div className="min-h-screen bg-[#04040a] text-white">
       <div className="max-w-7xl mx-auto px-6 py-10">
-        <header className="mb-8">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">
-              Polymarket Creators
-            </h1>
-            <p className="text-sm text-white/40 mt-1">
-              Creator-level market statistics from the Polymarket Gamma API
-            </p>
-            {/* NOTE: Creator-level stats are aggregated from event + market data; 
-                Gamma does not expose creator-specific volume or open interest directly. */}
-          </div>
-          {data?.lastUpdated && (
-            <p className="text-xs text-white/25 font-mono mt-2">
-              Last updated: {new Date(data.lastUpdated).toLocaleString()}
-            </p>
-          )}
-          <p className="text-xs text-white/20 mt-1">
-            Wallet addresses are fetched via profile search API (best-effort; may be missing for some creators).
-            Click wallet address to copy full address.
-          </p>
+        <header className="mb-6">
+          <h1 className="text-2xl font-bold tracking-tight text-white">
+            Polymarket Creators
+          </h1>
         </header>
 
         <section className="bg-[#0a0a0f] border border-white/10 rounded-2xl overflow-hidden flex flex-col min-h-0">
