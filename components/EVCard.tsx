@@ -25,7 +25,9 @@ export function EVCard({ opportunity, isTopEv = false }: EVCardProps) {
   const formatCents = (v: number) => (isMlb && v < 10 ? v.toFixed(2) : v.toFixed(1));
 
   const evPositive = evPercent >= 0;
-  const expectedProfit = opportunity.expectedProfit100 ?? 0;
+  // Keep Expected Profit perfectly consistent with the displayed (clamped) EV%.
+  // For a $100 stake: expected profit = stake × (EV% / 100) = EV% numerically.
+  const expectedProfit = displayEvPercent;
   const profitPositive = expectedProfit >= 0;
 
   return (

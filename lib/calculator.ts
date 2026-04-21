@@ -101,9 +101,12 @@ export function calculateEV(
   // Profit if win: $100 stake → (1/p - 1) per dollar → stake * (1/p - 1)
   const potentialProfit = getPolymarketProfitIfWin(stake, polymarketImpliedProb);
 
-  // Expected profit = (sharpImpliedProb * polymarketPayout * stake) - ((1 - sharpImpliedProb) * stake)
-  // = stake * (sharpImpliedProb / polymarketImpliedProb - 1)
-  const expectedProfit = stake * (bookImpliedProb / polymarketImpliedProb - 1);
+  // Expected profit is derived from the SAME (clamped) EV% the rest of the app displays,
+  // so the two numbers are always consistent on screen:
+  //   expectedProfit = stake × (EV% / 100)
+  // This is algebraically equivalent to stake × (bookImpliedProb / polymarketImpliedProb - 1)
+  // when EV% is not clamped, and keeps both values in sync when it is.
+  const expectedProfit = stake * (evPercentage / 100);
   const ev = expectedProfit;
 
   return {
