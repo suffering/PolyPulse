@@ -227,7 +227,7 @@ export default function MarketsPage() {
               ) : pageEvents.length === 0 ? (
                 <div className="p-8 text-center text-white/40 text-sm">No markets found</div>
               ) : (
-                <div className="overflow-y-auto flex-1 min-h-0">
+                <div className="overflow-y-auto overflow-x-hidden flex-1 min-h-0">
                   <table className="w-full text-left border-collapse">
                     <thead className="sticky top-0 bg-[#0d0d14] z-10">
                       <tr className="border-b border-[#1a1a2e]">
@@ -286,7 +286,7 @@ export default function MarketsPage() {
               ) : pageMarkets.length === 0 ? (
                 <div className="p-8 text-center text-white/40 text-sm">No questions found</div>
               ) : (
-                <div className="overflow-y-auto flex-1 min-h-0">
+                <div className="overflow-y-auto overflow-x-hidden flex-1 min-h-0">
                   <table className="w-full text-left border-collapse">
                     <thead className="sticky top-0 bg-[#0d0d14] z-10">
                       <tr className="border-b border-[#1a1a2e]">
