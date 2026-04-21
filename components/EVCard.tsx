@@ -82,7 +82,7 @@ export function EVCard({ opportunity }: EVCardProps) {
                 </p>
               </div>
               <div className="pl-4 border-l border-white/[0.06]">
-                <p className="text-[10px] uppercase text-white/35 tracking-wider mb-2 font-semibold truncate">
+                <p className="text-[10px] uppercase text-white/35 tracking-wider mb-2 font-semibold">
                   {opportunity.sportsbookName}
                 </p>
                 <p className="text-white font-mono text-2xl font-bold tabular-nums leading-none">
