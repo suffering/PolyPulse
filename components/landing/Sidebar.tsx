@@ -12,11 +12,8 @@ import {
   BarChart3,
   Search,
   Wallet,
-  Home,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const HOME_LINK = { href: "/", label: "Home", icon: Home, customIcon: null as string | null };
 
 const NAV_LINKS = [
   { href: "/ev", label: "+EV", icon: Sparkles, customIcon: "/plus-circle-green.png" },
@@ -55,7 +52,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps = {}) {
   const renderLink = (link: {
     href: string;
     label: string;
-    icon: typeof Home;
+    icon: typeof Sparkles;
     customIcon: string | null;
   }) => {
     const Icon = link.icon;
@@ -113,9 +110,6 @@ export function Sidebar({ className, onNavigate }: SidebarProps = {}) {
       {/* Main Navigation */}
       <nav className="flex-1 overflow-y-auto py-3">
         <div className="px-2 space-y-1">
-          {/* Home link - always accessible */}
-          <div className="mb-3">{renderLink(HOME_LINK)}</div>
-
           {/* Tools Section */}
           <div>
             <p className="text-[10px] uppercase tracking-wide text-[#555] px-2 mb-3 font-light">
