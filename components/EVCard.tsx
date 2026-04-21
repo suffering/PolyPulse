@@ -4,7 +4,6 @@ import type { MatchedOpportunity } from "@/lib/matching";
 
 interface EVCardProps {
   opportunity: MatchedOpportunity;
-  isTopEv?: boolean;
 }
 
 function formatOdds(american: number): string {
@@ -12,7 +11,7 @@ function formatOdds(american: number): string {
   return String(Math.round(american));
 }
 
-export function EVCard({ opportunity, isTopEv = false }: EVCardProps) {
+export function EVCard({ opportunity }: EVCardProps) {
   const hasSportsbook =
     opportunity.sportsbookName != null && opportunity.sportsbookOdds != null;
   const evPercent = opportunity.evPercent ?? 0;
@@ -38,17 +37,8 @@ export function EVCard({ opportunity, isTopEv = false }: EVCardProps) {
       className="block group"
     >
       <div
-        className={`relative bg-[#0b0b12] rounded-2xl transition-all duration-200 overflow-hidden flex flex-col h-full border ${
-          isTopEv
-            ? "border-[#4B4BF7]/50 shadow-[0_0_24px_rgba(75,75,247,0.18)]"
-            : "border-white/[0.07] hover:border-white/20"
-        }`}
+        className={`relative bg-[#0b0b12] rounded-2xl transition-all duration-200 overflow-hidden flex flex-col h-full border border-white/[0.07] hover:border-[#4B4BF7]/50 hover:shadow-[0_0_24px_rgba(75,75,247,0.18)]`}
       >
-        {/* Top accent bar for top-EV card */}
-        {isTopEv && (
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#4B4BF7] to-transparent pointer-events-none" />
-        )}
-
         {/* Header: Sport + EV Badge */}
         <div className="flex items-center justify-between px-6 pt-6">
           <span className="text-[10px] uppercase tracking-widest font-semibold text-white/40">
