@@ -6,7 +6,8 @@ import type { PolymarketEvent, PolymarketMarket } from "@/lib/polymarket";
 import { useSetPageAiState } from "@/components/ai/PageAiContext";
 
 const PAGE_SIZE = 100;
-const ROWS_PER_PAGE = 100;
+const INITIAL_DISPLAY = 10;
+const LOAD_MORE_INCREMENT = 10;
 
 type EventsResponse = {
   events: PolymarketEvent[];
@@ -62,11 +63,12 @@ export default function MarketsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loadedEvents, setLoadedEvents] = useState<PolymarketEvent[]>([]);
   const [loadedMarkets, setLoadedMarkets] = useState<PolymarketMarket[]>([]);
-  const [clientPage, setClientPage] = useState(1);
   const [hasMoreEvents, setHasMoreEvents] = useState(true);
   const [hasMoreMarkets, setHasMoreMarkets] = useState(true);
   const [offsetEvents, setOffsetEvents] = useState(0);
   const [offsetMarkets, setOffsetMarkets] = useState(0);
+  // Shared display count — both columns always show the same number of rows.
+  const [displayCount, setDisplayCount] = useState(INITIAL_DISPLAY);
 
   const { data: eventsData, isLoading: eventsLoading, isFetching: eventsFetching, isError: eventsError, error: eventsErr } = useQuery({
     queryKey: ["polymarket-events", offsetEvents],
@@ -129,38 +131,39 @@ export default function MarketsPage() {
 
   const totalFilteredEvents = filteredEvents.length;
   const totalFilteredMarkets = filteredMarkets.length;
-  const totalPages = Math.max(
-    1,
-    Math.max(
-      Math.ceil(totalFilteredEvents / ROWS_PER_PAGE),
-      Math.ceil(totalFilteredMarkets / ROWS_PER_PAGE)
-    )
-  );
-  const page = Math.min(clientPage, totalPages);
-  const start = (page - 1) * ROWS_PER_PAGE;
+
+  // Both columns slice from the same displayCount so row counts stay in sync.
   const pageEvents = useMemo(
-    () => filteredEvents.slice(start, start + ROWS_PER_PAGE),
-    [filteredEvents, start]
+    () => filteredEvents.slice(0, displayCount),
+    [filteredEvents, displayCount]
   );
   const pageMarkets = useMemo(
-    () => filteredMarkets.slice(start, start + ROWS_PER_PAGE),
-    [filteredMarkets, start]
+    () => filteredMarkets.slice(0, displayCount),
+    [filteredMarkets, displayCount]
   );
 
-  const loadMore = useCallback(() => {
-    setOffsetEvents(loadedEvents.length);
-    setOffsetMarkets(loadedMarkets.length);
-  }, [loadedEvents.length, loadedMarkets.length]);
+  const canShowMore =
+    displayCount < totalFilteredEvents ||
+    displayCount < totalFilteredMarkets ||
+    hasMoreEvents ||
+    hasMoreMarkets;
 
-  const goToPage = useCallback((p: number) => {
-    setClientPage(Math.max(1, Math.min(p, totalPages)));
-  }, [totalPages]);
+  const loadMore = useCallback(() => {
+    const nextCount = displayCount + LOAD_MORE_INCREMENT;
+    setDisplayCount(nextCount);
+    // Fetch more from API if we're approaching the end of loaded data.
+    if (nextCount > loadedEvents.length - LOAD_MORE_INCREMENT && hasMoreEvents) {
+      setOffsetEvents(loadedEvents.length);
+    }
+    if (nextCount > loadedMarkets.length - LOAD_MORE_INCREMENT && hasMoreMarkets) {
+      setOffsetMarkets(loadedMarkets.length);
+    }
+  }, [displayCount, loadedEvents.length, loadedMarkets.length, hasMoreEvents, hasMoreMarkets]);
 
   const isLoading = eventsLoading || marketsLoading;
   const isFetching = eventsFetching || marketsFetching;
   const isError = eventsError || marketsError;
   const error = eventsError ? eventsErr : marketsErr;
-  const hasMoreGlobal = hasMoreEvents || hasMoreMarkets;
   const showFooter = !isError && (loadedEvents.length > 0 || loadedMarkets.length > 0 || isLoading);
   const setPageAiState = useSetPageAiState();
 
@@ -169,8 +172,7 @@ export default function MarketsPage() {
       kind: "extra",
       state: {
         searchQuery,
-        page,
-        totalPages,
+        displayCount,
         eventsVisible: pageEvents.map((e) => ({
           id: e.id,
           title: e.title ?? null,
@@ -186,19 +188,18 @@ export default function MarketsPage() {
         })),
         totalFilteredEvents,
         totalFilteredMarkets,
-        hasMore: hasMoreGlobal,
+        canShowMore,
       },
     });
   }, [
     setPageAiState,
     searchQuery,
-    page,
-    totalPages,
+    displayCount,
     pageEvents,
     pageMarkets,
     totalFilteredEvents,
     totalFilteredMarkets,
-    hasMoreGlobal,
+    canShowMore,
   ]);
 
   return (
@@ -332,47 +333,22 @@ export default function MarketsPage() {
           </div>
         )}
 
-        {/* Footer Pagination */}
+        {/* Footer */}
         {showFooter && (
           <div className="mt-6 w-full max-w-[1600px] mx-auto flex items-center justify-between gap-4 px-4 py-3 border border-[#1a1a2e] rounded-xl bg-[#0d0d14] shrink-0">
             <div className="text-white/40 text-xs font-mono">
-              {totalFilteredEvents.toLocaleString("en-US")} markets · {totalFilteredMarkets.toLocaleString("en-US")} questions
+              Showing {pageEvents.length} of {totalFilteredEvents.toLocaleString("en-US")} markets · {pageMarkets.length} of {totalFilteredMarkets.toLocaleString("en-US")} questions
             </div>
-            <div className="flex items-center gap-3">
-              {hasMoreGlobal && (
-                <button
-                  type="button"
-                  onClick={loadMore}
-                  disabled={isFetching}
-                  className="px-3 py-1.5 rounded-md border border-[#1a1a2e] text-[#4B4BF7] hover:border-[#4B4BF7]/40 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-medium transition-colors"
-                >
-                  {isFetching ? "Loading..." : "Load more"}
-                </button>
-              )}
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => goToPage(page - 1)}
-                  disabled={page <= 1}
-                  className="w-7 h-7 rounded-md border border-[#1a1a2e] text-[#4B4BF7] hover:border-[#4B4BF7]/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs"
-                  aria-label="Previous page"
-                >
-                  ←
-                </button>
-                <span className="text-white/40 text-xs font-mono">
-                  {page} / {totalPages}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => goToPage(page + 1)}
-                  disabled={page >= totalPages}
-                  className="w-7 h-7 rounded-md border border-[#1a1a2e] text-[#4B4BF7] hover:border-[#4B4BF7]/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs"
-                  aria-label="Next page"
-                >
-                  →
-                </button>
-              </div>
-            </div>
+            {canShowMore && (
+              <button
+                type="button"
+                onClick={loadMore}
+                disabled={isFetching}
+                className="px-3 py-1.5 rounded-md border border-[#1a1a2e] text-[#4B4BF7] hover:border-[#4B4BF7]/40 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-medium transition-colors"
+              >
+                {isFetching ? "Loading..." : `Load ${LOAD_MORE_INCREMENT} more`}
+              </button>
+            )}
           </div>
         )}
       </main>
