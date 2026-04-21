@@ -212,16 +212,10 @@ export default function ExtradataPage() {
   return (
     <div className="min-h-screen bg-[#0d1117] text-slate-200 font-mono">
       <div className="max-w-[1600px] mx-auto px-4 py-6 grid grid-cols-1 gap-4">
-        <header className="flex items-center justify-between">
+        <header>
           <h1 className="text-xl font-bold text-white tracking-tight">
             Markets
           </h1>
-          <Link
-            href="/"
-            className="px-3 py-1.5 rounded border border-slate-600 bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 transition-colors text-sm"
-          >
-            ← Back to EV Engine
-          </Link>
         </header>
 
         {isError && (

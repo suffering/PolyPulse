@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import type { CreatorStats } from "@/lib/polymarket";
 import { TableSkeleton } from "@/components/ui/Skeleton";
@@ -140,23 +139,15 @@ export default function CreatorsPage() {
     <div className="min-h-screen bg-[#04040a] text-white">
       <div className="max-w-7xl mx-auto px-6 py-10">
         <header className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-white">
-                Polymarket Creators
-              </h1>
-              <p className="text-sm text-white/40 mt-1">
-                Creator-level market statistics from the Polymarket Gamma API
-              </p>
-              {/* NOTE: Creator-level stats are aggregated from event + market data; 
-                  Gamma does not expose creator-specific volume or open interest directly. */}
-            </div>
-            <Link
-              href="/"
-              className="bg-white/5 border border-white/10 text-white/60 text-sm px-4 py-2 rounded-xl hover:border-[#4B4BF7]/50 hover:text-white transition-all duration-150"
-            >
-              ← Back to EV Engine
-            </Link>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-white">
+              Polymarket Creators
+            </h1>
+            <p className="text-sm text-white/40 mt-1">
+              Creator-level market statistics from the Polymarket Gamma API
+            </p>
+            {/* NOTE: Creator-level stats are aggregated from event + market data; 
+                Gamma does not expose creator-specific volume or open interest directly. */}
           </div>
           {data?.lastUpdated && (
             <p className="text-xs text-white/25 font-mono mt-2">

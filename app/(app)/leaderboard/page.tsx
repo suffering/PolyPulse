@@ -169,21 +169,13 @@ export default function LeaderboardPage() {
     <div className="min-h-screen bg-[#04040a] text-white">
       <div className="max-w-7xl mx-auto px-6 pt-6 pb-10">
         <header className="mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-white">
-                Polymarket Leaderboard
-              </h1>
-              <p className="text-sm text-white/40 mt-1">
-                Top traders ranked by profit &amp; loss
-              </p>
-            </div>
-            <Link
-              href="/"
-              className="text-sm bg-white/5 border border-white/10 text-white/60 px-4 py-2 rounded-xl hover:border-[#4B4BF7]/50 hover:text-white transition-all duration-150"
-            >
-              ← Back to Home
-            </Link>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-white">
+              Polymarket Leaderboard
+            </h1>
+            <p className="text-sm text-white/40 mt-1">
+              Top traders ranked by profit &amp; loss
+            </p>
           </div>
         </header>
 
