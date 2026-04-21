@@ -211,7 +211,7 @@ export default function MarketsPage() {
         )}
 
         {!isError && (
-          <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-0">
+          <div className="flex-1 w-full max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-0">
             {/* Active Markets Table */}
             <section className="bg-[#0d0d14] border border-[#1a1a2e] rounded-xl overflow-hidden flex flex-col min-h-0 p-4">
               <div className="flex items-center gap-3 px-2 pb-4 shrink-0">
@@ -334,7 +334,7 @@ export default function MarketsPage() {
 
         {/* Footer Pagination */}
         {showFooter && (
-          <div className="mt-6 flex items-center justify-between gap-4 px-4 py-3 border border-[#1a1a2e] rounded-xl bg-[#0d0d14] shrink-0">
+          <div className="mt-6 w-full max-w-[1600px] mx-auto flex items-center justify-between gap-4 px-4 py-3 border border-[#1a1a2e] rounded-xl bg-[#0d0d14] shrink-0">
             <div className="text-white/40 text-xs font-mono">
               {totalFilteredEvents.toLocaleString("en-US")} markets · {totalFilteredMarkets.toLocaleString("en-US")} questions
             </div>
