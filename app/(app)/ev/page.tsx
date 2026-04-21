@@ -183,21 +183,15 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#04040a]">
-      <main className="min-h-screen py-10 flex flex-col items-center">
+      <main className="min-h-screen pt-6 pb-10 flex flex-col items-center">
         <div className="w-full max-w-7xl mx-auto px-6">
           {/* Page Header */}
-          <header className="mb-10">
-            <div className="flex items-center gap-2 mb-2">
+          <header className="mb-6">
+            <div className="flex items-center gap-2">
               <div className="w-1 h-6 bg-[#4B4BF7] rounded-full" />
               <h1 className="text-2xl font-bold tracking-tight text-white">
-                +EV Engine
+                +EV
               </h1>
-            </div>
-            <div className="flex items-center gap-2 pl-3">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#4ade80] animate-pulse inline-block" />
-              <span className="text-xs text-white/40 font-mono">
-                Live · scanning sportsbook vs polymarket edges
-              </span>
             </div>
           </header>
 
