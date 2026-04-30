@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { formatVolume } from "@/lib/volume";
@@ -14,57 +13,6 @@ async function fetchVolume(): Promise<VolumeResponse> {
   const res = await fetch("/api/volume");
   if (!res.ok) throw new Error("Failed to fetch volume data");
   return res.json();
-}
-
-function ExchangeCard({
-  title,
-  data,
-  weekLabel = "Last Week",
-  weekSublabel = "Last 7 days",
-  showVolume24h = false,
-}: {
-  title: string;
-  data: { volume24h?: number; week?: number; month: number; allTime: number; lastUpdated: string };
-  weekLabel?: string;
-  weekSublabel?: string;
-  showVolume24h?: boolean;
-}) {
-  return (
-    <section className="border border-slate-700/50 rounded-lg bg-slate-900/30 p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-white">{title}</h2>
-        <span className="text-xs text-slate-500">
-          Last updated: {new Date(data.lastUpdated).toLocaleString()}
-        </span>
-      </div>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {showVolume24h && data.volume24h != null && (
-          <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700/30">
-            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Last 24h</p>
-            <p className="text-2xl font-bold text-emerald-400">{formatVolume(data.volume24h)}</p>
-            <p className="text-xs text-slate-500 mt-1">Last 24 hours</p>
-          </div>
-        )}
-        {data.week != null && (
-          <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700/30">
-            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">{weekLabel}</p>
-            <p className="text-2xl font-bold text-green-400">{formatVolume(data.week)}</p>
-            <p className="text-xs text-slate-500 mt-1">{weekSublabel}</p>
-          </div>
-        )}
-        <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700/30">
-          <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Last Month</p>
-          <p className="text-2xl font-bold text-blue-400">{formatVolume(data.month)}</p>
-          <p className="text-xs text-slate-500 mt-1">Last 30 days</p>
-        </div>
-        <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700/30">
-          <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">All-Time</p>
-          <p className="text-2xl font-bold text-purple-400">{formatVolume(data.allTime)}</p>
-          <p className="text-xs text-slate-500 mt-1">Exchange lifetime</p>
-        </div>
-      </div>
-    </section>
-  );
 }
 
 export default function VolumePage() {
@@ -86,36 +34,96 @@ export default function VolumePage() {
   }, [setPageAiState, data?.polymarket]);
 
   return (
-    <div className="min-h-screen bg-[#0d1117] text-slate-200 font-mono">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-[#04040a]">
+      <div className="max-w-7xl mx-auto px-6 pt-6 pb-10">
+        {/* Header */}
         <header className="mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Exchange Volume Dashboard</h1>
-            <p className="text-slate-500 text-sm mt-1">
-              Last 24h, last week, last 30 days, and all-time volume from Gamma API
-            </p>
-            <p className="text-slate-600 text-xs mt-1">
-              Summed over all active and closed markets
-            </p>
-          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-white mb-2">
+            Exchange Volume Dashboard
+          </h1>
+          <p className="text-xs font-mono text-white/35 mb-1">
+            Last 24h, last week, last 30 days, and all-time volume from Gamma API
+          </p>
+          <p className="text-xs font-mono text-white/35">
+            Summed over all active and closed markets
+          </p>
         </header>
 
-        {isLoading && <div className="text-center py-12 text-slate-500">Loading volume data...</div>}
+        {/* Error State */}
         {isError && (
-          <div className="text-center py-12 text-red-400">
+          <div className="text-center py-12 text-red-400 text-sm">
             Error: {error instanceof Error ? error.message : "Failed to load volume data"}
           </div>
         )}
 
-        {!isLoading && !isError && data && (
-          <div className="space-y-8">
-            <ExchangeCard
-              title="Polymarket"
-              data={data.polymarket}
-              weekLabel="Last Week"
-              weekSublabel="Last 7 days"
-              showVolume24h
-            />
+        {/* Loading State */}
+        {isLoading && (
+          <div className="text-center py-12 text-white/40 text-sm font-mono">
+            Loading volume data...
+          </div>
+        )}
+
+        {/* Content */}
+        {!isLoading && !isError && data?.polymarket && (
+          <div className="border border-[#1a1a2e] rounded-xl bg-[#0d0d14] p-6">
+            {/* Top Row: Title + Timestamp */}
+            <div className="flex items-center justify-between mb-6 pb-6 border-b border-[#1a1a2e]">
+              <span className="text-sm font-mono text-white">Polymarket</span>
+              <span className="text-xs font-mono text-white/30">
+                Last updated: {new Date(data.polymarket.lastUpdated).toLocaleString()}
+              </span>
+            </div>
+
+            {/* Stat Tiles */}
+            <div className="grid grid-cols-4 gap-4">
+              {/* Last 24h */}
+              {data.polymarket.volume24h != null && (
+                <div className="bg-[#0b0b12] rounded-lg p-4 border border-white/[0.07]">
+                  <p className="text-[10px] uppercase tracking-wider font-semibold text-white/35 mb-2">
+                    Last 24h
+                  </p>
+                  <p className="text-xl font-bold font-mono text-[#4ade80] mb-2">
+                    {formatVolume(data.polymarket.volume24h)}
+                  </p>
+                  <p className="text-[10px] font-mono text-white/25">Last 24 hours</p>
+                </div>
+              )}
+
+              {/* Last Week */}
+              {data.polymarket.week != null && (
+                <div className="bg-[#0b0b12] rounded-lg p-4 border border-white/[0.07]">
+                  <p className="text-[10px] uppercase tracking-wider font-semibold text-white/35 mb-2">
+                    Last Week
+                  </p>
+                  <p className="text-xl font-bold font-mono text-[#4ade80] mb-2">
+                    {formatVolume(data.polymarket.week)}
+                  </p>
+                  <p className="text-[10px] font-mono text-white/25">Last 7 days</p>
+                </div>
+              )}
+
+              {/* Last Month */}
+              <div className="bg-[#0b0b12] rounded-lg p-4 border border-white/[0.07]">
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-white/35 mb-2">
+                  Last Month
+                </p>
+                <p className="text-xl font-bold font-mono text-[#4ade80] mb-2">
+                  {formatVolume(data.polymarket.month)}
+                </p>
+                <p className="text-[10px] font-mono text-white/25">Last 30 days</p>
+              </div>
+
+              {/* All-Time (Indigo) */}
+              <div className="bg-[#0b0b12] rounded-lg p-4 border border-white/[0.07]">
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-white/35 mb-2">
+                  All-Time
+                </p>
+                <p className="text-xl font-bold font-mono text-[#4B4BF7] mb-2">
+                  {formatVolume(data.polymarket.allTime)}
+                </p>
+                <p className="text-[10px] font-mono text-white/25">Exchange lifetime</p>
+              </div>
+            </div>
           </div>
         )}
       </div>
