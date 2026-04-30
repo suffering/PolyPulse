@@ -38,15 +38,9 @@ export default function VolumePage() {
       <div className="max-w-7xl mx-auto px-6 pt-6 pb-10">
         {/* Header */}
         <header className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight text-white mb-2">
+          <h1 className="text-2xl font-bold tracking-tight text-white">
             Exchange Volume Dashboard
           </h1>
-          <p className="text-xs font-mono text-white/35 mb-1">
-            Last 24h, last week, last 30 days, and all-time volume from Gamma API
-          </p>
-          <p className="text-xs font-mono text-white/35">
-            Summed over all active and closed markets
-          </p>
         </header>
 
         {/* Error State */}
@@ -66,11 +60,16 @@ export default function VolumePage() {
         {/* Content */}
         {!isLoading && !isError && data?.polymarket && (
           <div className="border border-[#1a1a2e] rounded-xl bg-[#0d0d14] p-6">
-            {/* Top Row: Title + Timestamp */}
+            {/* Top Row: Source badge + Timestamp */}
             <div className="flex items-center justify-between mb-6 pb-6 border-b border-[#1a1a2e]">
-              <span className="text-sm font-mono text-white">Polymarket</span>
-              <span className="text-xs font-mono text-white/30">
-                Last updated: {new Date(data.polymarket.lastUpdated).toLocaleString()}
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-4 rounded-full bg-[#4B4BF7]" />
+                <span className="text-[11px] uppercase tracking-widest font-semibold text-white/50">
+                  Polymarket
+                </span>
+              </div>
+              <span className="text-[11px] font-mono text-white/25">
+                Updated {new Date(data.polymarket.lastUpdated).toLocaleString()}
               </span>
             </div>
 
