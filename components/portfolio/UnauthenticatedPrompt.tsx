@@ -6,18 +6,9 @@ import { useWallet } from "@/lib/wallet/use-wallet";
 
 type CardState = "idle" | "connecting" | "success";
 
-const WALLETS = [
-  { id: "metamask", name: "MetaMask", tag: "Popular", icon: "🦊" },
-  { id: "walletconnect", name: "WalletConnect", tag: "Mobile", icon: "📱" },
-  { id: "coinbase", name: "Coinbase Wallet", tag: "Hardware", icon: "🔐" },
-] as const;
-
-type WalletOption = (typeof WALLETS)[number];
-
 export function UnauthenticatedPrompt() {
   const { connect, address } = useWallet();
   const [state, setState] = useState<CardState>("idle");
-  const [selectedWallet, setSelectedWallet] = useState<WalletOption | null>(null);
 
   // Simulated 2.5s connection delay
   useEffect(() => {
@@ -26,14 +17,12 @@ export function UnauthenticatedPrompt() {
     return () => clearTimeout(t);
   }, [state]);
 
-  const handleWalletClick = (wallet: WalletOption) => {
-    setSelectedWallet(wallet);
+  const handleConnectClick = () => {
     setState("connecting");
   };
 
   const handleCancel = () => {
     setState("idle");
-    setSelectedWallet(null);
   };
 
   const handleViewPortfolio = () => {
@@ -61,24 +50,13 @@ export function UnauthenticatedPrompt() {
             </h2>
           </div>
 
-          <div className="w-full flex flex-col gap-2">
-            {WALLETS.map((w) => (
-              <button
-                key={w.id}
-                type="button"
-                onClick={() => handleWalletClick(w)}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-[#1a1a2e] bg-[#161622] hover:bg-[#1e1e2e] hover:border-[#4B4BF7]/50 transition-all duration-150"
-              >
-                <span className="flex items-center gap-2.5">
-                  <span className="text-base leading-none">{w.icon}</span>
-                  <span className="text-sm font-medium text-white">{w.name}</span>
-                </span>
-                <span className="text-[9px] text-white/30 font-mono uppercase tracking-widest">
-                  {w.tag}
-                </span>
-              </button>
-            ))}
-          </div>
+          <button
+            type="button"
+            onClick={handleConnectClick}
+            className="w-full px-4 py-3 rounded-lg bg-[#4B4BF7] text-white text-sm font-semibold tracking-wide hover:bg-[#5a5af7] active:scale-[0.99] transition-all duration-150"
+          >
+            Connect Wallet
+          </button>
 
           <p className="text-[10px] text-white/25 text-center font-mono leading-relaxed">
             By connecting you agree to the Terms of Service.
@@ -92,9 +70,7 @@ export function UnauthenticatedPrompt() {
             <div className="relative w-24 h-24 flex items-center justify-center">
               <div className="absolute inset-0 bg-[#4B4BF7]/10 rounded-full blur-md" />
               <div className="absolute inset-0 rounded-full bg-[#0a0a12] border border-[#1a1a2e]" />
-              <span className="relative z-10 text-3xl leading-none">
-                {selectedWallet?.icon ?? "🦊"}
-              </span>
+              <Wallet className="relative z-10 w-9 h-9 text-[#4B4BF7]" strokeWidth={1.75} />
               <svg
                 className="absolute inset-0 w-full h-full ev-spin"
                 viewBox="0 0 100 100"
@@ -115,7 +91,7 @@ export function UnauthenticatedPrompt() {
 
             <div className="flex flex-col items-center gap-1">
               <p className="text-sm text-white font-medium">
-                Connecting to {selectedWallet?.name ?? "wallet"}
+                Connecting wallet
               </p>
               <p className="text-[11px] text-white/40 font-mono ev-pulse-text">
                 Approve the connection in your wallet...
