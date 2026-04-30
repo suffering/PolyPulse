@@ -53,7 +53,7 @@ export function UnauthenticatedPrompt() {
           <button
             type="button"
             onClick={handleConnectClick}
-            className="w-full px-4 py-3 rounded-lg bg-[#4B4BF7] text-white text-sm font-semibold tracking-wide hover:bg-[#5a5af7] active:scale-[0.99] transition-all duration-150"
+            className="px-5 py-2 rounded-lg bg-[#4B4BF7] text-white text-xs font-semibold tracking-wide hover:bg-[#5a5af7] active:scale-[0.99] transition-all duration-150"
           >
             Connect Wallet
           </button>
