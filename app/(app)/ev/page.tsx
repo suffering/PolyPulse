@@ -7,7 +7,7 @@ import type { MatchedOpportunity } from "@/lib/matching";
 import type { Timeframe, MarketCategory } from "@/lib/types";
 import { getTimeframeLabel } from "@/lib/types";
 import { useSetPageAiState } from "@/components/ai/PageAiContext";
-import { Inbox, AlertCircle, Sparkles } from "lucide-react";
+import { Inbox, AlertCircle } from "lucide-react";
 
 type UiSport = "nba" | "mls" | "mlb" | "nhl" | "tennis";
 
@@ -366,18 +366,6 @@ export default function Home() {
           )}
         </div>
       </main>
-
-      {/* Floating Ask AI Button */}
-      <button
-        onClick={() => {
-          // Handled by the UniversalAiAssistant in layout
-        }}
-        className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-[#4B4BF7] to-[#7B4BF7] rounded-full px-5 py-3 flex items-center gap-2 shadow-lg shadow-[#4B4BF7]/40 hover:scale-105 hover:shadow-xl hover:shadow-[#4B4BF7]/60 active:scale-95 transition-all duration-200 group"
-      >
-        <Sparkles className="w-4 h-4 text-white" />
-        <span className="text-sm font-semibold text-white">Ask AI</span>
-        <div className="absolute inset-0 rounded-full bg-[#4B4BF7]/20 animate-pulse group-hover:animate-none pointer-events-none" />
-      </button>
     </div>
   );
 }

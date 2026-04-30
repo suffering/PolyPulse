@@ -2,7 +2,6 @@
 
 import { Sidebar } from "@/components/landing/Sidebar";
 import { HeroContent } from "@/components/landing/HeroContent";
-import { UniversalAiAssistant } from "@/components/ai/UniversalAiAssistant";
 
 export default function LandingPage() {
   return (
@@ -14,8 +13,6 @@ export default function LandingPage() {
       <main className="ml-[220px]">
         <HeroContent />
       </main>
-      
-      <UniversalAiAssistant />
     </div>
   );
 }
