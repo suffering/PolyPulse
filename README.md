@@ -1,1 +1,1 @@
-# PolyPulse by Daniel Makarovskiy
+# PolyPulse by Daniel 
