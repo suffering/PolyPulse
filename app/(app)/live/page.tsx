@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { useSetPageAiState } from "@/components/ai/PageAiContext";
@@ -15,6 +15,7 @@ type Trade = {
   size: number;
   dollarValue: number;
   proxyWallet: string;
+  isNew?: boolean;
 };
 
 type LiveTradeRaw = {
@@ -78,12 +79,18 @@ export default function LivePage() {
             size: Number(r.size ?? 0),
             dollarValue: Number(r.price ?? 0) * Number(r.size ?? 0),
             proxyWallet: String(r.proxyWallet ?? "N/A"),
+            isNew: true,
           });
         }
 
         if (newTrades.length > 0) {
           setTotalReceived((count) => count + newTrades.length);
-          setTrades((prev) => [...newTrades, ...prev].slice(0, MAX_ROWS));
+          setTrades((prev) =>
+            [...newTrades, ...prev].slice(0, MAX_ROWS).map((t, i) => ({
+              ...t,
+              isNew: i < newTrades.length,
+            }))
+          );
         }
       } catch (error) {
         console.warn("Failed to fetch trades", error);
@@ -128,30 +135,29 @@ export default function LivePage() {
   };
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4">
-      <div className="flex items-center justify-between gap-4">
+    <main className="min-h-screen bg-[#04040a] px-6 py-6 flex flex-col">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <div className="text-lg font-semibold text-slate-100">Live Trade Feed</div>
-          <div className="text-sm text-slate-400">
-            Status:{" "}
-            {status === "DISCONNECTED"
-              ? "DISCONNECTED — retrying every 3s"
-              : status === "LIVE"
-                ? `LIVE — ${totalReceived} trades`
-                : status}
-          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-white">
+            Live Trade Feed
+          </h1>
+          <p className="text-xs text-white/40 font-mono mt-1">
+            Status: {status === "LIVE" ? "LIVE" : "CONNECTING"} — {totalReceived} trades
+          </p>
         </div>
         <button
           type="button"
           onClick={() => setPaused((p) => !p)}
-          className="rounded-md border border-slate-600 bg-slate-800/50 px-3 py-1.5 text-sm text-slate-200 hover:bg-slate-700/60 transition-colors"
+          className="px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-white/80 text-sm font-medium hover:bg-white/15 hover:border-white/30 transition-all duration-150"
         >
           {paused ? "Resume" : "Pause"}
         </button>
       </div>
 
-      <section className="rounded-lg border border-slate-800 bg-slate-950/70 shadow-sm">
-        <header className="grid grid-cols-[90px,minmax(0,1.7fr),70px,minmax(0,1fr),80px,80px,110px,150px] gap-2 border-b border-slate-800 bg-slate-900/60 px-3 py-2 text-[11px] font-medium uppercase tracking-wide text-slate-400">
+      {/* Data Table */}
+      <div className="flex-1 flex flex-col border border-[#1a1a2e] bg-[#0d0d14] overflow-hidden">
+        {/* Header Row */}
+        <div className="grid grid-cols-[100px,2fr,70px,1fr,80px,80px,110px,1fr] gap-4 px-4 py-3 bg-[#0e0e1a] border-b border-[#1a1a2e] text-[10px] uppercase tracking-widest font-semibold text-white/40 shrink-0">
           <div>Time</div>
           <div>Market</div>
           <div>Side</div>
@@ -160,46 +166,83 @@ export default function LivePage() {
           <div>Size</div>
           <div>Value (USD)</div>
           <div>Trader</div>
-        </header>
-        <div className="h-[480px] overflow-y-auto text-xs font-mono text-slate-200">
+        </div>
+
+        {/* Rows */}
+        <div className="flex-1 overflow-y-auto">
           {trades.length === 0 ? (
-            <div className="flex h-full items-center justify-center text-slate-500">
+            <div className="flex h-full items-center justify-center text-white/30 text-sm">
               Waiting for live trades...
             </div>
           ) : (
-            <ul className="divide-y divide-slate-800/80">
-              {trades.map((trade) => (
-                <li
+            <div className="divide-y divide-[#1a1a2e]">
+              {trades.map((trade, idx) => (
+                <div
                   key={trade.id}
-                  className="grid grid-cols-[90px,minmax(0,1.7fr),70px,minmax(0,1fr),80px,80px,110px,150px] gap-2 px-3 py-1.5 hover:bg-slate-900/60"
+                  className={`grid grid-cols-[100px,2fr,70px,1fr,80px,80px,110px,1fr] gap-4 px-4 py-2 font-mono text-xs transition-colors duration-300 ${
+                    idx % 2 === 0 ? "bg-[#0d0d14]" : "bg-[#09090f]"
+                  } ${
+                    trade.isNew ? "animate-slide-in bg-indigo-950/20" : ""
+                  }`}
                 >
-                  <div className="truncate">{formatTime(trade.timestamp)}</div>
-                  <div className="truncate" title={trade.title}>
+                  <div className="truncate text-white/40">
+                    {formatTime(trade.timestamp)}
+                  </div>
+                  <div className="truncate text-white" title={trade.title}>
                     {trade.title}
                   </div>
                   <div
-                    className={
+                    className={`font-bold ${
                       trade.side === "BUY"
-                        ? "text-emerald-400"
-                        : "text-rose-400"
-                    }
+                        ? "text-[#4ade80]"
+                        : "text-[#f87171]"
+                    }`}
                   >
                     {trade.side}
                   </div>
-                  <div className="truncate">{trade.outcome}</div>
-                  <div>{(trade.price * 100).toFixed(1)}c</div>
-                  <div>{trade.size.toFixed(2)}</div>
-                  <div>${trade.dollarValue.toFixed(2)}</div>
-                  <div className="truncate" title={trade.proxyWallet}>
+                  <div className="truncate text-white/50">{trade.outcome}</div>
+                  <div className="text-white/60">{(trade.price * 100).toFixed(1)}c</div>
+                  <div className="text-white/60">{trade.size.toFixed(2)}</div>
+                  <div className="text-white">${trade.dollarValue.toFixed(2)}</div>
+                  <div
+                    className="truncate text-white/50"
+                    title={trade.proxyWallet}
+                  >
                     {formatAddress(trade.proxyWallet)}
                   </div>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           )}
         </div>
-      </section>
+      </div>
+
+      {/* CSS Animation */}
+      <style>{`
+        @keyframes slideIn {
+          from {
+            transform: translateY(-100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+        
+        @keyframes fadeOut {
+          from {
+            background-color: rgba(79, 39, 245, 0.2);
+          }
+          to {
+            background-color: transparent;
+          }
+        }
+        
+        .animate-slide-in {
+          animation: slideIn 200ms ease-out, fadeOut 600ms ease-out 200ms;
+        }
+      `}</style>
     </main>
   );
 }
-
