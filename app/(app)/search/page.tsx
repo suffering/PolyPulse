@@ -341,14 +341,14 @@ function SearchPageInner() {
   const xUsername = profile?.xUsername ?? null;
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
-      <section className="mb-8">
-        <h1 className="text-2xl font-bold text-white mb-4">Search Wallet</h1>
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-col items-center gap-3"
-        >
-          <div className="w-full max-w-2xl flex items-stretch gap-2">
+    <main className="min-h-screen bg-[#04040a] px-6 pt-6 pb-10">
+      <div className="max-w-6xl mx-auto">
+        {/* Page title */}
+        <h1 className="text-2xl font-bold text-white mb-6">Search Wallet</h1>
+
+        {/* Fused search bar */}
+        <form onSubmit={handleSubmit} className="mb-6">
+          <div className="flex items-stretch w-full rounded-xl overflow-hidden border border-[#1a1a2e]">
             <input
               type="text"
               value={query}
@@ -357,66 +357,60 @@ function SearchPageInner() {
                 setFormatError(null);
                 setNotFoundError(null);
               }}
-              placeholder="Search any Polymarket wallet address or username"
-              className="flex-1 rounded-md border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/60"
+              placeholder="Enter wallet address or username..."
+              className="flex-1 bg-[#0d0d14] px-4 py-3 text-sm font-mono text-white placeholder:text-white/20 focus:outline-none"
             />
             <button
               type="submit"
-              className="px-4 py-2 rounded-md border border-slate-600 bg-slate-800/70 text-sm text-slate-200 hover:bg-slate-700/70 transition-colors disabled:opacity-60"
               disabled={isResolving}
+              className="px-6 py-3 bg-[#161622] text-white text-sm font-medium border-l border-[#1a1a2e] hover:bg-[#1e1e30] transition-colors disabled:opacity-50"
             >
-              {isResolving ? "Searching…" : "Search"}
+              {isResolving ? "Searching..." : "Search"}
             </button>
           </div>
           {(formatError || notFoundError) && (
-            <p className="text-sm text-red-400">
+            <p className="text-xs text-[#f87171] font-mono mt-2">
               {formatError || notFoundError}
             </p>
           )}
         </form>
 
+        {/* Recent searches */}
         {!resolvedAddress && recent.length > 0 && (
-          <div className="mt-6 border border-slate-700/50 rounded-lg bg-slate-900/30 p-4">
+          <div className="border border-[#1a1a2e] rounded-xl bg-[#0d0d14] p-4 mb-6">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-slate-200">
+              <span className="text-[10px] uppercase tracking-widest font-semibold text-white/30">
                 Recent searches
-              </h2>
+              </span>
               <button
                 type="button"
                 onClick={clearRecent}
-                className="text-xs text-slate-400 hover:text-slate-200"
+                className="text-[10px] font-mono text-white/25 hover:text-white/50 transition-colors uppercase tracking-widest"
               >
                 Clear
               </button>
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1">
               {recent.map((item) => (
                 <button
                   key={item.wallet}
                   type="button"
-                  onClick={() => {
-                    setQuery(item.wallet);
-                    runSearch(item.wallet);
-                  }}
-                  className="flex items-center gap-3 rounded-md border border-slate-700/50 bg-slate-900/40 px-3 py-2 text-left hover:bg-slate-800/50 transition-colors"
+                  onClick={() => { setQuery(item.wallet); runSearch(item.wallet); }}
+                  className="flex items-center gap-3 rounded-lg border border-[#1a1a2e] px-3 py-2 text-left hover:bg-[#111120] transition-colors"
                 >
-                  <div className="h-8 w-8 rounded-full bg-slate-800 border border-slate-700 overflow-hidden flex items-center justify-center text-xs text-slate-400">
+                  <div className="h-7 w-7 rounded-full bg-[#0a0a12] border border-[#1a1a2e] overflow-hidden flex items-center justify-center text-[10px] font-mono text-white/30">
                     {item.profileImage ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={item.profileImage}
-                        alt={item.displayName ?? item.wallet}
-                        className="h-full w-full object-cover"
-                      />
+                      <img src={item.profileImage} alt="" className="h-full w-full object-cover" />
                     ) : (
                       <span>{item.wallet.slice(2, 4).toUpperCase()}</span>
                     )}
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-sm text-slate-100">
+                    <span className="text-xs text-white/70 font-mono">
                       {item.displayName ?? truncateWallet(item.wallet)}
                     </span>
-                    <span className="text-xs text-slate-500 font-mono">
+                    <span className="text-[10px] text-white/25 font-mono">
                       {truncateWallet(item.wallet)}
                     </span>
                   </div>
@@ -425,120 +419,106 @@ function SearchPageInner() {
             </div>
           </div>
         )}
-      </section>
 
-      {resolvedAddress && (
-        <>
-          {profileQuery.isLoading && !profile ? (
-            <ProfileHeaderSkeleton />
-          ) : (
-            <TraderProfileHeader
-              userName={currentUserName}
-              profileImage={profileImage}
-              walletAddress={resolvedAddress}
-              xUsername={xUsername}
-            />
-          )}
-
-          {showNoActivityMessage && (
-            <div className="border border-slate-700/50 rounded-lg bg-slate-900/30 p-4 mb-6">
-              <p className="text-slate-300 mb-2">
-                This wallet has no Polymarket activity.
-              </p>
-              <a
-                href="https://polymarket.com"
-                target="_blank"
-                rel="noreferrer"
-                className="text-sm text-amber-400 hover:text-amber-300"
-              >
-                Visit Polymarket →
-              </a>
-            </div>
-          )}
-
-          <StatisticsCards
-            stats={stats}
-            isLoading={statsQuery.isLoading}
-            isError={statsQuery.isError}
-            refetch={statsQuery.refetch}
-          />
-
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <div className="text-xs text-slate-400 mb-1">Profit/Loss</div>
-                <div
-                  className={`text-3xl font-bold ${
-                    currentPnl >= 0 ? "text-emerald-400" : "text-red-400"
-                  }`}
-                >
-                  {currentPnl >= 0 ? "+" : ""}
-                  $
-                  {Math.abs(currentPnl) >= 1_000_000
-                    ? (currentPnl / 1_000_000).toFixed(2) + "M"
-                    : Math.abs(currentPnl) >= 100_000
-                    ? (currentPnl / 1_000).toFixed(1) + "K"
-                    : currentPnl.toFixed(2)}
-                </div>
-                <div className="text-xs text-slate-500 mt-0.5">
-                  {PNL_RANGE_LABELS[timeRange]}
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {PNL_RANGES.map((range) => (
-                  <button
-                    key={range}
-                    type="button"
-                    onClick={() => setTimeRange(range)}
-                    className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                      timeRange === range
-                        ? "bg-amber-500/20 border border-amber-500/50 text-amber-400"
-                        : "bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:bg-slate-700/50"
-                    }`}
-                  >
-                    {range === "MAX" ? "ALL" : range}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {pnlQuery.isLoading && chartData.length === 0 ? (
-              <ChartSkeleton />
+        {resolvedAddress && (
+          <>
+            {profileQuery.isLoading && !profile ? (
+              <ProfileHeaderSkeleton />
             ) : (
-              <PnLChart
-                data={chartData}
-                isLoading={false}
-                currentPnl={currentPnl}
+              <TraderProfileHeader
+                userName={currentUserName}
+                profileImage={profileImage}
+                walletAddress={resolvedAddress}
+                xUsername={xUsername}
               />
             )}
-          </div>
 
-          <SearchPositionsActivityPanel
-            positions={positionsResponse?.positions ?? []}
-            trades={accumulatedTrades}
-            tradesHasMore={tradesResponse?.hasMore ?? false}
-            onLoadMoreTrades={() => setTradesOffset((prev) => prev + TRADES_PAGE_SIZE)}
-            isPositionsLoading={positionsQuery.isLoading}
-            isTradesLoading={tradesQuery.isLoading}
-            isTradesLoadingMore={tradesQuery.isFetching && tradesOffset > 0}
-            isPositionsError={positionsQuery.isError}
-            isTradesError={tradesQuery.isError}
-            refetchPositions={positionsQuery.refetch}
-            refetchTrades={tradesQuery.refetch}
-          />
-        </>
-      )}
+            {showNoActivityMessage && (
+              <div className="border border-[#1a1a2e] rounded-xl bg-[#0d0d14] p-5 mb-5">
+                <p className="text-white/40 text-sm font-mono mb-2">
+                  This wallet has no Polymarket activity.
+                </p>
+                <a
+                  href="https://polymarket.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-amber-400 hover:text-amber-300 font-mono"
+                >
+                  Visit Polymarket →
+                </a>
+              </div>
+            )}
 
-      {!resolvedAddress && !initialQ && (
-        <div className="mt-10 flex justify-center">
-          <div className="flex items-center gap-3 text-slate-500">
-            <Skeleton className="h-8 w-8 rounded-full" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-40" />
-              <Skeleton className="h-3 w-56" />
+            <StatisticsCards
+              stats={stats}
+              isLoading={statsQuery.isLoading}
+              isError={statsQuery.isError}
+              refetch={statsQuery.refetch}
+            />
+
+            {/* PnL section */}
+            <div className="mb-5">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <div className="text-[10px] uppercase tracking-widest font-semibold text-white/30 mb-1">
+                    Profit / Loss
+                  </div>
+                  <div
+                    className={`text-3xl font-bold font-mono tabular-nums ${
+                      currentPnl >= 0 ? "text-[#4ade80]" : "text-[#f87171]"
+                    }`}
+                  >
+                    {currentPnl >= 0 ? "+" : ""}$
+                    {Math.abs(currentPnl) >= 1_000_000
+                      ? (currentPnl / 1_000_000).toFixed(2) + "M"
+                      : Math.abs(currentPnl) >= 100_000
+                      ? (currentPnl / 1_000).toFixed(1) + "K"
+                      : currentPnl.toFixed(2)}
+                  </div>
+                  <div className="text-[10px] font-mono text-white/25 mt-1">
+                    {PNL_RANGE_LABELS[timeRange]}
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {PNL_RANGES.map((range) => (
+                    <button
+                      key={range}
+                      type="button"
+                      onClick={() => setTimeRange(range)}
+                      className={`px-3 py-1.5 rounded-full text-[11px] font-medium font-mono transition-colors ${
+                        timeRange === range
+                          ? "bg-white text-[#04040a] border border-white"
+                          : "bg-transparent border border-[#1a1a2e] text-white/40 hover:text-white hover:border-white/20"
+                      }`}
+                    >
+                      {range === "MAX" ? "ALL" : range}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {pnlQuery.isLoading && chartData.length === 0 ? (
+                <ChartSkeleton />
+              ) : (
+                <PnLChart data={chartData} isLoading={false} currentPnl={currentPnl} />
+              )}
             </div>
-          </div>
-        </div>
-      )}
+
+            <SearchPositionsActivityPanel
+              positions={positionsResponse?.positions ?? []}
+              trades={accumulatedTrades}
+              tradesHasMore={tradesResponse?.hasMore ?? false}
+              onLoadMoreTrades={() => setTradesOffset((prev) => prev + TRADES_PAGE_SIZE)}
+              isPositionsLoading={positionsQuery.isLoading}
+              isTradesLoading={tradesQuery.isLoading}
+              isTradesLoadingMore={tradesQuery.isFetching && tradesOffset > 0}
+              isPositionsError={positionsQuery.isError}
+              isTradesError={tradesQuery.isError}
+              refetchPositions={positionsQuery.refetch}
+              refetchTrades={tradesQuery.refetch}
+            />
+          </>
+        )}
+      </div>
     </main>
   );
 }

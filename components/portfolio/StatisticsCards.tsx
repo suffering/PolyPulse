@@ -14,7 +14,7 @@ function formatCurrency(value: number): string {
 function StatCard({
   label,
   value,
-  valueColor = "text-slate-200",
+  valueColor = "text-white",
   isCurrency = true,
 }: {
   label: string;
@@ -32,9 +32,9 @@ function StatCard({
         : value;
 
   return (
-    <div className="border border-slate-700/50 rounded-lg bg-slate-900/30 p-4">
-      <div className="text-xs text-slate-400 mb-1">{label}</div>
-      <div className={`text-lg font-bold ${valueColor}`}>{display}</div>
+    <div className="border border-[#1a1a2e] rounded-xl bg-[#0d0d14] p-4">
+      <div className="text-[10px] uppercase tracking-widest text-white/30 font-semibold mb-2">{label}</div>
+      <div className={`text-xl font-bold font-mono tabular-nums ${valueColor}`}>{display}</div>
     </div>
   );
 }
@@ -58,13 +58,13 @@ export function StatisticsCards({
 
   if (isError) {
     return (
-      <div className="border border-slate-700/50 rounded-lg bg-slate-900/30 p-6 mb-6">
-        <p className="text-slate-400 mb-2">Couldn&apos;t load stats.</p>
+      <div className="border border-[#1a1a2e] rounded-xl bg-[#0d0d14] p-6 mb-5">
+        <p className="text-white/40 text-sm font-mono mb-2">Couldn&apos;t load stats.</p>
         {refetch && (
           <button
             type="button"
             onClick={() => refetch()}
-            className="text-sm text-amber-400 hover:text-amber-300"
+            className="text-xs text-amber-400 hover:text-amber-300 font-mono"
           >
             Try again
           </button>
@@ -75,43 +75,39 @@ export function StatisticsCards({
 
   const s = stats!;
   return (
-    <>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-        <StatCard
-          label="Trading Volume"
-          value={s.tradingVolume}
-          valueColor="text-emerald-400"
-        />
-        <StatCard
-          label="Portfolio Size"
-          value={s.portfolioValue}
-          valueColor="text-sky-400"
-        />
-        <StatCard
-          label="Markets Traded"
-          value={s.marketsTraded}
-          isCurrency={false}
-          valueColor="text-amber-400"
-        />
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-        <StatCard
-          label="Total PnL"
-          value={s.totalPnl}
-          valueColor={s.totalPnl >= 0 ? "text-emerald-400" : "text-red-400"}
-        />
-        <StatCard
-          label="Open Interest"
-          value={s.openInterest}
-          valueColor="text-sky-400"
-        />
-        <StatCard
-          label="Win Rate"
-          value={s.winRate != null ? `${s.winRate}%` : "—"}
-          isCurrency={false}
-          valueColor="text-amber-400"
-        />
-      </div>
-    </>
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-5">
+      <StatCard
+        label="Trading Volume"
+        value={s.tradingVolume}
+        valueColor="text-[#4ade80]"
+      />
+      <StatCard
+        label="Portfolio Size"
+        value={s.portfolioValue}
+        valueColor="text-[#4ade80]"
+      />
+      <StatCard
+        label="Markets Traded"
+        value={s.marketsTraded}
+        isCurrency={false}
+        valueColor="text-[#facc15]"
+      />
+      <StatCard
+        label="Total PnL"
+        value={s.totalPnl}
+        valueColor={s.totalPnl >= 0 ? "text-[#4ade80]" : "text-[#f87171]"}
+      />
+      <StatCard
+        label="Open Interest"
+        value={s.openInterest}
+        valueColor="text-[#4ade80]"
+      />
+      <StatCard
+        label="Win Rate"
+        value={s.winRate != null ? `${s.winRate}%` : "—"}
+        isCurrency={false}
+        valueColor="text-[#facc15]"
+      />
+    </div>
   );
 }
