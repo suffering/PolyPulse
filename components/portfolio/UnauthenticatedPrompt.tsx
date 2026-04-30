@@ -159,7 +159,7 @@ export function UnauthenticatedPrompt() {
           <button
             type="button"
             onClick={handleViewPortfolio}
-            className="w-full px-4 py-3 rounded-lg bg-[#4B4BF7] text-white text-sm font-semibold tracking-wide hover:bg-[#5a5af7] active:scale-[0.99] transition-all duration-150"
+            className="px-5 py-2 rounded-lg bg-[#4B4BF7] text-white text-xs font-semibold tracking-wide hover:bg-[#5a5af7] active:scale-[0.99] transition-all duration-150 shadow-[0_0_20px_rgba(117,54,198,0.45)] hover:shadow-[0_0_28px_rgba(117,54,198,0.6)]"
           >
             View Portfolio →
           </button>
