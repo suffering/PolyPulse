@@ -4,6 +4,7 @@ import type { MatchedOpportunity } from "@/lib/matching";
 
 interface EVCardProps {
   opportunity: MatchedOpportunity;
+  isTopEv?: boolean;
 }
 
 function formatOdds(american: number): string {

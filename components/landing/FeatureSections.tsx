@@ -14,6 +14,12 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+function recordFromUnknown(v: unknown): Record<string, unknown> {
+  return v !== null && typeof v === "object" && !Array.isArray(v)
+    ? (v as Record<string, unknown>)
+    : {};
+}
+
 // Shared types
 interface LeaderboardEntry {
   rank: number;
@@ -50,56 +56,132 @@ interface VolumeData {
 async function fetchLeaderboard(): Promise<LeaderboardEntry[]> {
   const res = await fetch("/api/leaderboard?limit=5&orderBy=PNL&timePeriod=MONTH");
   if (!res.ok) return [];
-  const data = await res.json();
+  const data = (await res.json()) as Record<string, unknown>;
+  const raw = Array.isArray(data.entries) ? data.entries : [];
   // API returns { entries: [...] } with proxyWallet, userName, vol, pnl, rank
-  return (data.entries || []).slice(0, 5).map((entry: any, idx: number) => ({
-    rank: entry.rank || idx + 1,
-    name: entry.userName || `Trader ${idx + 1}`,
-    address: entry.proxyWallet || "",
-    profit: entry.pnl || 0,
-    volume: entry.vol || 0,
-  }));
+  return raw.slice(0, 5).map((entry: unknown, idx: number) => {
+    const e = recordFromUnknown(entry);
+    const rankRaw = e.rank;
+    const rank =
+      typeof rankRaw === "number" && Number.isFinite(rankRaw)
+        ? rankRaw
+        : typeof rankRaw === "string"
+          ? parseInt(rankRaw, 10) || idx + 1
+          : idx + 1;
+    const nameRaw = e.userName;
+    const name =
+      typeof nameRaw === "string" && nameRaw ? nameRaw : `Trader ${idx + 1}`;
+    const profitRaw = e.pnl;
+    const profit =
+      typeof profitRaw === "number" && Number.isFinite(profitRaw)
+        ? profitRaw
+        : typeof profitRaw === "string"
+          ? parseFloat(profitRaw) || 0
+          : 0;
+    const volRaw = e.vol;
+    const volume =
+      typeof volRaw === "number" && Number.isFinite(volRaw)
+        ? volRaw
+        : typeof volRaw === "string"
+          ? parseFloat(volRaw) || 0
+          : 0;
+    return {
+      rank,
+      name,
+      address: typeof e.proxyWallet === "string" ? e.proxyWallet : "",
+      profit,
+      volume,
+    };
+  });
 }
 
 async function fetchCreators(): Promise<Creator[]> {
   const res = await fetch("/api/creators");
   if (!res.ok) return [];
-  const data = await res.json();
+  const data = (await res.json()) as Record<string, unknown>;
+  const raw = Array.isArray(data.creators) ? data.creators : [];
   // API returns { creators: [...] } with id, name, totalMarkets, totalVolume
-  return (data.creators || []).slice(0, 5).map((c: any) => ({
-    id: c.id || "",
-    name: c.name || c.handle || "Creator",
-    marketsCreated: c.totalMarkets || 0,
-    totalVolume: c.totalVolume || 0,
-  }));
+  return raw.slice(0, 5).map((c: unknown) => {
+    const o = recordFromUnknown(c);
+    const marketsRaw = o.totalMarkets;
+    const marketsCreated =
+      typeof marketsRaw === "number" && Number.isFinite(marketsRaw)
+        ? marketsRaw
+        : typeof marketsRaw === "string"
+          ? parseInt(marketsRaw, 10) || 0
+          : 0;
+    const volRaw = o.totalVolume;
+    const totalVolume =
+      typeof volRaw === "number" && Number.isFinite(volRaw)
+        ? volRaw
+        : typeof volRaw === "string"
+          ? parseFloat(volRaw) || 0
+          : 0;
+    const name =
+      typeof o.name === "string" && o.name
+        ? o.name
+        : typeof o.handle === "string" && o.handle
+          ? o.handle
+          : "Creator";
+    return {
+      id: typeof o.id === "string" ? o.id : String(o.id ?? ""),
+      name,
+      marketsCreated,
+      totalVolume,
+    };
+  });
 }
 
 async function fetchLiveTrades(): Promise<LiveTrade[]> {
   const res = await fetch("/api/live/trades?limit=8");
   if (!res.ok) return [];
-  const data = await res.json();
+  const data = (await res.json()) as Record<string, unknown>;
+  const raw = Array.isArray(data.trades) ? data.trades : [];
   // API returns { trades: [...] } with title, side, outcome, price, size, timestamp, transactionHash
-  return (data.trades || []).slice(0, 8).map((t: any, idx: number) => ({
-    id: t.transactionHash || `${t.timestamp}-${idx}`,
-    market: t.title || "Unknown Market",
-    side: t.side === "SELL" ? "SELL" : "BUY",
-    price: Number(t.price) || 0,
-    size: Number(t.size) || 0,
-    timestamp: t.timestamp ? new Date(Number(t.timestamp) * 1000).toISOString() : new Date().toISOString(),
-  }));
+  return raw.slice(0, 8).map((t: unknown, idx: number) => {
+    const o = recordFromUnknown(t);
+    const hash = o.transactionHash;
+    const ts = o.timestamp;
+    const id =
+      typeof hash === "string" && hash
+        ? hash
+        : `${String(ts ?? "")}-${idx}`;
+    const title = o.title;
+    const sideRaw = o.side;
+    const price = Number(o.price) || 0;
+    const size = Number(o.size) || 0;
+    const timestamp =
+      ts != null && ts !== ""
+        ? new Date(Number(ts) * 1000).toISOString()
+        : new Date().toISOString();
+    return {
+      id,
+      market: typeof title === "string" && title ? title : "Unknown Market",
+      side: sideRaw === "SELL" ? "SELL" : "BUY",
+      price,
+      size,
+      timestamp,
+    };
+  });
 }
 
 async function fetchVolumeData(): Promise<VolumeData | null> {
   const res = await fetch("/api/volume");
   if (!res.ok) return null;
-  const data = await res.json();
+  const data = (await res.json()) as Record<string, unknown>;
   // API returns { polymarket: { volume24h, week, month, allTime } }
-  const pm = data.polymarket || {};
+  const pm = recordFromUnknown(data.polymarket);
+  const num = (v: unknown) =>
+    typeof v === "number" && Number.isFinite(v)
+      ? v
+      : typeof v === "string"
+        ? parseFloat(v) || 0
+        : 0;
   return {
-    volume24h: pm.volume24h || 0,
-    week: pm.week || 0,
-    month: pm.month || 0,
-    allTime: pm.allTime || 0,
+    volume24h: num(pm.volume24h),
+    week: num(pm.week),
+    month: num(pm.month),
+    allTime: num(pm.allTime),
   };
 }
 
@@ -108,11 +190,6 @@ function formatCurrency(value: number): string {
   if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
   if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
   return `$${value.toFixed(0)}`;
-}
-
-function formatAddress(address: string): string {
-  if (!address || address.length < 10) return address || "---";
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
 function formatTime(timestamp: string): string {

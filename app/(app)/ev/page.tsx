@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { EVCard } from "@/components/EVCard";
 import type { MatchedOpportunity } from "@/lib/matching";
 import type { Timeframe, MarketCategory } from "@/lib/types";
@@ -89,10 +89,9 @@ export default function Home() {
   const [league, setLeague] = useState<string | "all">("all");
   const [soccerLeague, setSoccerLeague] = useState<SoccerLeagueKey>("mls");
   const [sort, setSort] = useState<SortOption>("highest_ev");
-  const queryClient = useQueryClient();
   const setPageAiState = useSetPageAiState();
 
-  const { data, isLoading, isError, error, refetch } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["ev", sport, sport === "mls" ? soccerLeague : undefined],
     queryFn: () => fetchEV(sport, sport === "mls" ? soccerLeague : undefined),
     refetchInterval: 10 * 60 * 1000,

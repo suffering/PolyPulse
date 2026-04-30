@@ -3,7 +3,9 @@
 import Link from "next/link";
 import Image from "next/image";
 
-const FOOTER_LINKS = {
+type FooterLink = { label: string; href: string; external?: boolean };
+
+const FOOTER_LINKS: Record<string, FooterLink[]> = {
   Tools: [
     { label: "+EV Engine", href: "/ev" },
     { label: "Leaderboard", href: "/leaderboard" },

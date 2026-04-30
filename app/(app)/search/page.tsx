@@ -9,7 +9,6 @@ import { SearchPositionsActivityPanel } from "@/components/SearchPositionsActivi
 import {
   ProfileHeaderSkeleton,
   ChartSkeleton,
-  Skeleton,
 } from "@/components/ui/Skeleton";
 import {
   usePortfolioProfile,

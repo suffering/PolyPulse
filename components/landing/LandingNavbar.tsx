@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Search, Menu, X } from "lucide-react";
 import { WalletButton } from "@/components/wallet/WalletButton";
-import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
   { href: "/ev", label: "+EV Engine" },

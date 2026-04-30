@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { ArrowRight, TrendingUp, Activity } from "lucide-react";
+import { TrendingUp, Activity } from "lucide-react";
 
 interface Stats {
   totalVolume: number;
@@ -15,6 +15,12 @@ interface TrendingEvent {
   volume: number;
   liquidity: number;
   slug: string | null;
+}
+
+function recordFromUnknown(v: unknown): Record<string, unknown> {
+  return v !== null && typeof v === "object" && !Array.isArray(v)
+    ? (v as Record<string, unknown>)
+    : {};
 }
 
 async function fetchStats(): Promise<Stats> {
@@ -35,18 +41,36 @@ async function fetchTrendingEvents(): Promise<TrendingEvent[]> {
   // Use /api/markets/events which returns active events sorted by volume (highest first)
   const res = await fetch("/api/markets/events?limit=5");
   if (!res.ok) return [];
-  const data = await res.json();
-  
+  const data = (await res.json()) as Record<string, unknown>;
+  const raw = Array.isArray(data.events) ? data.events : [];
+
   // API returns events sorted by volume descending, all active/non-closed
-  return (data.events || [])
-    .slice(0, 3)
-    .map((e: any) => ({
-      id: e.id,
-      title: e.title || "Market",
-      volume: typeof e.volume === "string" ? parseFloat(e.volume) || 0 : (e.volume || 0),
-      liquidity: typeof e.liquidity === "string" ? parseFloat(e.liquidity) || 0 : (e.liquidity || 0),
-      slug: e.slug || null,
-    }));
+  return raw.slice(0, 3).map((e: unknown) => {
+    const o = recordFromUnknown(e);
+    const volRaw = o.volume;
+    const volume =
+      typeof volRaw === "string"
+        ? parseFloat(volRaw) || 0
+        : typeof volRaw === "number" && Number.isFinite(volRaw)
+          ? volRaw
+          : 0;
+    const liqRaw = o.liquidity;
+    const liquidity =
+      typeof liqRaw === "string"
+        ? parseFloat(liqRaw) || 0
+        : typeof liqRaw === "number" && Number.isFinite(liqRaw)
+          ? liqRaw
+          : 0;
+    const slugRaw = o.slug;
+    const slug = typeof slugRaw === "string" && slugRaw ? slugRaw : null;
+    return {
+      id: String(o.id ?? ""),
+      title: typeof o.title === "string" ? o.title : "Market",
+      volume,
+      liquidity,
+      slug,
+    };
+  });
 }
 
 function formatVolume(volume: number): string {

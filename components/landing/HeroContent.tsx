@@ -1,8 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import Image from "next/image";
-import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -28,31 +26,76 @@ interface ExchangeVolume {
   allTime: number;
 }
 
+function recordFromUnknown(v: unknown): Record<string, unknown> {
+  return v !== null && typeof v === "object" && !Array.isArray(v)
+    ? (v as Record<string, unknown>)
+    : {};
+}
+
 async function fetchTrendingEvents(): Promise<TrendingEvent[]> {
   const res = await fetch("/api/markets/events?limit=5");
   if (!res.ok) return [];
-  const data = await res.json();
-  return (data.events || []).slice(0, 5).map((e: any) => ({
-    id: e.id,
-    title: e.title || "Market",
-    volume: typeof e.volume === "string" ? parseFloat(e.volume) || 0 : (e.volume || 0),
-    slug: e.slug || null,
-  }));
+  const data = (await res.json()) as Record<string, unknown>;
+  const raw = Array.isArray(data.events) ? data.events : [];
+  return raw.slice(0, 5).map((e: unknown) => {
+    const o = recordFromUnknown(e);
+    const volRaw = o.volume;
+    const volume =
+      typeof volRaw === "string"
+        ? parseFloat(volRaw) || 0
+        : typeof volRaw === "number" && Number.isFinite(volRaw)
+          ? volRaw
+          : 0;
+    const slugRaw = o.slug;
+    const slug = typeof slugRaw === "string" && slugRaw ? slugRaw : null;
+    return {
+      id: String(o.id ?? ""),
+      title: typeof o.title === "string" ? o.title : "Market",
+      volume,
+      slug,
+    };
+  });
 }
 
 async function fetchTopTraders(): Promise<TopTrader[]> {
   try {
     const res = await fetch("/api/leaderboard?category=OVERALL&timePeriod=ALL&orderBy=PNL&limit=5");
     if (!res.ok) return [];
-    const data = await res.json();
-    const entries = data.entries || [];
-    return entries.map((entry: any, index: number) => ({
-      id: entry.proxyWallet,
-      address: entry.userName || entry.proxyWallet,
-      pnl: entry.pnl || 0,
-      wins: 0, // Not available from API, set to 0
-      trades: entry.totalTrades || 0,
-    }));
+    const data = (await res.json()) as Record<string, unknown>;
+    const entries = Array.isArray(data.entries) ? data.entries : [];
+    return entries.map((entry: unknown) => {
+      const e = recordFromUnknown(entry);
+      const pnlRaw = e.pnl;
+      const pnl =
+        typeof pnlRaw === "number" && Number.isFinite(pnlRaw)
+          ? pnlRaw
+          : typeof pnlRaw === "string"
+            ? parseFloat(pnlRaw) || 0
+            : 0;
+      const tradesRaw = e.totalTrades;
+      const trades =
+        typeof tradesRaw === "number" && Number.isFinite(tradesRaw)
+          ? tradesRaw
+          : typeof tradesRaw === "string"
+            ? parseInt(tradesRaw, 10) || 0
+            : 0;
+      const proxy = e.proxyWallet;
+      const userName = e.userName;
+      const id = typeof proxy === "string" ? proxy : String(proxy ?? "");
+      const address =
+        typeof userName === "string" && userName
+          ? userName
+          : typeof proxy === "string"
+            ? proxy
+            : id;
+      return {
+        id,
+        address,
+        pnl,
+        wins: 0, // Not available from API, set to 0
+        trades,
+      };
+    });
   } catch (error) {
     console.error("Failed to fetch top traders:", error);
     return [];
@@ -63,13 +106,19 @@ async function fetchExchangeVolume(): Promise<ExchangeVolume | null> {
   try {
     const res = await fetch("/api/volume");
     if (!res.ok) return null;
-    const data = await res.json();
-    const polymarket = data.polymarket || {};
+    const data = (await res.json()) as Record<string, unknown>;
+    const polymarket = recordFromUnknown(data.polymarket);
+    const num = (v: unknown) =>
+      typeof v === "number" && Number.isFinite(v)
+        ? v
+        : typeof v === "string"
+          ? parseFloat(v) || 0
+          : 0;
     return {
-      volume24h: polymarket.volume24h || 0,
-      week: polymarket.week || 0,
-      month: polymarket.month || 0,
-      allTime: polymarket.allTime || 0,
+      volume24h: num(polymarket.volume24h),
+      week: num(polymarket.week),
+      month: num(polymarket.month),
+      allTime: num(polymarket.allTime),
     };
   } catch (error) {
     console.error("Failed to fetch volume:", error);

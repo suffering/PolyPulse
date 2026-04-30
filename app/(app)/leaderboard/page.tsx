@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
 import { LeaderboardCard } from "@/components/LeaderboardCard";
 import { LeaderboardTable } from "@/components/LeaderboardTable";
 import { TableSkeleton } from "@/components/ui/Skeleton";

@@ -60,7 +60,7 @@ function getMarketUrl(market: PolymarketMarket): string {
 }
 
 export default function MarketsPage() {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery] = useState("");
   const [loadedEvents, setLoadedEvents] = useState<PolymarketEvent[]>([]);
   const [loadedMarkets, setLoadedMarkets] = useState<PolymarketMarket[]>([]);
   const [hasMoreEvents, setHasMoreEvents] = useState(true);
