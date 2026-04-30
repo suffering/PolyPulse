@@ -141,9 +141,6 @@ export default function LivePage() {
           <h1 className="text-2xl font-bold tracking-tight text-white">
             Live Trade Feed
           </h1>
-          <p className="text-xs text-white/40 font-mono mt-1">
-            Status: {status === "LIVE" ? "LIVE" : "CONNECTING"} — {totalReceived} trades
-          </p>
         </div>
         <button
           type="button"
