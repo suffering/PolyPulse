@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Wallet } from "lucide-react";
 import { useWallet } from "@/lib/wallet/use-wallet";
 
 type CardState = "idle" | "connecting" | "success";
@@ -42,8 +41,15 @@ export function UnauthenticatedPrompt() {
         <CardSurface visible={state === "idle"} accent="indigo">
           <div className="flex flex-col items-center gap-3">
             <div className="relative w-12 h-12 flex items-center justify-center">
-              <div className="absolute inset-0 bg-[#4B4BF7]/15 rounded-full blur-md" />
-              <Wallet className="w-9 h-9 text-[#4B4BF7] relative z-10" strokeWidth={1.75} />
+              {/* Soft indigo underglow */}
+              <div className="absolute inset-0 bg-[#7536C6]/40 rounded-full blur-xl scale-150" />
+              <div className="absolute inset-0 bg-[#4B4BF7]/25 rounded-full blur-md" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/wallet-icon.svg"
+                alt=""
+                className="relative z-10 w-12 h-12"
+              />
             </div>
             <h2 className="text-base font-semibold text-white text-center">
               Connect your wallet
@@ -68,9 +74,15 @@ export function UnauthenticatedPrompt() {
           <div className="flex flex-col items-center gap-4">
             {/* Spinner: 96px circle with rotating 270° indigo arc */}
             <div className="relative w-24 h-24 flex items-center justify-center">
-              <div className="absolute inset-0 bg-[#4B4BF7]/10 rounded-full blur-md" />
+              <div className="absolute inset-0 bg-[#7536C6]/30 rounded-full blur-xl scale-125" />
+              <div className="absolute inset-0 bg-[#4B4BF7]/15 rounded-full blur-md" />
               <div className="absolute inset-0 rounded-full bg-[#0a0a12] border border-[#1a1a2e]" />
-              <Wallet className="relative z-10 w-9 h-9 text-[#4B4BF7]" strokeWidth={1.75} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/wallet-icon.svg"
+                alt=""
+                className="relative z-10 w-12 h-12"
+              />
               <svg
                 className="absolute inset-0 w-full h-full ev-spin"
                 viewBox="0 0 100 100"
