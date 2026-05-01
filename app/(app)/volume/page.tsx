@@ -38,9 +38,12 @@ export default function VolumePage() {
       <div className="max-w-7xl mx-auto px-6 pt-6 pb-10">
         {/* Header */}
         <header className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight text-white">
-            Exchange Volume Dashboard
-          </h1>
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-6 bg-[#4B4BF7] rounded-full" />
+            <h1 className="text-2xl font-bold tracking-tight text-white">
+              Exchange Volume Dashboard
+            </h1>
+          </div>
         </header>
 
         {/* Error State */}

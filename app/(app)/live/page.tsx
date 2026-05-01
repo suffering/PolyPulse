@@ -137,7 +137,8 @@ export default function LivePage() {
   return (
     <main className="min-h-screen bg-[#04040a] px-6 py-6 flex flex-col">
       <div className="flex items-center justify-between mb-6">
-        <div>
+        <div className="flex items-center gap-2">
+          <div className="w-1 h-6 bg-[#4B4BF7] rounded-full" />
           <h1 className="text-2xl font-bold tracking-tight text-white">
             Live Trade Feed
           </h1>

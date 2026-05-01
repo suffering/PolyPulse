@@ -170,9 +170,12 @@ export default function LeaderboardPage() {
       <div className="max-w-7xl mx-auto px-6 pt-6 pb-10">
         <header className="mb-6">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">
-              Polymarket Leaderboard
-            </h1>
+            <div className="flex items-center gap-2">
+              <div className="w-1 h-6 bg-[#4B4BF7] rounded-full" />
+              <h1 className="text-2xl font-bold tracking-tight text-white">
+                Polymarket Leaderboard
+              </h1>
+            </div>
             <p className="text-sm text-white/40 mt-1">
               Top traders ranked by profit &amp; loss
             </p>

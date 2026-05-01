@@ -139,9 +139,12 @@ export default function CreatorsPage() {
     <div className="min-h-screen bg-[#04040a] text-white">
       <div className="max-w-7xl mx-auto px-6 py-10">
         <header className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight text-white">
-            Polymarket Creators
-          </h1>
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-6 bg-[#4B4BF7] rounded-full" />
+            <h1 className="text-2xl font-bold tracking-tight text-white">
+              Polymarket Creators
+            </h1>
+          </div>
         </header>
 
         <section className="bg-[#0a0a0f] border border-white/10 rounded-2xl overflow-hidden flex flex-col min-h-0">

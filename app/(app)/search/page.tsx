@@ -344,7 +344,10 @@ function SearchPageInner() {
     <main className="min-h-screen bg-[#04040a] px-6 pt-6 pb-10">
       <div className="max-w-6xl mx-auto">
         {/* Page title */}
-        <h1 className="text-2xl font-bold text-white mb-6">Search Wallet</h1>
+        <div className="flex items-center gap-2 mb-6">
+          <div className="w-1 h-6 bg-[#4B4BF7] rounded-full" />
+          <h1 className="text-2xl font-bold text-white">Search Wallet</h1>
+        </div>
 
         {/* Fused search bar */}
         <form onSubmit={handleSubmit} className="mb-6">
