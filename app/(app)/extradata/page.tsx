@@ -2,7 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { PolymarketEvent, PolymarketMarket } from "@/lib/polymarket";
+import type { PolymarketEvent } from "@/lib/polymarket";
+import {
+  buildEventMarketRows,
+  getMarketLiquidityUsd,
+  getMarketVolume24h,
+  getMarketVolumeUsd,
+  getPolymarketUrl,
+} from "@/lib/polymarket";
 import { useSetPageAiState } from "@/components/ai/PageAiContext";
 
 const PAGE_SIZE = 100;
@@ -13,24 +20,11 @@ type EventsResponse = {
   hasMore: boolean;
 };
 
-type MarketsResponse = {
-  markets: PolymarketMarket[];
-  hasMore: boolean;
-};
-
 async function fetchEventsPage(offset: number): Promise<EventsResponse> {
   const res = await fetch(
     `/api/markets/events?limit=${PAGE_SIZE}&offset=${offset}`
   );
   if (!res.ok) throw new Error("Failed to fetch events");
-  return res.json();
-}
-
-async function fetchMarketsPage(offset: number): Promise<MarketsResponse> {
-  const res = await fetch(
-    `/api/markets?limit=${PAGE_SIZE}&offset=${offset}`
-  );
-  if (!res.ok) throw new Error("Failed to fetch markets");
   return res.json();
 }
 
@@ -51,16 +45,6 @@ function toNumber(value: unknown): number {
   return 0;
 }
 
-function getEventUrl(event: PolymarketEvent): string {
-  const slug = event.slug ?? event.id;
-  return `https://polymarket.com/event/${slug}`;
-}
-
-function getMarketUrl(market: PolymarketMarket): string {
-  const slug = market.slug ?? market.id;
-  return `https://polymarket.com/event/${slug}?market=${market.id}`;
-}
-
 const tableScrollClass = "overflow-y-auto overflow-x-auto min-h-0";
 const tableContainerHeight = "max-h-[45vh]";
 const denseCell = "px-2 py-1 text-xs whitespace-nowrap";
@@ -68,28 +52,22 @@ const denseCell = "px-2 py-1 text-xs whitespace-nowrap";
 export default function ExtradataPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loadedEvents, setLoadedEvents] = useState<PolymarketEvent[]>([]);
-  const [loadedMarkets, setLoadedMarkets] = useState<PolymarketMarket[]>([]);
   const [clientPage, setClientPage] = useState(1);
   const [hasMoreEvents, setHasMoreEvents] = useState(true);
-  const [hasMoreMarkets, setHasMoreMarkets] = useState(true);
   const [offsetEvents, setOffsetEvents] = useState(0);
-  const [offsetMarkets, setOffsetMarkets] = useState(0);
 
-  const { data: eventsData, isLoading: eventsLoading, isFetching: eventsFetching, isError: eventsError, error: eventsErr } = useQuery({
+  const {
+    data: eventsData,
+    isLoading: eventsLoading,
+    isFetching: eventsFetching,
+    isError: eventsError,
+    error: eventsErr,
+  } = useQuery({
     queryKey: ["polymarket-events", offsetEvents],
     queryFn: () => fetchEventsPage(offsetEvents),
     enabled:
       (offsetEvents === 0 && loadedEvents.length === 0) ||
       (offsetEvents > 0 && loadedEvents.length === offsetEvents),
-    refetchInterval: 5 * 60 * 1000,
-  });
-
-  const { data: marketsData, isLoading: marketsLoading, isFetching: marketsFetching, isError: marketsError, error: marketsErr } = useQuery({
-    queryKey: ["polymarket-markets", offsetMarkets],
-    queryFn: () => fetchMarketsPage(offsetMarkets),
-    enabled:
-      (offsetMarkets === 0 && loadedMarkets.length === 0) ||
-      (offsetMarkets > 0 && loadedMarkets.length === offsetMarkets),
     refetchInterval: 5 * 60 * 1000,
   });
 
@@ -104,38 +82,29 @@ export default function ExtradataPage() {
     }
   }, [eventsData, offsetEvents]);
 
-  useEffect(() => {
-    if (!marketsData?.markets?.length) return;
-    if (offsetMarkets === 0) {
-      setLoadedMarkets(marketsData.markets);
-      setHasMoreMarkets(marketsData.hasMore);
-    } else {
-      setLoadedMarkets((prev) => [...prev, ...marketsData.markets]);
-      setHasMoreMarkets(marketsData.hasMore);
-    }
-  }, [marketsData, offsetMarkets]);
-
   const filteredEvents = useMemo(() => {
     if (!searchQuery.trim()) return loadedEvents;
     const q = searchQuery.trim().toLowerCase();
-    return loadedEvents.filter(
-      (e) => (e.title ?? "").toLowerCase().includes(q)
-    );
+    return loadedEvents.filter((e) => {
+      if ((e.title ?? "").toLowerCase().includes(q)) return true;
+      return (e.markets ?? []).some(
+        (m) =>
+          (m.question ?? "").toLowerCase().includes(q) ||
+          (m.groupItemTitle ?? "").toLowerCase().includes(q)
+      );
+    });
   }, [loadedEvents, searchQuery]);
 
-  const filteredMarkets = useMemo(() => {
-    let list = loadedMarkets;
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      list = list.filter(
-        (m) => m.question?.toLowerCase().includes(q) || (m.groupItemTitle ?? "").toLowerCase().includes(q)
-      );
-    }
-    return [...list].sort((a, b) => (b.volumeNum ?? 0) - (a.volumeNum ?? 0));
-  }, [loadedMarkets, searchQuery]);
+  const allMarketRows = useMemo(
+    () =>
+      buildEventMarketRows(filteredEvents, searchQuery, {
+        rowOrder: "volume-global",
+      }),
+    [filteredEvents, searchQuery]
+  );
 
   const totalFilteredEvents = filteredEvents.length;
-  const totalFilteredMarkets = filteredMarkets.length;
+  const totalFilteredMarkets = allMarketRows.length;
   const totalPages = Math.max(
     1,
     Math.max(
@@ -149,26 +118,28 @@ export default function ExtradataPage() {
     () => filteredEvents.slice(start, start + ROWS_PER_PAGE),
     [filteredEvents, start]
   );
-  const pageMarkets = useMemo(
-    () => filteredMarkets.slice(start, start + ROWS_PER_PAGE),
-    [filteredMarkets, start]
+  const pageMarketRows = useMemo(
+    () => allMarketRows.slice(start, start + ROWS_PER_PAGE),
+    [allMarketRows, start]
   );
 
   const loadMore = useCallback(() => {
     setOffsetEvents(loadedEvents.length);
-    setOffsetMarkets(loadedMarkets.length);
-  }, [loadedEvents.length, loadedMarkets.length]);
+  }, [loadedEvents.length]);
 
-  const goToPage = useCallback((p: number) => {
-    setClientPage(Math.max(1, Math.min(p, totalPages)));
-  }, [totalPages]);
+  const goToPage = useCallback(
+    (p: number) => {
+      setClientPage(Math.max(1, Math.min(p, totalPages)));
+    },
+    [totalPages]
+  );
 
-  const isLoading = eventsLoading || marketsLoading;
-  const isFetching = eventsFetching || marketsFetching;
-  const isError = eventsError || marketsError;
-  const error = eventsError ? eventsErr : marketsErr;
-  const hasMoreGlobal = hasMoreEvents || hasMoreMarkets;
-  const showFooter = !isError && (loadedEvents.length > 0 || loadedMarkets.length > 0 || isLoading);
+  const isLoading = eventsLoading;
+  const isFetching = eventsFetching;
+  const isError = eventsError;
+  const error = eventsErr;
+  const hasMoreGlobal = hasMoreEvents;
+  const showFooter = !isError && (loadedEvents.length > 0 || isLoading);
   const setPageAiState = useSetPageAiState();
 
   useEffect(() => {
@@ -184,13 +155,15 @@ export default function ExtradataPage() {
           liquidity: e.liquidity,
           volume: e.volume,
         })),
-        marketsVisible: pageMarkets.map((m) => ({
-          id: m.id,
-          question: m.question ?? null,
-          groupItemTitle: m.groupItemTitle ?? null,
-          liquidityNum: m.liquidityNum ?? 0,
-          volumeNum: m.volumeNum ?? 0,
-        })),
+                          marketsVisible: pageMarketRows.map(({ event: e, market: m }) => ({
+                          id: m.id,
+                          eventId: e.id,
+                          question: m.question ?? null,
+                          groupItemTitle: m.groupItemTitle ?? null,
+                          liquidityNum: getMarketLiquidityUsd(m),
+                          volumeNum: getMarketVolumeUsd(m),
+                          volume24h: getMarketVolume24h(m),
+                        })),
         totalFilteredEvents,
         totalFilteredMarkets,
         hasMore: hasMoreGlobal,
@@ -202,7 +175,7 @@ export default function ExtradataPage() {
     page,
     totalPages,
     pageEvents,
-    pageMarkets,
+    pageMarketRows,
     totalFilteredEvents,
     totalFilteredMarkets,
     hasMoreGlobal,
@@ -212,9 +185,7 @@ export default function ExtradataPage() {
     <div className="min-h-screen bg-[#0d1117] text-slate-200 font-mono">
       <div className="max-w-[1600px] mx-auto px-4 py-6 grid grid-cols-1 gap-4">
         <header>
-          <h1 className="text-xl font-bold text-white tracking-tight">
-            Markets
-          </h1>
+          <h1 className="text-xl font-bold text-white tracking-tight">Markets</h1>
         </header>
 
         {isError && (
@@ -225,7 +196,6 @@ export default function ExtradataPage() {
 
         {!isError && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Polymarket Active Questions — EVENT-level (title, OI, notional volume) */}
             <section className="border border-slate-700/50 rounded-lg bg-slate-900/30 overflow-hidden flex flex-col flex-1 min-w-0">
               <h2 className="px-3 py-2 text-sm font-semibold text-white border-b border-slate-700/50 shrink-0">
                 Polymarket Active Markets
@@ -237,7 +207,9 @@ export default function ExtradataPage() {
                   <table className="w-full text-left border-collapse min-w-[900px]">
                     <thead className="sticky top-0 bg-slate-800/30 border-b border-slate-700/50 z-10">
                       <tr>
-                        <th className={`${denseCell} text-slate-400 font-medium uppercase tracking-wider min-w-[220px]`}>
+                        <th
+                          className={`${denseCell} text-slate-400 font-medium uppercase tracking-wider min-w-[220px]`}
+                        >
                           Question
                         </th>
                         <th className={`${denseCell} text-slate-400 font-medium uppercase tracking-wider`}>
@@ -256,7 +228,7 @@ export default function ExtradataPage() {
                         >
                           <td className={`${denseCell} min-w-[220px] whitespace-nowrap`}>
                             <a
-                              href={getEventUrl(event)}
+                              href={getPolymarketUrl(event)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-400 hover:text-blue-300 underline"
@@ -278,38 +250,39 @@ export default function ExtradataPage() {
               )}
             </section>
 
-            {/* Polymarket Active Markets — MARKET-level (market, OI, notional vol, volume, unique traders) */}
             <section className="border border-slate-700/50 rounded-lg bg-slate-900/30 overflow-hidden flex flex-col flex-1 min-w-0">
               <h2 className="px-3 py-2 text-sm font-semibold text-white border-b border-slate-700/50 shrink-0">
                 Polymarket Active Questions
               </h2>
-              {marketsLoading && offsetMarkets === 0 ? (
+              {eventsLoading && offsetEvents === 0 ? (
                 <div className="p-6 text-center text-slate-500 text-sm">Loading...</div>
               ) : (
                 <div className={`${tableScrollClass} ${tableContainerHeight} shrink min-h-0`}>
                   <table className="w-full text-left border-collapse min-w-[900px]">
                     <thead className="sticky top-0 bg-slate-800/30 border-b border-slate-700/50 z-10">
                       <tr>
-                        <th className={`${denseCell} text-slate-400 font-medium uppercase tracking-wider min-w-[220px]`}>
+                        <th
+                          className={`${denseCell} text-slate-400 font-medium uppercase tracking-wider min-w-[220px]`}
+                        >
                           Market
                         </th>
                         <th className={`${denseCell} text-slate-400 font-medium uppercase tracking-wider`}>
                           Open Interest
                         </th>
                         <th className={`${denseCell} text-slate-400 font-medium uppercase tracking-wider`}>
-                          Notional Volume
+                          24h Volume
                         </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {pageMarkets.map((market) => (
+                      {pageMarketRows.map(({ event, market }) => (
                         <tr
-                          key={market.id}
+                          key={`${event.id}-${market.id}`}
                           className="border-b border-slate-700/30 hover:bg-slate-800/30 transition-colors"
                         >
                           <td className={`${denseCell} min-w-[220px] whitespace-nowrap`}>
                             <a
-                              href={getMarketUrl(market)}
+                              href={getPolymarketUrl(event, market)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-400 hover:text-blue-300 underline break-words"
@@ -318,10 +291,10 @@ export default function ExtradataPage() {
                             </a>
                           </td>
                           <td className={`${denseCell} text-slate-200`}>
-                            {formatCurrency(market.liquidityNum)}
+                            {formatCurrency(getMarketLiquidityUsd(market))}
                           </td>
                           <td className={`${denseCell} text-slate-200`}>
-                            {formatCurrency(market.volumeNum)}
+                            {formatCurrency(getMarketVolume24h(market))}
                           </td>
                         </tr>
                       ))}
@@ -333,11 +306,11 @@ export default function ExtradataPage() {
           </div>
         )}
 
-        {/* Shared footer: row count, search, pagination */}
         {showFooter && (
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 py-2 border border-slate-700/50 rounded-lg bg-slate-800/20">
             <span className="text-slate-500 text-sm">
-              {totalFilteredEvents.toLocaleString("en-US")} events, {totalFilteredMarkets.toLocaleString("en-US")} markets
+              {totalFilteredEvents.toLocaleString("en-US")} events,{" "}
+              {totalFilteredMarkets.toLocaleString("en-US")} markets
             </span>
             <input
               type="search"

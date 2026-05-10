@@ -49,27 +49,63 @@ export function useWallet() {
 
   const CONNECT_TIMEOUT_MS = 60_000;
 
+  // Shared helper: arm the session monitor after a successful connect or restore.
+  const startSessionMonitor = () => {
+    sessionMonitor.start(() => {
+      clearWalletStorage();
+      sessionMonitor.stop();
+      queryClient.setQueryData(walletKeys.connection(), DEFAULT_WALLET_STATE);
+    });
+  };
+
+  // Restart session monitor whenever a verified-live session is loaded on mount.
+  // This runs once when connectionQuery settles with an address (page-reload restore path).
+  const restoredAddress = connectionQuery.data?.address ?? null;
+  if (restoredAddress && !connectionQuery.isLoading) {
+    // Only arm if the monitor is not already running (it has no public isRunning getter,
+    // but start() is idempotent: calling it again just resets the timer, which is fine).
+    startSessionMonitor();
+  }
+
   const connectMutation = useMutation({
     mutationFn: async (): Promise<WalletState> => {
-      const connectPromise = (async () => {
-        const state = await service.connectBrowserWallet();
+      // Use an AbortController-style flag so we can ignore the connectPromise result
+      // if the timeout fires first, preventing storage + monitor side-effects on timeout.
+      let timedOut = false;
+      const timeoutId = setTimeout(() => {
+        timedOut = true;
+      }, CONNECT_TIMEOUT_MS);
+
+      try {
+        const state = await Promise.race([
+          service.connectBrowserWallet(),
+          new Promise<never>((_, reject) =>
+            setTimeout(
+              () => reject(new Error("Connection timed out. Please try again.")),
+              CONNECT_TIMEOUT_MS
+            )
+          ),
+        ]);
+
+        clearTimeout(timeoutId);
+
+        if (timedOut) {
+          // Timeout already fired; discard and throw so callers see failure.
+          throw new Error("Connection timed out. Please try again.");
+        }
+
         await saveWalletToStorage({
           address: state.address!,
           chainId: state.chainId!,
           lastConnected: Date.now(),
           connectionType: "browser_extension",
         });
-        sessionMonitor.start(() => {
-          clearWalletStorage();
-          sessionMonitor.stop();
-          queryClient.setQueryData(walletKeys.connection(), DEFAULT_WALLET_STATE);
-        });
+        startSessionMonitor();
         return state;
-      })();
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error("Connection timed out. Please try again.")), CONNECT_TIMEOUT_MS);
-      });
-      return Promise.race([connectPromise, timeoutPromise]);
+      } catch (err) {
+        clearTimeout(timeoutId);
+        throw err;
+      }
     },
     onSuccess: (data) => {
       queryClient.setQueryData(walletKeys.connection(), data);

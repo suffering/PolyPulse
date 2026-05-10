@@ -11,6 +11,8 @@ interface Market {
   outcomes?: string;
   volume?: string;
   volume24hr?: number;
+  manualActivation?: boolean;
+  events?: { slug?: string | null }[];
 }
 
 interface MarketTickerItem {
@@ -18,7 +20,7 @@ interface MarketTickerItem {
   question: string;
   yesPrice: number;
   volume24h: number;
-  slug: string;
+  href: string;
 }
 
 async function fetchMarkets(): Promise<MarketTickerItem[]> {
@@ -26,7 +28,10 @@ async function fetchMarkets(): Promise<MarketTickerItem[]> {
   if (!res.ok) throw new Error("Failed to fetch markets");
   const data = await res.json();
   
-  return (data.markets || []).slice(0, 12).map((m: Market) => {
+  const rows = (data.markets || []).filter(
+    (m: Market) => m.manualActivation !== true
+  );
+  return rows.slice(0, 12).map((m: Market) => {
     let yesPrice = 0.5;
     if (m.outcomePrices) {
       try {
@@ -37,12 +42,17 @@ async function fetchMarkets(): Promise<MarketTickerItem[]> {
       }
     }
     
+    const eventSlug = m.events?.[0]?.slug;
+    const href = eventSlug
+      ? `https://polymarket.com/event/${eventSlug}?market=${m.id}`
+      : `https://polymarket.com/event/${m.slug}`;
+
     return {
       id: m.id,
       question: m.question,
       yesPrice,
       volume24h: m.volume24hr || 0,
-      slug: m.slug,
+      href,
     };
   });
 }
@@ -83,7 +93,7 @@ export function TickerBar() {
         {tickerItems.map((market, idx) => (
           <a
             key={`${market.id}-${idx}`}
-            href={`https://polymarket.com/event/${market.slug}`}
+            href={market.href}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 px-2 text-xs hover:bg-card-elevated transition-colors duration-150 h-full"

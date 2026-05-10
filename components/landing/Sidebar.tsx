@@ -142,7 +142,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps = {}) {
               Polymarket
             </a>
             <a
-              href="https://x.com/unluckixmr"
+              href="https://x.com/unluckiXD"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-[#888] hover:text-white hover:bg-[#111] transition-all duration-200 ease-out"

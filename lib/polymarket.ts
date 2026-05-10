@@ -40,8 +40,33 @@ export interface PolymarketMarket {
   active?: boolean;
   /** Some Gamma responses may include closed flag at the market level. */
   closed?: boolean;
-  /** Nested events (e.g. from Gamma API); may include commentCount for "Users" column */
-  events?: Array<{ commentCount?: number }>;
+  /**
+   * Gamma: when true, market was manually / secondarily activated in a multi-outcome event
+   * (satellite names). Polymarket’s main lists emphasize rows with `manualActivation !== true`.
+   */
+  manualActivation?: boolean;
+  archived?: boolean;
+  /** CLOB totals when present (Gamma); preferred with volumeNum for display consistency. */
+  volumeClob?: number | string;
+  liquidityClob?: number | string;
+  /** Best bid/ask on CLOB; used with event.sortBy === "price" to match Polymarket outcome ordering. */
+  bestBid?: number;
+  bestAsk?: number;
+  lastTradePrice?: number;
+  /**
+   * Parent event(s) on Gamma `/markets` rows. Use `slug` for polymarket.com URLs — `market.slug` is often
+   * a per-outcome slug that does not resolve as `/event/{slug}`.
+   */
+  events?: PolymarketNestedEvent[];
+}
+
+/** Minimal parent event on a market row from Gamma (URL + grouping). */
+export interface PolymarketNestedEvent {
+  id: string;
+  slug?: string | null;
+  title?: string | null;
+  ticker?: string | null;
+  commentCount?: number;
 }
 
 export interface EventCreator {
@@ -73,6 +98,8 @@ export interface PolymarketEvent {
   openInterest?: number;
   /** Creator attribution from Gamma API when available. */
   eventCreators?: EventCreator[] | null;
+  /** Gamma: how child markets are ordered on polymarket.com (e.g. `price` vs raw volume). */
+  sortBy?: string | null;
 }
 
 export interface SportsMetadata {
@@ -863,6 +890,129 @@ export function getPolymarketUrl(event: PolymarketEvent, market?: PolymarketMark
   const slug = event.slug || event.id;
   const base = `https://polymarket.com/event/${slug}`;
   return market ? `${base}?market=${market.id}` : base;
+}
+
+/** Per-market all-time notional volume in USD (Gamma). */
+export function getMarketVolumeUsd(market: PolymarketMarket): number {
+  return toNumber(market.volumeNum ?? market.volumeClob ?? market.volume);
+}
+
+/**
+ * Per-market 24-hour trading volume in USD.
+ * Gamma returns `volume24hr` (not `volume24h`) on both `/markets` and event-embedded markets.
+ */
+export function getMarketVolume24h(market: PolymarketMarket): number {
+  return toNumber(market.volume24hr ?? market.volume24h);
+}
+
+/** Per-market liquidity / open interest in USD (Gamma). */
+export function getMarketLiquidityUsd(market: PolymarketMarket): number {
+  return toNumber(market.liquidityNum ?? market.liquidityClob ?? market.liquidity);
+}
+
+export type EventMarketRow = {
+  event: PolymarketEvent;
+  market: PolymarketMarket;
+};
+
+export type BuildEventMarketRowsOptions = {
+  /**
+   * `default` — same order as Polymarket: walk events in array order; within each event, sort
+   * outcomes by `event.sortBy` (typically `price` = implied Yes probability, not raw all-time volume).
+   * `volume-global` — pool all eligible markets then sort by **24-hour volume** descending.
+   *   Sorting by 24h (not all-time) keeps the list fresh: long-shot novelty markets that had large
+   *   speculative volume months ago (e.g. "Will Jesus Christ return before 2027?") do not dominate
+   *   over genuinely active markets right now (UFC bouts, FIFA group stage, etc.).
+   */
+  rowOrder?: "default" | "volume-global";
+};
+
+/** Implied "Yes" mid price in 0–1 (matches Polymarket list when event.sortBy is `price`). */
+export function getMarketYesMidPrice(market: PolymarketMarket): number {
+  if (typeof market.bestBid === "number" && typeof market.bestAsk === "number") {
+    const hi = Math.max(market.bestBid, market.bestAsk);
+    const lo = Math.min(market.bestBid, market.bestAsk);
+    if (Number.isFinite(hi) && Number.isFinite(lo) && hi > 0) {
+      return (lo + hi) / 2;
+    }
+  }
+  if (typeof market.lastTradePrice === "number" && market.lastTradePrice > 0) {
+    return market.lastTradePrice;
+  }
+  const pricesStr = market.outcomePrices || "[]";
+  try {
+    const arr = JSON.parse(pricesStr.replace(/'/g, '"')) as unknown;
+    if (Array.isArray(arr) && arr.length > 0) {
+      const yes = parseFloat(String(arr[0]));
+      return Number.isFinite(yes) ? yes : 0;
+    }
+  } catch {
+    // fall through
+  }
+  return 0;
+}
+
+function compareMarketsForEventDisplay(
+  a: PolymarketMarket,
+  b: PolymarketMarket,
+  event: PolymarketEvent
+): number {
+  const sortBy = (event.sortBy ?? "price").toLowerCase();
+  if (sortBy === "volume") {
+    return getMarketVolumeUsd(b) - getMarketVolumeUsd(a);
+  }
+  const pb = getMarketYesMidPrice(b) - getMarketYesMidPrice(a);
+  if (pb !== 0) return pb;
+  return getMarketVolumeUsd(b) - getMarketVolumeUsd(a);
+}
+
+/**
+ * Flatten active markets under the given events.
+ * Default row order matches Polymarket: events in input order, child markets sorted by `event.sortBy`
+ * (usually **price**, so long-shot names with huge historical volume do not appear above frontrunners).
+ *
+ * When `search` is set, keep rows whose event title matches, or (if the title does not match) whose
+ * market question / group label matches.
+ *
+ * Drops `archived` and **`manualActivation`** satellite rows (Gamma marks long-tail / manually wired
+ * outcomes this way so they do not dominate “primary” lists like LeBron-for-president or Oprah-for-nominee).
+ */
+export function buildEventMarketRows(
+  events: PolymarketEvent[],
+  search?: string,
+  options?: BuildEventMarketRowsOptions
+): EventMarketRow[] {
+  const q = (search ?? "").trim().toLowerCase();
+  const rowOrder = options?.rowOrder ?? "default";
+  const rows: EventMarketRow[] = [];
+  for (const event of events) {
+    const eventTitleMatch = !q || (event.title ?? "").toLowerCase().includes(q);
+    const candidates: PolymarketMarket[] = [];
+    for (const market of event.markets ?? []) {
+      if (market.closed === true) continue;
+      if (market.active === false) continue;
+      if (market.archived === true) continue;
+      if (market.manualActivation === true) continue;
+      if (q && !eventTitleMatch) {
+        const mq =
+          (market.question ?? "").toLowerCase().includes(q) ||
+          (market.groupItemTitle ?? "").toLowerCase().includes(q);
+        if (!mq) continue;
+      }
+      candidates.push(market);
+    }
+    const sorted =
+      rowOrder === "volume-global"
+        ? [...candidates].sort((a, b) => getMarketVolume24h(b) - getMarketVolume24h(a))
+        : [...candidates].sort((a, b) => compareMarketsForEventDisplay(a, b, event));
+    for (const market of sorted) {
+      rows.push({ event, market });
+    }
+  }
+  if (rowOrder === "volume-global") {
+    rows.sort((a, b) => getMarketVolume24h(b.market) - getMarketVolume24h(a.market));
+  }
+  return rows;
 }
 
 // --- Creator profile: public profile (Gamma), markets by creator, positions per market (Data API v1) ---

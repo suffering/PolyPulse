@@ -2,7 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { PolymarketEvent, PolymarketMarket } from "@/lib/polymarket";
+import type { PolymarketEvent } from "@/lib/polymarket";
+import {
+  buildEventMarketRows,
+  getMarketLiquidityUsd,
+  getMarketVolume24h,
+  getMarketVolumeUsd,
+  getPolymarketUrl,
+} from "@/lib/polymarket";
 import { useSetPageAiState } from "@/components/ai/PageAiContext";
 
 const PAGE_SIZE = 100;
@@ -14,24 +21,11 @@ type EventsResponse = {
   hasMore: boolean;
 };
 
-type MarketsResponse = {
-  markets: PolymarketMarket[];
-  hasMore: boolean;
-};
-
 async function fetchEventsPage(offset: number): Promise<EventsResponse> {
   const res = await fetch(
     `/api/markets/events?limit=${PAGE_SIZE}&offset=${offset}`
   );
   if (!res.ok) throw new Error("Failed to fetch events");
-  return res.json();
-}
-
-async function fetchMarketsPage(offset: number): Promise<MarketsResponse> {
-  const res = await fetch(
-    `/api/markets?limit=${PAGE_SIZE}&offset=${offset}`
-  );
-  if (!res.ok) throw new Error("Failed to fetch markets");
   return res.json();
 }
 
@@ -49,42 +43,25 @@ function toNumber(value: unknown): number {
   return 0;
 }
 
-function getEventUrl(event: PolymarketEvent): string {
-  const slug = event.slug ?? event.id;
-  return `https://polymarket.com/event/${slug}`;
-}
-
-function getMarketUrl(market: PolymarketMarket): string {
-  const slug = market.slug ?? market.id;
-  return `https://polymarket.com/event/${slug}?market=${market.id}`;
-}
-
 export default function MarketsPage() {
   const [searchQuery] = useState("");
   const [loadedEvents, setLoadedEvents] = useState<PolymarketEvent[]>([]);
-  const [loadedMarkets, setLoadedMarkets] = useState<PolymarketMarket[]>([]);
   const [hasMoreEvents, setHasMoreEvents] = useState(true);
-  const [hasMoreMarkets, setHasMoreMarkets] = useState(true);
   const [offsetEvents, setOffsetEvents] = useState(0);
-  const [offsetMarkets, setOffsetMarkets] = useState(0);
-  // Shared display count — both columns always show the same number of rows.
   const [displayCount, setDisplayCount] = useState(INITIAL_DISPLAY);
 
-  const { data: eventsData, isLoading: eventsLoading, isFetching: eventsFetching, isError: eventsError, error: eventsErr } = useQuery({
+  const {
+    data: eventsData,
+    isLoading: eventsLoading,
+    isFetching: eventsFetching,
+    isError: eventsError,
+    error: eventsErr,
+  } = useQuery({
     queryKey: ["polymarket-events", offsetEvents],
     queryFn: () => fetchEventsPage(offsetEvents),
     enabled:
       (offsetEvents === 0 && loadedEvents.length === 0) ||
       (offsetEvents > 0 && loadedEvents.length === offsetEvents),
-    refetchInterval: 5 * 60 * 1000,
-  });
-
-  const { data: marketsData, isLoading: marketsLoading, isFetching: marketsFetching, isError: marketsError, error: marketsErr } = useQuery({
-    queryKey: ["polymarket-markets", offsetMarkets],
-    queryFn: () => fetchMarketsPage(offsetMarkets),
-    enabled:
-      (offsetMarkets === 0 && loadedMarkets.length === 0) ||
-      (offsetMarkets > 0 && loadedMarkets.length === offsetMarkets),
     refetchInterval: 5 * 60 * 1000,
   });
 
@@ -99,72 +76,59 @@ export default function MarketsPage() {
     }
   }, [eventsData, offsetEvents]);
 
-  useEffect(() => {
-    if (!marketsData?.markets?.length) return;
-    if (offsetMarkets === 0) {
-      setLoadedMarkets(marketsData.markets);
-      setHasMoreMarkets(marketsData.hasMore);
-    } else {
-      setLoadedMarkets((prev) => [...prev, ...marketsData.markets]);
-      setHasMoreMarkets(marketsData.hasMore);
-    }
-  }, [marketsData, offsetMarkets]);
-
   const filteredEvents = useMemo(() => {
     if (!searchQuery.trim()) return loadedEvents;
     const q = searchQuery.trim().toLowerCase();
-    return loadedEvents.filter(
-      (e) => (e.title ?? "").toLowerCase().includes(q)
-    );
+    return loadedEvents.filter((e) => {
+      if ((e.title ?? "").toLowerCase().includes(q)) return true;
+      return (e.markets ?? []).some(
+        (m) =>
+          (m.question ?? "").toLowerCase().includes(q) ||
+          (m.groupItemTitle ?? "").toLowerCase().includes(q)
+      );
+    });
   }, [loadedEvents, searchQuery]);
 
-  const filteredMarkets = useMemo(() => {
-    let list = loadedMarkets;
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      list = list.filter(
-        (m) => m.question?.toLowerCase().includes(q) || (m.groupItemTitle ?? "").toLowerCase().includes(q)
-      );
-    }
-    return [...list].sort((a, b) => (b.volumeNum ?? 0) - (a.volumeNum ?? 0));
-  }, [loadedMarkets, searchQuery]);
+  /** All active outcome rows across loaded events, sorted by notional volume (highest first). */
+  const allMarketRows = useMemo(
+    () =>
+      buildEventMarketRows(filteredEvents, searchQuery, {
+        rowOrder: "volume-global",
+      }),
+    [filteredEvents, searchQuery]
+  );
 
   const totalFilteredEvents = filteredEvents.length;
-  const totalFilteredMarkets = filteredMarkets.length;
+  const totalFilteredMarkets = allMarketRows.length;
 
-  // Both columns slice from the same displayCount so row counts stay in sync.
   const pageEvents = useMemo(
     () => filteredEvents.slice(0, displayCount),
     [filteredEvents, displayCount]
   );
-  const pageMarkets = useMemo(
-    () => filteredMarkets.slice(0, displayCount),
-    [filteredMarkets, displayCount]
+
+  const pageMarketRows = useMemo(
+    () => allMarketRows.slice(0, displayCount),
+    [allMarketRows, displayCount]
   );
 
   const canShowMore =
     displayCount < totalFilteredEvents ||
     displayCount < totalFilteredMarkets ||
-    hasMoreEvents ||
-    hasMoreMarkets;
+    hasMoreEvents;
 
   const loadMore = useCallback(() => {
     const nextCount = displayCount + LOAD_MORE_INCREMENT;
     setDisplayCount(nextCount);
-    // Fetch more from API if we're approaching the end of loaded data.
     if (nextCount > loadedEvents.length - LOAD_MORE_INCREMENT && hasMoreEvents) {
       setOffsetEvents(loadedEvents.length);
     }
-    if (nextCount > loadedMarkets.length - LOAD_MORE_INCREMENT && hasMoreMarkets) {
-      setOffsetMarkets(loadedMarkets.length);
-    }
-  }, [displayCount, loadedEvents.length, loadedMarkets.length, hasMoreEvents, hasMoreMarkets]);
+  }, [displayCount, loadedEvents.length, hasMoreEvents]);
 
-  const isLoading = eventsLoading || marketsLoading;
-  const isFetching = eventsFetching || marketsFetching;
-  const isError = eventsError || marketsError;
-  const error = eventsError ? eventsErr : marketsErr;
-  const showFooter = !isError && (loadedEvents.length > 0 || loadedMarkets.length > 0 || isLoading);
+  const isLoading = eventsLoading;
+  const isFetching = eventsFetching;
+  const isError = eventsError;
+  const error = eventsErr;
+  const showFooter = !isError && (loadedEvents.length > 0 || isLoading);
   const setPageAiState = useSetPageAiState();
 
   useEffect(() => {
@@ -179,13 +143,15 @@ export default function MarketsPage() {
           liquidity: e.liquidity,
           volume: e.volume,
         })),
-        marketsVisible: pageMarkets.map((m) => ({
-          id: m.id,
-          question: m.question ?? null,
-          groupItemTitle: m.groupItemTitle ?? null,
-          liquidityNum: m.liquidityNum ?? 0,
-          volumeNum: m.volumeNum ?? 0,
-        })),
+                        marketsVisible: pageMarketRows.map(({ event: e, market: m }) => ({
+                          id: m.id,
+                          eventId: e.id,
+                          question: m.question ?? null,
+                          groupItemTitle: m.groupItemTitle ?? null,
+                          liquidityNum: getMarketLiquidityUsd(m),
+                          volumeNum: getMarketVolumeUsd(m),
+                          volume24h: getMarketVolume24h(m),
+                        })),
         totalFilteredEvents,
         totalFilteredMarkets,
         canShowMore,
@@ -196,7 +162,7 @@ export default function MarketsPage() {
     searchQuery,
     displayCount,
     pageEvents,
-    pageMarkets,
+    pageMarketRows,
     totalFilteredEvents,
     totalFilteredMarkets,
     canShowMore,
@@ -213,7 +179,6 @@ export default function MarketsPage() {
 
         {!isError && (
           <div className="flex-1 w-full max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-0">
-            {/* Active Markets Table */}
             <section className="bg-[#0d0d14] border border-[#1a1a2e] rounded-xl overflow-hidden flex flex-col min-h-0 p-4">
               <div className="flex items-center gap-3 px-2 pb-4 shrink-0">
                 <div className="w-1 h-5 bg-[#4B4BF7]"></div>
@@ -244,13 +209,10 @@ export default function MarketsPage() {
                     </thead>
                     <tbody>
                       {pageEvents.map((event) => (
-                        <tr
-                          key={event.id}
-                          className="border-b border-[#1a1a2e]"
-                        >
+                        <tr key={event.id} className="border-b border-[#1a1a2e]">
                           <td className="px-4 py-4 align-top">
                             <a
-                              href={getEventUrl(event)}
+                              href={getPolymarketUrl(event)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-[#4B4BF7] hover:opacity-70 transition-opacity text-sm break-words"
@@ -272,7 +234,6 @@ export default function MarketsPage() {
               )}
             </section>
 
-            {/* Active Questions Table */}
             <section className="bg-[#0d0d14] border border-[#1a1a2e] rounded-xl overflow-hidden flex flex-col min-h-0 p-4">
               <div className="flex items-center gap-3 px-2 pb-4 shrink-0">
                 <div className="w-1 h-5 bg-[#4B4BF7]"></div>
@@ -281,9 +242,9 @@ export default function MarketsPage() {
                 </h2>
               </div>
 
-              {marketsLoading && offsetMarkets === 0 ? (
+              {eventsLoading && offsetEvents === 0 ? (
                 <div className="p-8 text-center text-white/40 text-sm">Loading...</div>
-              ) : pageMarkets.length === 0 ? (
+              ) : pageMarketRows.length === 0 ? (
                 <div className="p-8 text-center text-white/40 text-sm">No questions found</div>
               ) : (
                 <div className="overflow-y-auto overflow-x-hidden flex-1 min-h-0">
@@ -297,19 +258,16 @@ export default function MarketsPage() {
                           Open Interest
                         </th>
                         <th className="px-4 py-3 text-[11px] font-medium text-[#4B4BF7] uppercase tracking-[0.15em] text-right">
-                          Notional Volume
+                          24h Volume
                         </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {pageMarkets.map((market) => (
-                        <tr
-                          key={market.id}
-                          className="border-b border-[#1a1a2e]"
-                        >
+                      {pageMarketRows.map(({ event, market }) => (
+                        <tr key={`${event.id}-${market.id}`} className="border-b border-[#1a1a2e]">
                           <td className="px-4 py-4 align-top">
                             <a
-                              href={getMarketUrl(market)}
+                              href={getPolymarketUrl(event, market)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-[#4B4BF7] hover:opacity-70 transition-opacity text-sm break-words"
@@ -318,10 +276,10 @@ export default function MarketsPage() {
                             </a>
                           </td>
                           <td className="px-4 py-4 text-[#4ade80] text-sm text-right font-mono whitespace-nowrap align-top">
-                            {formatCurrency(market.liquidityNum)}
+                            {formatCurrency(getMarketLiquidityUsd(market))}
                           </td>
                           <td className="px-4 py-4 text-[#4ade80] text-sm text-right font-mono whitespace-nowrap align-top">
-                            {formatCurrency(market.volumeNum)}
+                            {formatCurrency(getMarketVolume24h(market))}
                           </td>
                         </tr>
                       ))}
@@ -333,11 +291,11 @@ export default function MarketsPage() {
           </div>
         )}
 
-        {/* Footer */}
         {showFooter && (
           <div className="mt-6 w-full max-w-[1600px] mx-auto flex items-center justify-between gap-4 px-4 py-3 border border-[#1a1a2e] rounded-xl bg-[#0d0d14] shrink-0">
             <div className="text-white/40 text-xs font-mono">
-              Showing {pageEvents.length} of {totalFilteredEvents.toLocaleString("en-US")} markets · {pageMarkets.length} of {totalFilteredMarkets.toLocaleString("en-US")} questions
+              Showing {pageEvents.length} of {totalFilteredEvents.toLocaleString("en-US")} markets ·{" "}
+              {pageMarketRows.length} of {totalFilteredMarkets.toLocaleString("en-US")} questions
             </div>
             {canShowMore && (
               <button
