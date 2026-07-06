@@ -14,6 +14,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SITE_ICON } from "@/lib/site-brand";
 
 const NAV_LINKS = [
   { href: "/ev", label: "+EV", icon: Sparkles, customIcon: "/plus-circle-green.png" },
@@ -97,7 +98,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps = {}) {
       <div className="p-4 border-b border-[#1a1a1a] flex flex-col items-center justify-center gap-1.5">
         <Link href="/" onClick={onNavigate} className="flex justify-center">
           <Image
-            src="/logo.png"
+            src={SITE_ICON}
             alt="PolyPulse"
             width={120}
             height={120}

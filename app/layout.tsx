@@ -19,7 +19,9 @@ export const metadata: Metadata = {
   title: "PolyPulse - Polymarket Intelligence Platform",
   description: "Real-time analytics, +EV opportunities, and market intelligence for Polymarket traders",
   icons: {
-    icon: "/logo.png",
+    icon: [{ url: "/logo.png", type: "image/png" }],
+    shortcut: "/logo.png",
+    apple: "/logo.png",
   },
 };
 
