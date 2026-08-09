@@ -104,7 +104,15 @@ export async function loadWalletFromStorage(): Promise<StoredWalletData | null> 
     const password = getStoragePassword();
     const json = await decrypt(encoded, password);
     const data = JSON.parse(json) as StoredWalletData;
-    if (!data.address || !data.chainId || data.connectionType !== "browser_extension") {
+    if (
+      !data.address ||
+      !data.chainId ||
+      data.connectionType !== "browser_extension" ||
+      !data.signature ||
+      !data.message ||
+      !data.nonce ||
+      !data.issuedAt
+    ) {
       return null;
     }
     return data;

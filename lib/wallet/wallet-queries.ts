@@ -2,6 +2,7 @@ import type { WalletState } from "./types";
 import { DEFAULT_WALLET_STATE } from "./types";
 import { loadWalletFromStorage, clearWalletStorage } from "./storage";
 import { getWalletService } from "./wallet-service";
+import { verifyAuthSignature } from "./auth";
 
 export const walletKeys = {
   all: ["wallet"] as const,
@@ -38,7 +39,12 @@ function storedAddressIsAuthorized(storedAddress: string, accounts: string[]): b
 
 export async function fetchConnectionState(): Promise<WalletState> {
   const stored = await loadWalletFromStorage();
-  if (!stored?.address) {
+  if (!stored?.address || !stored.signature || !stored.message) {
+    return DEFAULT_WALLET_STATE;
+  }
+
+  if (!verifyAuthSignature(stored.message, stored.signature, stored.address)) {
+    clearWalletStorage();
     return DEFAULT_WALLET_STATE;
   }
 
@@ -64,6 +70,12 @@ export async function fetchConnectionState(): Promise<WalletState> {
     lastSync: new Date(),
     approvals,
     connectionType: "browser_extension",
+    auth: {
+      nonce: stored.nonce,
+      issuedAt: stored.issuedAt,
+      message: stored.message,
+      signature: stored.signature,
+    },
   };
 }
 

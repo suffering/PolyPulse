@@ -98,7 +98,22 @@ export function WalletConnect({ onClose, className }: WalletConnectProps) {
                     {isConnecting ? "Connecting…" : "Connect Wallet"}
                   </Button>
                   <p className="text-xs text-slate-500">
-                    Install a Web3 wallet to connect.
+                    {error?.code === "NO_WALLET" ? (
+                      <>
+                        No wallet detected —{" "}
+                        <a
+                          href="https://metamask.io/download/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-slate-300 underline underline-offset-2 hover:text-white"
+                        >
+                          install MetaMask
+                        </a>
+                        .
+                      </>
+                    ) : (
+                      "Connect with MetaMask or another injected wallet. You will be asked to sign in."
+                    )}
                   </p>
                 </>
               ) : (
