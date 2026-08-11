@@ -178,4 +178,4 @@ PolyPulse is an analytics tool, **not financial advice**. Prediction markets car
 
 ## Author
 
-Built by **Daniel Makarovskiy** — made in NYC.
+Built by **Maka** — made in NYC.
